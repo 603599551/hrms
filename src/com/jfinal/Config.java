@@ -1,12 +1,14 @@
 package com.jfinal;
 
 import com.jfinal.config.*;
-import com.jfinal.kit.PropKit;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import com.ss.controllers.MenuCtrl;
+import com.ss.organization.controllers.DeptCtrl;
+import com.ss.organization.controllers.JobCtrl;
+import com.ss.organization.controllers.StaffCtrl;
 
 import java.io.File;
 
@@ -34,6 +36,9 @@ public class Config extends JFinalConfig {
 	@Override
 	public void configRoute(Routes routes) {
 		routes.add("/mgr/menu",MenuCtrl.class);
+		routes.add("/mgr/dept",DeptCtrl.class);
+		routes.add("/mgr/staff",StaffCtrl.class);
+		routes.add("/mgr/job",JobCtrl.class);
 	}
 
 	@Override
