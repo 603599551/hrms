@@ -1,0 +1,8 @@
+jdbcUrl = jdbc:mysql://localhost:3308/security_stock?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
+username = root
+password = 
+devMode = true
+
+minIdle=5
+initialPoolSize=5
+maxActivee=180

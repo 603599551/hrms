@@ -6,6 +6,7 @@ import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
+import com.ss.controllers.MenuCtrl;
 
 import java.io.File;
 
@@ -32,7 +33,7 @@ public class Config extends JFinalConfig {
 
 	@Override
 	public void configRoute(Routes routes) {
-//		routes.add("/test",TestCtrl.class);
+		routes.add("/mgr/menu",MenuCtrl.class);
 	}
 
 	@Override
