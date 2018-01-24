@@ -1,5 +1,7 @@
 package utils;
 
+import easy.util.DateTool;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -12,7 +14,7 @@ public class TestTools {
 	private TestTools(Class clazz,String method,String message){
 		startTime=System.currentTimeMillis();
 		Date date=new Date(startTime);
-		String dateStr=DateTool.getDate(date, "yyyy-MM-dd HH:mm:ss");
+		String dateStr= DateTool.getDate(date, "yyyy-MM-dd HH:mm:ss");
 		System.out.println();
 		System.out.println("TestTools 开始------------------"+dateStr+"---------------------------");
 		System.out.println("Class:"+clazz);

@@ -1,5 +1,7 @@
 package utils;
 
+import easy.util.PathTools;
+
 import java.io.File;
 import java.io.FileFilter;
 
@@ -130,7 +132,7 @@ public class FileUploadPath {
 	 * @return
 	 */
 	public static File getRootPath(){
-		File file=PathTools.getWebRootPath(PATH_ROOT);
+		File file= PathTools.getWebRootPath(PATH_ROOT);
 		if(!file.exists()){
 			file.mkdirs();
 		}

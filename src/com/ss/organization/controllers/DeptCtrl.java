@@ -363,4 +363,17 @@ public class DeptCtrl extends Controller{
         reList.add(0,map);
         renderJson(reList);
     }
+
+    public void showById(){
+        String id=getPara("id");
+        JsonHashMap jhm=new JsonHashMap();
+        try {
+            Record r = Db.findById("dept", id);
+            jhm.putCode(1).put("data",r);
+            renderJson(jhm);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+    }
 }

@@ -11,8 +11,8 @@ import com.utils.RequestTool;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
+import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
-import utils.UUIDTool;
 import utils.bean.JsonHashMap;
 
 import java.util.*;
@@ -505,5 +505,16 @@ public class StaffCtrl extends Controller{
         }
         renderJson(r);
     }
-
+    public void showById(){
+        String id=getPara("id");
+        JsonHashMap jhm=new JsonHashMap();
+        try {
+            Record r = Db.findById("staff", id);
+            jhm.putCode(1).put("data",r);
+            renderJson(jhm);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+    }
 }
