@@ -9,6 +9,7 @@ import com.ss.controllers.MenuCtrl;
 import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
+import com.ss.organization.controllers.StoreCtrl;
 
 import java.io.File;
 
@@ -39,6 +40,8 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/dept",DeptCtrl.class);
 		routes.add("/mgr/staff",StaffCtrl.class);
 		routes.add("/mgr/job",JobCtrl.class);
+		routes.add("/mgr/store",StoreCtrl.class);
+
 	}
 
 	@Override
