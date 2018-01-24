@@ -10,9 +10,9 @@ import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import com.utils.RequestTool;
 import com.utils.UserSessionUtil;
-import utils.DateTool;
-import utils.NumberUtils;
-import utils.UUIDTool;
+import easy.util.DateTool;
+import easy.util.NumberUtils;
+import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 
 import java.util.ArrayList;
@@ -124,7 +124,7 @@ public class JobCtrl extends Controller{
 
         JsonHashMap jhm=new JsonHashMap();
         try {
-            List<Record> list=Db.find("select id,name,parent_id from sys_menu order by sort");
+            List<Record> list=Db.find("select id,name,parent_id from menu order by sort");
             for(Record r:list){
                 r.set("power",false);
             }
@@ -249,7 +249,7 @@ public class JobCtrl extends Controller{
                 " select id,name,parent_id," +
                 " ifnull((select access from author_job_menu where author_job_menu.menu_id=m.id and author_job_menu.job_id=?),0) as power  " +
                 ",sort " +
-                " from sys_menu m " +
+                " from menu m " +
                 " ) as a" +
                 " order by sort ";
         try{

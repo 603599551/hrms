@@ -1,5 +1,7 @@
 package utils;
 
+import easy.util.PathTools;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -66,7 +68,7 @@ public class MessageConfigTools extends HashMap<String,String>{
 	 * @throws IOException 
 	 */
 	public void readFile() throws IOException{
-		File file=PathTools.getWebRootPath("WEB-INF/message.config");
+		File file= PathTools.getWebRootPath("WEB-INF/message.config");
 		readFile(file);
 	}
 }

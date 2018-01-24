@@ -1,8 +1,9 @@
 package utils.qrcode;
 
+import easy.util.PathTools;
+
 import java.io.File;
 
-import utils.PathTools;
 
 
 /**
@@ -114,7 +115,7 @@ public class QRCodePath {
 	 * @return
 	 */
 	public static File getRootPath(){
-		File file=PathTools.getWebRootPath(PATH_QRCODE_ROOT);
+		File file= PathTools.getWebRootPath(PATH_QRCODE_ROOT);
 		if(!file.exists()){
 			file.mkdirs();
 		}
