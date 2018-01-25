@@ -6,6 +6,8 @@ import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import com.ss.controllers.MenuCtrl;
+import com.ss.goods.controllers.GoodsTypeCtrl;
+import com.ss.goods.controllers.GoodsUnitCtrl;
 import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
@@ -41,6 +43,8 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/staff",StaffCtrl.class);
 		routes.add("/mgr/job",JobCtrl.class);
 		routes.add("/mgr/store",StoreCtrl.class);
+		routes.add("/mgr/goodsUnit",GoodsUnitCtrl.class);
+		routes.add("/mgr/goodsType",GoodsTypeCtrl.class);
 
 	}
 

@@ -1,5 +1,7 @@
 package com.utils;
 
+import com.jfinal.plugin.activerecord.Db;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,13 +46,23 @@ public class SQLUtil {
 
     public SQLUtil(String sql, List paraList) {
         this.sql.append(sql);
+        if(paraList==null){
+            throw new NullPointerException("paraList不能为空！");
+        }
         this.paraList = paraList;
     }
     public SQLUtil(String sql){
         this.sql.append(sql);
         paraList=new ArrayList();
     }
-
+    public static SQLUtil initSelectSQL(String sql, List paraList){
+        SQLUtil instance=new SQLUtil(sql, paraList);
+        return instance;
+    }
+    public static SQLUtil initSelectSQL(String sql){
+        SQLUtil instance=new SQLUtil(sql);
+        return instance;
+    }
     /**
      * 拼装where条件
      * @param where 必须以and或者or开头
@@ -283,11 +295,15 @@ public class SQLUtil {
         return sql0;
     }
 
-    public SQLUtil initUpdateSQL(String tableName){
-        sqlType=3;
-        sql.append("update "+tableName+" set ");
-        columnValues=new LinkedHashMap();
-        return this;
+    public static SQLUtil initUpdateSQL(String tableName){
+        SQLUtil instance=new SQLUtil();
+        instance.sqlType=3;
+        instance.sql.append("update "+tableName+" set ");
+        instance.columnValues=new LinkedHashMap();
+        return instance;
+    }
+    public SQLUtil addUpdateColumn(String columnName,Object obj){
+        return addUpdateColumn(columnName,NONE,obj);
     }
     public SQLUtil addUpdateColumn(String columnName,int not,Object obj){
         if(not==NOT_NULL){
@@ -344,7 +360,7 @@ public class SQLUtil {
         return sql0;
     }
     public static void main(String[] args) {
-        SQLUtil sql=new SQLUtil();
+//        SQLUtil sql=SQLUtil.initSelectSQL("from student");
 //        sql.append("select id,name from student");
 //        String age=null;
 //        sql.addWhere("and age=?",SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING,age)
@@ -352,7 +368,7 @@ public class SQLUtil {
 //                .in(" or status in",new String[]{"1","2","3"});
 //        sql.in("and jr_class in","1","2","3");
 //        sql.in("and school not in","1");
-////        sql.in("id");
+//        sql.in("id");
 //        Object ageObj=null;
 //        sql.addWhere("and ?<birthday",NOT_EMPTY_STRING,ageObj);
 //        sql.addWhere("and name like ? ","张%")
@@ -366,12 +382,27 @@ public class SQLUtil {
 
 //        sql.append("delete from student ");
 //        sql.addWhere("and age=?",NOT_EMPTY_STRING,age);
-        String name2="马%";
-        sql.initUpdateSQL("student");
-        sql.addUpdateColumn("name",NOT_EMPTY_STRING,name);
-        sql.addUpdateColumn("age",NOT_EMPTY_STRING,age);
-        sql.addWhere("and name like ?",NOT_EMPTY_STRING,name2);
+
+//        SQLUtil sql=SQLUtil.initUpdateSQL("student");
+//        String name2="马%";
+//        sql.addUpdateColumn("name",NOT_EMPTY_STRING,name);
+//        sql.addUpdateColumn("age",NOT_EMPTY_STRING,age);
+//        sql.addWhere("and name like ?",NOT_EMPTY_STRING,name2);
+
+//        String key="关键字";
+//        SQLUtil sql = SQLUtil.initSelectSQL("from store");
+//        sql.addWhere(" and name=? ", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, key);
+//        sql.addWhere(" or phone=? ", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, key);
+//        sql.addWhere(" order by modify_time desc ");
+        SQLUtil sql = SQLUtil.initUpdateSQL("store").addUpdateColumn("status", 3)
+                .addWhere(" and id=?",1);
+        Object[] array=sql.getParameterArray();
+
+
         System.out.println(sql.toString());
         System.out.println(sql.getParameterList());
+
+        System.out.println(sql.toString());
+
     }
 }

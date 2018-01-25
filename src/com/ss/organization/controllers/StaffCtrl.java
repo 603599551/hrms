@@ -192,16 +192,6 @@ public class StaffCtrl extends Controller{
         String id=getPara("id");
         JsonHashMap jhm=new JsonHashMap();
         try {
-            Record countR=Db.findFirst("select count(id) as count from student_owner where staff_id=?",id);
-            Object countObj=countR.get("count");
-            int count=NumberUtils.parseInt(countObj,0);
-            if(count>0){
-                jhm.putCode(-1);
-                jhm.putMessage("该员工是"+count+"个学员的所有者，请先将这些学员移交给其他人，然后再删除！");
-                renderJson(jhm);
-                return;
-            }
-
             Record r=new Record();
             r.set("id",id);
             r.set("status","6");

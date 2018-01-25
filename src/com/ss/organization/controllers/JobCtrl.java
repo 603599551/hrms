@@ -8,6 +8,8 @@ import com.jfinal.core.Controller;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
+import com.ss.organization.services.JobService;
+import com.ss.services.MenuService;
 import com.utils.RequestTool;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
@@ -122,22 +124,21 @@ public class JobCtrl extends Controller{
     }
     public void showResource(){
 
-        JsonHashMap jhm=new JsonHashMap();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        JsonHashMap jhm = new JsonHashMap();
         try {
-            List<Record> list=Db.find("select id,name,parent_id from menu order by sort");
-            for(Record r:list){
-                r.set("power",false);
-            }
-            List<Record> reList=sort(list);
+            List<Record> list = Db.find("select id,name as label,CONCAT('/',url) as link,parent_id,sort,icon as iconName,type from menu order by sort");
+            List reList = JobService.getMe().sort(list);
             jhm.putCode(1);
-            jhm.put("menuList",reList);
-        }catch (Exception e){
+            jhm.put("list", reList);
+            renderJson(jhm);
+        } catch (Exception e) {
             e.printStackTrace();
-            jhm.putCode(-1);
-            jhm.putMessage(e.toString());
+            Map ret = new HashMap();
+            ret.put("code", KEY.CODE.ERROR);
+            ret.put("msg", e.toString());
+            renderJson(ret);
         }
-
-        renderJson(jhm);
     }
     private List sort(List<Record> list){
         List<Record> mylist=new ArrayList(list);
