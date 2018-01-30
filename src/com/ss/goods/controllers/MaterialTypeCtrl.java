@@ -3,23 +3,32 @@ package com.ss.goods.controllers;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
-import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
-import com.sun.deploy.panel.JHighDPITable;
 import com.utils.RequestTool;
-import com.utils.SQLUtil;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
-import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 import utils.jfinal.DbUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class GoodsUnitCtrl extends BaseCtrl {
+public class MaterialTypeCtrl extends BaseCtrl {
+
+    public void getFirstType(){
+        JsonHashMap result = new JsonHashMap();
+        List<Record> list = Db.find("select * from material_type where parent_id=0 order by sort");
+        Record rootRecord = new Record();
+        rootRecord.set("id", "0");
+        rootRecord.set("name", "添加一级分类");
+        list.add(0, rootRecord);
+        result.put("data", list);
+        renderJson(result);
+    }
     @Override
     public void add() {
         JsonHashMap jhm=new JsonHashMap();
@@ -37,9 +46,9 @@ public class GoodsUnitCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        List<Record> list = Db.find("select * from goods_unit where name=?", json.getString("name"));
+        List<Record> list = Db.find("select * from material_type where code=? or name=?", json.getString("code"), json.getString("name"));
         if(list != null && list .size() > 0){
-            jhm.putCode(-1).putMessage("单位名称重复！");
+            jhm.putCode(-1).putMessage("原料类别编码或者原料类别名称重复！");
             renderJson(jhm);
             return;
         }
@@ -49,20 +58,28 @@ public class GoodsUnitCtrl extends BaseCtrl {
         try{
             sort=Integer.parseInt(sortStr);
         }catch (Exception e){
-            sort=nextSort(DbUtil.queryMax("goods_unit","sort"));
+            sort=nextSort(DbUtil.queryMax("material_type","sort"));
         }
         String uuid= UUIDTool.getUUID();
         String dateTime= DateTool.GetDateTime();
+        String parent_id = json.getString("parent_id");
+        if(parent_id == null || parent_id.length() <= 0){
+            parent_id = "0";
+        }
         Record record=new Record();
         record.set("id",uuid);
+        record.set("parent_id",parent_id);
+        record.set("code",json.getString("code"));
         record.set("name",json.getString("name"));
         record.set("sort",sort);
+        record.set("desc",json.getString("desc"));
+        record.set("showChild",0);
         record.set("creater_id",usu.getUserId());
         record.set("modifier_id",usu.getUserId());
         record.set("create_time",dateTime);
         record.set("modify_time",dateTime);
         try {
-            boolean b = Db.save("goods_unit", record);
+            boolean b = Db.save("material_type", record);
             if (b) {
                 jhm.putCode(1).putMessage("保存成功！");
             }else{
@@ -74,7 +91,6 @@ public class GoodsUnitCtrl extends BaseCtrl {
         }
         renderJson(jhm);
     }
-
     private int nextSort(int sort){
         int i=sort;
         while(true){
@@ -85,7 +101,6 @@ public class GoodsUnitCtrl extends BaseCtrl {
         }
         return i;
     }
-
     @Override
     public void deleteById() {
         String id=getPara("id");
@@ -96,50 +111,36 @@ public class GoodsUnitCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        //验证material中的两个类别是否占用，unit
-        List<Record> hasList = Db.find("select * from material where unit=?", id);
+        //验证该分类下是否有子分类，即是否有parent_id和传入id相同的
+        List<Record> hasList = Db.find("select * from material_type where parent_id=?", id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("原料表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("该分类下有二级分类，不能删除！");
             renderJson(jhm);
             return;
         }
-        //验证sale_goods_material中的两个类别是否占用，unit
-        hasList = Db.find("select * from sale_goods_material where unit=?", id);
+        //验证material中的两个类别是否占用，type_1和type_2
+        hasList = Db.find("select * from material where type_1=? or type_2=?", id, id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("销售商品原料表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("原料表占用该类别，不能删除！");
             renderJson(jhm);
             return;
         }
-        //验证scrap_goods_material中的两个类别是否占用，unit
-        hasList = Db.find("select * from scrap_goods_material where unit=?", id);
+        //验证sale_goods_material中的两个类别是否占用，type_1和type_2
+        hasList = Db.find("select * from sale_goods_material where type_1=? or type_2=?", id, id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("报废商品原料表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("销售商品原料表占用该类别，不能删除！");
             renderJson(jhm);
             return;
         }
-        //验证goods中的两个类别是否占用，unit
-        hasList = Db.find("select * from goods where unit=?", id);
+        //验证scrap_goods_material中的两个类别是否占用，type_1和type_2
+        hasList = Db.find("select * from scrap_goods_material where type_1=? or type_2=?", id, id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("商品表占用该单位，不能删除！");
-            renderJson(jhm);
-            return;
-        }
-        //验证sale_goods中的两个类别是否占用，unit
-        hasList = Db.find("select * from sale_goods where unit=?", id);
-        if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("销售商品表占用该单位，不能删除！");
-            renderJson(jhm);
-            return;
-        }
-        //验证scrap_goods中的两个类别是否占用，unit
-        hasList = Db.find("select * from scrap_goods where unit=?", id);
-        if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("报废商品表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("报废商品原料表占用该类别，不能删除！");
             renderJson(jhm);
             return;
         }
         try {
-            Db.deleteById("goods_unit", id);
+            Db.deleteById("material_type", id);
             jhm.putCode(1);
             jhm.putMessage("删除成功！");
         }catch(Exception e){
@@ -160,7 +161,7 @@ public class GoodsUnitCtrl extends BaseCtrl {
             return ;
         }
         try {
-            Record storeRecord=Db.findById("goods_unit",id);
+            Record storeRecord=Db.findById("material_type",id);
             if(storeRecord!=null){
                 jhm.putCode(1).put("data",storeRecord);
             }else{
@@ -190,22 +191,29 @@ public class GoodsUnitCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        List<Record> list = Db.find("select * from goods_unit where id<>? and name=?", json.getString("id"), json.getString("name"));
+        List<Record> list = Db.find("select * from material_type where id<>? and (code=? or name=?)", json.getString("id"), json.getString("code"), json.getString("name"));
         if(list != null && list .size() > 0){
-            jhm.putCode(-1).putMessage("单位名称重复！");
+            jhm.putCode(-1).putMessage("原料类别编码或者原料类别名称重复！");
             renderJson(jhm);
             return;
         }
         UserSessionUtil usu=new UserSessionUtil(getRequest());
         String uuid= json.getString("id");
         String dateTime= DateTool.GetDateTime();
+        String parent_id = json.getString("parent_id");
+        if(parent_id == null || parent_id.length() <= 0){
+            parent_id = "0";
+        }
         Record record=new Record();
         record.set("id",uuid);
+        record.set("parent_id",parent_id);
+        record.set("code",json.getString("code"));
         record.set("name",json.getString("name"));
+        record.set("desc",json.getString("desc"));
         record.set("modifier_id",usu.getUserId());
         record.set("modify_time",dateTime);
         try {
-            boolean b = Db.update("goods_unit", record);
+            boolean b = Db.update("material_type", record);
             if (b) {
                 jhm.putCode(1).putMessage("保存成功！");
             }else{
@@ -220,22 +228,39 @@ public class GoodsUnitCtrl extends BaseCtrl {
 
     @Override
     public void query() {
-        String key=getPara("name");
-        String pageNumStr=getPara("pageNum");
-        String pageSizeStr=getPara("pageSize");
-        int pageNum= NumberUtils.parseInt(pageNumStr,1);
-        int pageSize= NumberUtils.parseInt(pageSizeStr,10);
-        JsonHashMap jhm=new JsonHashMap();
-        try {
-            SQLUtil sql = SQLUtil.initSelectSQL("from goods_unit ");
-            sql.addWhere(" and name=? ", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, key);
-            sql.append(" order by sort ");
-            Page<Record> page = Db.paginate(pageNum, pageSize, "select * ", sql.toString(), sql.getParameterArray());
-            jhm.putCode(1).put("data",page);
-        }catch (Exception e){
-            e.printStackTrace();
-            jhm.putCode(-1).putMessage(e.toString());
+        List<Record> goodsTypeList = Db.find("select * from material_type order by sort");
+        List<Record> firstList = new ArrayList<>();
+        Map<String, Record> firstMap = new HashMap<>();
+        List<Record> secondList = new ArrayList<>();
+        for(Record r : goodsTypeList){
+            if(!"0".equals(r.getStr("parent_id"))){
+                r.set("showChild", false);
+                secondList.add(r);
+            }else{
+                //一级分类，当showChild为1时，默认展开，0时不展开
+                if("1".equals(r.getStr("showChild"))){
+                    r.set("showChild", true);
+                }else{
+                    r.set("showChild", false);
+                }
+                r.set("children", new ArrayList<>());
+                firstList.add(r);
+                firstMap.put(r.getStr("id"), r);
+            }
         }
+        for(Record r : secondList){
+            Record firstR = firstMap.get(r.getStr("parent_id"));
+            List<Record> list = firstR.get("children");
+            if(list != null && list.size() > 0){
+                list.add(r);
+            }else{
+                list = new ArrayList<>();
+                list.add(r);
+                firstR.set("children", list);
+            }
+        }
+        JsonHashMap jhm = new JsonHashMap();
+        jhm.put("data", firstList);
         renderJson(jhm);
     }
 
@@ -256,20 +281,28 @@ public class GoodsUnitCtrl extends BaseCtrl {
             return;
         }
         //{"pid":"1","sort":["3","4","5","6"]}
+        String pid = json.getString("pid");
         JSONArray sortArr = json.getJSONArray("sort");
         int sort = 10;
         List<Record> recordList = new ArrayList<>();
+        boolean isFirst = "0".equals(pid);
         for(Object s : sortArr){
             if(s != null){
                 Record r = new Record();
                 r.set("id", s.toString());
                 r.set("sort", sort);
+                if(isFirst){
+                    r.set("showChild", "1");
+                    isFirst = false;
+                }else{
+                    r.set("showChild", "0");
+                }
                 recordList.add(r);
                 sort += 10;
             }
         }
         for(Record r : recordList){
-            Db.update("goods_unit", r);
+            Db.update("material_type", r);
         }
         renderJson(jhm);
     }

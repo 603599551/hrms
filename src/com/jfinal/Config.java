@@ -8,10 +8,12 @@ import com.jfinal.template.Engine;
 import com.ss.controllers.MenuCtrl;
 import com.ss.goods.controllers.GoodsTypeCtrl;
 import com.ss.goods.controllers.GoodsUnitCtrl;
+import com.ss.goods.controllers.MaterialTypeCtrl;
 import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
 import com.ss.organization.controllers.StoreCtrl;
+import com.ss.stock.controllers.ImportXlsCtrl;
 
 import java.io.File;
 
@@ -45,7 +47,9 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/store",StoreCtrl.class);
 		routes.add("/mgr/goodsUnit",GoodsUnitCtrl.class);
 		routes.add("/mgr/goodsType",GoodsTypeCtrl.class);
+		routes.add("/mgr/materialType",MaterialTypeCtrl.class);
 
+		routes.add("/mgr/importXls", ImportXlsCtrl.class);
 	}
 
 	@Override
