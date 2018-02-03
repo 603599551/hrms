@@ -157,6 +157,7 @@ public class SQLUtil {
     }
     /**
      * 构建sql的where条件的in部分
+     * 例子：sql.in("and jr_class in","1","2","3");
      * @param sqlStr 拼装sql，必须有in或者not in，不能有小括号(
      * @param array 添加指定参数
      * @return

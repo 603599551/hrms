@@ -359,7 +359,7 @@ public class DeptCtrl extends Controller{
 
         Map map=new HashMap();
         map.put("name","请选择部门");
-        map.put("id","");
+        map.put("id","0");
         reList.add(0,map);
         renderJson(reList);
     }

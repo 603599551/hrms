@@ -3,12 +3,11 @@ package com.jfinal;
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.druid.DruidPlugin;
+import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import com.ss.controllers.MenuCtrl;
-import com.ss.goods.controllers.GoodsTypeCtrl;
-import com.ss.goods.controllers.GoodsUnitCtrl;
-import com.ss.goods.controllers.MaterialTypeCtrl;
+import com.ss.goods.controllers.*;
 import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
@@ -48,8 +47,11 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/goodsUnit",GoodsUnitCtrl.class);
 		routes.add("/mgr/goodsType",GoodsTypeCtrl.class);
 		routes.add("/mgr/materialType",MaterialTypeCtrl.class);
-
+		routes.add("/mgr/goods",GoodsCtrl.class);
 		routes.add("/mgr/importXls", ImportXlsCtrl.class);
+		routes.add("/mgr/goodsInitForm", GoodsInitFormCtrl.class);
+		routes.add("/mgr/material", MaterialCtrl.class);
+		routes.add("/mgr/bomMgr", BomMgrCtrl.class);
 	}
 
 	@Override
@@ -76,11 +78,15 @@ public class Config extends JFinalConfig {
 		ActiveRecordPlugin activeRecordPlugin = new ActiveRecordPlugin(druidPlugin);
 //        activeRecordPlugin.addMapping("news","id", News.class);
 		plugins.add(activeRecordPlugin);
+
+		// ehcache缓存插件
+		plugins.add(new EhCachePlugin());
 	}
 
 	@Override
 	public void configInterceptor(Interceptors interceptors) {
-
+		// 事务控制器
+//		interceptors.add(new TxByActionKeyRegex("(.*save.*|.*update.*|.*del.*)",true));
 	}
 
 	@Override

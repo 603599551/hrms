@@ -255,10 +255,10 @@ public class StaffCtrl extends Controller{
             keyword = "%"+keyword + "%";
             where=where +" and (phone like '"+keyword+"' or name like '"+keyword+"' or pinyin like '"+keyword+"' )";
         }
-        if(deptId!=null && !"".equals(deptId)){
+        if(deptId!=null && !"".equals(deptId) && !"0".equals(deptId) ){
             where=where +" and dept='"+deptId+"'";
         }
-        if(jobId!=null && !"".equals(jobId)){
+        if(jobId!=null && !"".equals(jobId)&& !"0".equals(jobId)){
             where=where +" and job='"+jobId+"'";
         }
         if(statusId!=null){

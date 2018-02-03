@@ -312,7 +312,7 @@ public class JobCtrl extends Controller{
         try {
             List<Record> list = Db.find("select id,name from job order by create_time");
             Record r=new Record();
-            r.set("id","");
+            r.set("id","0");
             r.set("name","请选择职务");
             list.add(0,r);
             renderJson(list);
