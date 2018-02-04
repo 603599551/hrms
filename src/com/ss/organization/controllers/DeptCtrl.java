@@ -6,6 +6,7 @@ import com.jfinal.core.Controller;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.utils.RequestTool;
+import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import utils.bean.JsonHashMap;
 import easy.util.NumberUtils;
@@ -27,13 +28,7 @@ public class DeptCtrl extends Controller{
         String db_tb = "dept";
         String id= UUIDTool.getUUID();
         String time= DateTool.GetDateTime();
-        UserBean userBean=(UserBean)getSessionAttr(KEY.SESSION_USER);
-        String creator="";
-        String creator_name="";
-        if(userBean!=null) {
-            creator = userBean.getId();
-            creator_name = userBean.getName();
-        }
+        UserSessionUtil usu=new UserSessionUtil(getRequest());
         if(db_tb==null || "".equals(db_tb)){
             Map map=new HashMap();
             map.put("code",KEY.CODE.DB_TB_NOT_EMPTY);
@@ -70,8 +65,8 @@ public class DeptCtrl extends Controller{
 
             r.remove("dbObj");
             r.set("id",id);
-            r.set("creator",creator);
-            r.set("creator_name",creator_name);
+            r.set("creator",usu.getUserId());
+            r.set("creator_name",usu.getUsername());
             r.set("create_time",time);
             r.set("modify_time",time);
             Db.save(db_tb, r);
@@ -88,11 +83,15 @@ public class DeptCtrl extends Controller{
     public void updateById(){
         Map paraMap = RequestTool.getParameterMap(getRequest());
         JsonHashMap jhm=new JsonHashMap();
-        String db_tb = (String)paraMap.get("dbObj");
         String parentId=(String)paraMap.get("parent_id");
         String id=(String)paraMap.get("id");
+
+        UserSessionUtil usu=new UserSessionUtil(getRequest());
         String time= DateTool.GetDateTime();
         String parentName=null;
+        if(parentId==null || "".equals(parentId)){
+            parentId="0";
+        }
         try {
             Record r = new Record();
             Set<Map.Entry<String,String>> set=paraMap.entrySet();
@@ -101,7 +100,7 @@ public class DeptCtrl extends Controller{
             }
             //如果上级部门不是顶级部门，判断是否存在
             if(!"0".equals(parentId)){
-                Record parentDeptR=Db.findFirst("select name from "+db_tb+" where id=?",parentId);
+                Record parentDeptR=Db.findFirst("select name from dept where id=?",parentId);
                 if(parentDeptR!=null){
                     parentName=parentDeptR.get("name");
                     r.set("parent_name",parentName);
@@ -113,10 +112,11 @@ public class DeptCtrl extends Controller{
                     return;
                 }
             }
-            r.remove("dbObj");
 //            r.set("create_time",time);
             r.set("modify_time",time);
-            Db.update(db_tb, r);
+            r.set("creator",usu.getUserId());
+            r.set("creator_name",usu.getUsername());
+            Db.update("dept", r);
             Map ret=r.getColumns();
             ret.put("id",id);//执行save方法后，r中的id会被设置为null，所以重新填上
             renderJson(ret);
@@ -196,7 +196,7 @@ public class DeptCtrl extends Controller{
 //
 //        renderJson(reList);
 //    }
-        private void buildTree(List<Record> list,List<Map> treeList){
+    private void buildTree(List<Record> list,List<Map> treeList){
         if(list.isEmpty()){
             return;
         }
@@ -339,6 +339,10 @@ public class DeptCtrl extends Controller{
 
     }
 
+    /**
+     * 树形结构显示
+     *
+     */
     public void toWebSearch(){
         List<Record> list=null;
         try{
@@ -356,6 +360,13 @@ public class DeptCtrl extends Controller{
         buildTree(dataList,treeList);
         List reList=new ArrayList();
         toWeb(treeList,reList);
+
+        List<Record> storeList=Db.find("select id,name from store where status=1 order by status desc,sort,id");
+        if(storeList!=null && !storeList.isEmpty()){
+            for(Record r:storeList) {
+                reList.add(r.getColumns());
+            }
+        }
 
         Map map=new HashMap();
         map.put("name","请选择部门");

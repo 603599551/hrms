@@ -137,7 +137,7 @@ public class BomMgrCtrl extends BaseCtrl {
         String wm_type=getPara("inventoryId");//库存类型
         String pageNumStr=getPara("pageNum");
         String pageSizeStr=getPara("pageSize");
-
+        String goodsId=getPara("goodsId");
         int pageNum=NumberUtils.parseInt(pageNumStr,1);
         int pageSize=NumberUtils.parseInt(pageSizeStr,10);
 
@@ -147,8 +147,11 @@ public class BomMgrCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         try {
 
-            SQLUtil sqlUtil = new SQLUtil(" from material m left join goods_material gm on m.id=gm.material_id");
+//            SQLUtil sqlUtil = new SQLUtil(" from material m left join  goods_material gm on m.id=gm.material_id ");
+            SQLUtil sqlUtil = new SQLUtil(" from material m left join ( select * from goods_material where goods_id=?) gm on m.id=gm.material_id ");
+            sqlUtil.addParameter(goodsId);
             sqlUtil.addWhere(" and m.status=1 ");
+//            sqlUtil.addWhere(" and gm.goods_id=? ");
             if(typeArray!=null && typeArray.length>0){
                 if(typeArray.length==1 && "".equals(typeArray[0])){//前台没有选择分类时，默认传进一个空字符串
 
@@ -164,18 +167,18 @@ public class BomMgrCtrl extends BaseCtrl {
 
             if(org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
                 String key2 = key + "%";
-                if (list != null && !list.isEmpty()) {
+//                if (list != null && !list.isEmpty()) {
                     sql.append(" and (m.code like ? or m.name like ? or m.pinyin like ? )");
-                } else {
-                    sql.append(" where (m.code like ? or m.name like ? or m.pinyin like ? )");
-
-                }
+//                } else {
+//                    sql.append(" where (m.code like ? or m.name like ? or m.pinyin like ? )");
+//
+//                }
                 list.add(key2);
                 list.add(key2);
                 list.add(key2);
             }
             sql.append(" ) as a");
-            String select=" from (select gm.id as gm_id,m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,gm.net_num ,gm.gross_num,m.purchase_price as price,gm.total_price,ifnull(gm.sort,100000) as gm_sort,m.sort as m_sort ";
+            String select=" from (select gm.id as gm_id,m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,ifnull(gm.net_num,0) as net_num ,ifnull(gm.gross_num,0) as gross_num,m.purchase_price as price,gm.total_price,ifnull(gm.sort,100000) as gm_sort,m.sort as m_sort ";
             sql.insert(0,select);
             sql.append(" order by a.gm_sort,m_sort,a.a.id");
             if(Config.devMode){
