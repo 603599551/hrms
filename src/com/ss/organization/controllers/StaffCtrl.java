@@ -2,6 +2,7 @@ package com.ss.organization.controllers;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bean.UserBean;
+import com.jfinal.Config;
 import com.jfinal.KEY;
 import com.jfinal.core.Controller;
 import com.jfinal.plugin.activerecord.Db;
@@ -265,19 +266,12 @@ public class StaffCtrl extends Controller{
          */
             String select = "select s.id,s.name,case gender when 0 then '女' when 1 then '男' end as gender_text,phone,dept.name as dept_text,(select name from job where id=s.job) as job_text  ";
             whereEx.append(" order by create_time desc ,id");
+            if(Config.devMode){
+                System.out.println(whereEx);
+                System.out.println(paraList);
+            }
             Page<Record> page = Db.paginate(pageNum, pageSize, select, whereEx.toString(),paraList.toArray());
             List<Record> list=page.getList();
-            //过滤掉密码
-//            for(Record r:list){
-//                Object genderObj=r.get("gender");
-//                int gender=NumberUtils.parseInt(genderObj,0);
-//                if(gender==0){
-//                    r.set("gender","女");
-//                }else if(gender==1){
-//                    r.set("gender","男");
-//                }
-//                r.remove("password");
-//            }
             renderJson(page);
         }catch(Exception e){
             e.printStackTrace();
