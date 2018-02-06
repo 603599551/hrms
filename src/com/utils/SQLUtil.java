@@ -72,7 +72,10 @@ public class SQLUtil {
         this.where.append(" "+where+" ");
         return this;
     }
-
+    public SQLUtil order(String str){
+        this.where.append(" "+where+" ");
+        return this;
+    }
     /**
      * 拼装where条件
      * @param where 必须以and或者or开头
