@@ -13,7 +13,7 @@ import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
 import com.ss.organization.controllers.StoreCtrl;
-import com.ss.stock.controllers.ImportXlsCtrl;
+import com.ss.stock.controllers.DailySummaryCtrl;
 
 import java.io.File;
 
@@ -49,7 +49,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/goodsType",GoodsTypeCtrl.class);
 		routes.add("/mgr/materialType",MaterialTypeCtrl.class);
 
-		routes.add("/mgr/importXls", ImportXlsCtrl.class);
+		routes.add("/mgr/dailySummary", DailySummaryCtrl.class);
 	}
 
 	@Override
