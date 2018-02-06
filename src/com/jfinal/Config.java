@@ -6,7 +6,10 @@ import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
+import com.ss.controllers.HomeCtrl;
+import com.ss.controllers.LoginCtrl;
 import com.ss.controllers.MenuCtrl;
+import com.ss.controllers.UserCtrl;
 import com.ss.goods.controllers.*;
 import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
@@ -39,6 +42,7 @@ public class Config extends JFinalConfig {
 
 	@Override
 	public void configRoute(Routes routes) {
+		routes.add("/",HomeCtrl.class);
 		routes.add("/mgr/menu",MenuCtrl.class);
 		routes.add("/mgr/dept",DeptCtrl.class);
 		routes.add("/mgr/staff",StaffCtrl.class);
@@ -52,6 +56,8 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/goodsInitForm", GoodsInitFormCtrl.class);
 		routes.add("/mgr/material", MaterialCtrl.class);
 		routes.add("/mgr/bomMgr", BomMgrCtrl.class);
+		routes.add("/login", LoginCtrl.class);
+		routes.add("/mgr/user", UserCtrl.class);
 	}
 
 	@Override
