@@ -171,12 +171,7 @@ public class StoreCtrl extends BaseCtrl {
         }
         UserSessionUtil usu=new UserSessionUtil(getRequest());
         String sortStr=json.getString("sort");
-        int sort=1;
-        try{
-            sort=Integer.parseInt(sortStr);
-        }catch (Exception e){
-            sort=nextSort(DbUtil.queryMax("Store","sort"));
-        }
+
         String uuid= json.getString("id");
         String dateTime= DateTool.GetDateTime();
         Record record=new Record();
@@ -185,7 +180,17 @@ public class StoreCtrl extends BaseCtrl {
         record.set("address",json.getString("address"));
         record.set("phone",json.getString("phone"));
         record.set("desc",json.getString("desc"));
-        record.set("sort",sort);
+        if(org.apache.commons.lang.StringUtils.isEmpty(sortStr)){
+
+        }else {
+            int sort=1;
+            try{
+                sort=Integer.parseInt(sortStr);
+            }catch (Exception e){
+                sort=nextSort(DbUtil.queryMax("Store","sort"));
+            }
+            record.set("sort", sort);
+        }
 //        record.set("creater_id",usu.getUserId());
         record.set("modifier_id",usu.getUserId());
 //        record.set("create_time",dateTime);
