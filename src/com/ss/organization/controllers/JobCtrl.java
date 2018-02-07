@@ -15,6 +15,7 @@ import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
+import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
 import java.util.ArrayList;
@@ -31,19 +32,14 @@ public class JobCtrl extends Controller{
             JSONObject json = RequestTool.getJson(getRequest());
             String name = json.getString("name");
             String desc = json.getString("desc");
-            JSONArray jsonArray = json.getJSONArray("list");
+            String menuIds = json.getString("menuIds");
             if(name==null || "".equals(name)){
                 jhm.putCode(-1);
                 jhm.putMessage("名称不能为空！");
                 renderJson(jhm);
                 return;
             }
-            if(jsonArray==null || jsonArray.isEmpty()){
-                jhm.putCode(-1);
-                jhm.putMessage("权限不能为空！");
-                renderJson(jhm);
-                return;
-            }
+
             UserSessionUtil usu = new UserSessionUtil(getRequest());
 
             String time = DateTool.GetDateTime();
@@ -57,9 +53,10 @@ public class JobCtrl extends Controller{
             jobR.set("creator", usu.getUserId());
             jobR.set("creator_name", usu.getRealName());
             boolean b=Db.save("job", jobR);
-
-            saveJobMenu(jsonArray,uuid,time,usu);
-            jhm.putCode(1);
+            if(StringUtils.isNotEmpty(menuIds)){
+                saveJobMenu(menuIds.split(","),uuid,time,usu);
+            }
+            jhm.putCode(1).putMessage("操作成功！");
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1);
@@ -68,53 +65,14 @@ public class JobCtrl extends Controller{
         }
         renderJson(jhm);
     }
-    private void saveJobMenu(JSONArray jsonArray,String jobId,String time,UserSessionUtil usu){
-        if(jsonArray!=null && !jsonArray.isEmpty()){
-            /*
-            找出顶级节点，放入map中
-             */
-            Map<String,JSONObject> topMenuMap=new HashMap();
-            List<JSONObject> subMenuList=new ArrayList();
-            for(Object temp:jsonArray){
-                JSONObject jsonTemp=(JSONObject)temp;
-                String menuParentId=jsonTemp.getString("parent_id");
-                String menuId=jsonTemp.getString("id");
-                boolean power=jsonTemp.getBoolean("power");
-                if("0".equals(menuParentId)){
-                    topMenuMap.put(menuId,jsonTemp);
-                }else{
-                    subMenuList.add(jsonTemp);
-                }
-            }
-            /*
-            判断子节点为true，让其父节点也为true
-             */
-            for(Object temp:subMenuList){
-                JSONObject jsonTemp=(JSONObject)temp;
-                String menuParentId=jsonTemp.getString("parent_id");
-                String menuId=jsonTemp.getString("id");
-                boolean power=jsonTemp.getBoolean("power");
-                if(!"0".equals(menuParentId) && power){
-                    JSONObject menu=topMenuMap.get(menuParentId);
-                    menu.put("power",true);
-                }
-            }
-            for(Object temp:jsonArray){
-                JSONObject jsonTemp=(JSONObject)temp;
-                String menuParentId=jsonTemp.getString("parent_id");
-                String menuId=jsonTemp.getString("id");
-                boolean power=jsonTemp.getBoolean("power");
-                String access="0";
-                if(power){
-                    access="1";
-                }else{
-                    access="0";
-                }
+    private void saveJobMenu(String[] array,String jobId,String time,UserSessionUtil usu){
+        if(array!=null && array.length>0){
+            for(Object menuId:array){
                 Record authorMenuJob=new Record();
                 authorMenuJob.set("id",UUIDTool.getUUID());
                 authorMenuJob.set("menu_id",menuId);
                 authorMenuJob.set("job_id",jobId);
-                authorMenuJob.set("access",access);
+                authorMenuJob.set("access",1);
                 authorMenuJob.set("creator",usu.getUserId());
                 authorMenuJob.set("creator_name",usu.getRealName());
                 authorMenuJob.set("create_time",time);
@@ -184,6 +142,7 @@ public class JobCtrl extends Controller{
         }
         renderJson(jhm);
     }
+    @Before(Tx.class)
     public void updateById(){
         JsonHashMap jhm=new JsonHashMap();
         try {
@@ -197,7 +156,7 @@ public class JobCtrl extends Controller{
             String jobId=json.getString("id");
             String name = json.getString("name");
             String desc = json.getString("desc");
-            JSONArray jsonArray = json.getJSONArray("list");
+            String menuIds = json.getString("menuIds");
             if(jobId==null || "".equals(jobId)){
                 jhm.putCode(-1);
                 jhm.putMessage("id不能为空！");
@@ -210,12 +169,7 @@ public class JobCtrl extends Controller{
                 renderJson(jhm);
                 return;
             }
-            if(jsonArray==null || jsonArray.isEmpty()){
-                jhm.putCode(-1);
-                jhm.putMessage("权限不能为空！");
-                renderJson(jhm);
-                return;
-            }
+
             UserSessionUtil usu = new UserSessionUtil(getRequest());
 
             String time = DateTool.GetDateTime();
@@ -224,15 +178,16 @@ public class JobCtrl extends Controller{
             jobR.set("id", jobId);
             jobR.set("name", name);
             jobR.set("desc", desc);
-            jobR.set("create_time", time);
-            jobR.set("creator", usu.getUserId());
-            jobR.set("creator_name", usu.getRealName());
+            jobR.set("modify_time", time);
+            jobR.set("modifier", usu.getUserId());
+            jobR.set("modifier_name", usu.getRealName());
             boolean b=Db.update("job", jobR);
 
             //先将原有的job_menu数据删除
             int sqlNum=Db.update("delete from author_job_menu where job_id=?",jobId);
-
-            saveJobMenu(jsonArray,jobId,time,usu);
+            if(StringUtils.isNotEmpty(menuIds)) {
+                saveJobMenu(menuIds.split(","), jobId, time, usu);
+            }
             jhm.putCode(1);
         }catch (Exception e){
             e.printStackTrace();
@@ -245,27 +200,16 @@ public class JobCtrl extends Controller{
     public void showById(){
         String id=getPara("id");
         JsonHashMap jhm=new JsonHashMap();
-        String sql="select id,name,parent_id,case power when 0 then 'false' when 1 then 'true' end as power from " +
-                "(" +
-                " select id,name,parent_id," +
-                " ifnull((select access from author_job_menu where author_job_menu.menu_id=m.id and author_job_menu.job_id=?),0) as power  " +
-                ",sort " +
-                " from menu m " +
-                " ) as a" +
-                " order by sort ";
         try{
             Record r=Db.findFirst("select id,name,ifnull(`desc`,'') as `desc` from job where id=?",id);
             jhm.put("job",r);
 
-            List<Record> list=Db.find(sql,id);
-            List<Record> reList=sort(list);
-            jhm.putCode(1);
-            for(Record temp:list){
-                String powerStr=temp.getStr("power");
-                boolean powerBool=Boolean.parseBoolean(powerStr);
-                temp.set("power",powerBool);
-            }
-            jhm.put("menuList",reList);
+            List list=Db.query("select menu_id from author_job_menu where job_id=? ",id);
+            jhm.put("menuList",list);
+
+            List<Record> treeList = Db.find("select id,name as label,CONCAT('/',url) as link,parent_id,sort,icon as iconName,type from menu order by sort");
+            List treeList2 = JobService.getMe().sort(treeList);
+            jhm.put("tree",treeList2);
 
             jhm.putCode(1);
         }catch (Exception e){
@@ -312,7 +256,7 @@ public class JobCtrl extends Controller{
         try {
             List<Record> list = Db.find("select id,name from job order by create_time");
             Record r=new Record();
-            r.set("id","");
+            r.set("id","0");
             r.set("name","请选择职务");
             list.add(0,r);
             renderJson(list);

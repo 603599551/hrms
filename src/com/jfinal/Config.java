@@ -6,9 +6,7 @@ import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import com.ss.controllers.MenuCtrl;
-import com.ss.goods.controllers.GoodsTypeCtrl;
-import com.ss.goods.controllers.GoodsUnitCtrl;
-import com.ss.goods.controllers.MaterialTypeCtrl;
+import com.ss.goods.controllers.*;
 import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
@@ -48,6 +46,12 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/goodsUnit",GoodsUnitCtrl.class);
 		routes.add("/mgr/goodsType",GoodsTypeCtrl.class);
 		routes.add("/mgr/materialType",MaterialTypeCtrl.class);
+
+		routes.add("/mgr/bomMgr",BomMgrCtrl.class);
+		routes.add("/mgr/goods",GoodsCtrl.class);
+		routes.add("/mgr/goodsInitForm",GoodsInitFormCtrl.class);
+		routes.add("/mgr/goodsMaterial",GoodsMaterialCtrl.class);
+		routes.add("/mgr/material",MaterialCtrl.class);
 
 		routes.add("/mgr/dailySummary", DailySummaryCtrl.class);
 	}

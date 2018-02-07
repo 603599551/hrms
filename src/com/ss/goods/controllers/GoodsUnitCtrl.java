@@ -99,42 +99,42 @@ public class GoodsUnitCtrl extends BaseCtrl {
         //验证material中的两个类别是否占用，unit
         List<Record> hasList = Db.find("select * from material where unit=?", id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("原料表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("该单位被原料引用，不能删除！");
             renderJson(jhm);
             return;
         }
         //验证sale_goods_material中的两个类别是否占用，unit
         hasList = Db.find("select * from sale_goods_material where unit=?", id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("销售商品原料表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("该单位被销售商品原料引用，不能删除！");
             renderJson(jhm);
             return;
         }
         //验证scrap_goods_material中的两个类别是否占用，unit
         hasList = Db.find("select * from scrap_goods_material where unit=?", id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("报废商品原料表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("该单位被报废商品原料引用，不能删除！");
             renderJson(jhm);
             return;
         }
         //验证goods中的两个类别是否占用，unit
         hasList = Db.find("select * from goods where unit=?", id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("商品表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("该单位被商品表引用，不能删除！");
             renderJson(jhm);
             return;
         }
         //验证sale_goods中的两个类别是否占用，unit
         hasList = Db.find("select * from sale_goods where unit=?", id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("销售商品表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("该单位被销售商品引用，不能删除！");
             renderJson(jhm);
             return;
         }
         //验证scrap_goods中的两个类别是否占用，unit
         hasList = Db.find("select * from scrap_goods where unit=?", id);
         if(hasList != null && hasList .size() > 0){
-            jhm.putCode(-1).putMessage("报废商品表占用该单位，不能删除！");
+            jhm.putCode(-1).putMessage("该单位被报废商品引用，不能删除！");
             renderJson(jhm);
             return;
         }

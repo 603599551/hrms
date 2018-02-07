@@ -6,5 +6,7 @@
   </head>
   <body>
 
+<a href="mgr/dailySummary/importDailySummary">导入数据</a>
+<a href="mgr/dailySummary/getSecurityStock?time=2018-02-08">安存预估</a>
   </body>
 </html>
