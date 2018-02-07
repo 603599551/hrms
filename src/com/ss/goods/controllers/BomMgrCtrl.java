@@ -13,6 +13,7 @@ import com.ss.services.GoodsService;
 import com.ss.services.MaterialTypeService;
 import com.utils.RequestTool;
 import com.utils.SQLUtil;
+import com.utils.SelectUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
@@ -20,6 +21,8 @@ import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 import utils.jfinal.RecordUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -129,6 +132,28 @@ public class BomMgrCtrl extends BaseCtrl {
      * 为了让前端实现是联动，所以此接口查询的字段与queryBomByGoodsId()接口的字段一致
      * 实现了左外查询，
      * 为了让选中的原材料排在上面，让关联不上的gm.sort（即返回为null）设置为10000
+     *
+     *
+     *
+     *
+     select *
+     from (
+
+     select gm.id as gm_id,m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,
+     #(select name from material_type where id=m.type_2) as type_2_text,
+     case m.status when 1 then '启用' when 0 then '停用' end as status_text,
+     (select name from wm_type where id=m.wm_type) as wm_type_text,
+     (select name from goods_unit where id=m.unit) as goods_unit_text,
+     ifnull(gm.net_num,0) as net_num ,ifnull(gm.gross_num,0) as gross_num,
+     m.purchase_price as price,
+     gm.total_price,
+     ifnull(gm.sort,100000) as gm_sort,m.sort as m_sort
+
+     from material m , ( select * from goods_material where goods_id='e2d6f28dfd0343ae97599500b10a8430') gm where m.id=gm.material_id and   m.status=1
+     ) as a
+     order by a.gm_sort,m_sort,a.a.id
+
+
      */
     public void queryMaterialList() {
         String key=getPara("keyword");
@@ -138,6 +163,7 @@ public class BomMgrCtrl extends BaseCtrl {
         String pageNumStr=getPara("pageNum");
         String pageSizeStr=getPara("pageSize");
         String goodsId=getPara("goodsId");
+        String checkedIds=getPara("checkedIds");
         int pageNum=NumberUtils.parseInt(pageNumStr,1);
         int pageSize=NumberUtils.parseInt(pageSizeStr,10);
 
@@ -147,48 +173,143 @@ public class BomMgrCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         try {
 
-//            SQLUtil sqlUtil = new SQLUtil(" from material m left join  goods_material gm on m.id=gm.material_id ");
-            SQLUtil sqlUtil = new SQLUtil(" from material m left join ( select * from goods_material where goods_id=?) gm on m.id=gm.material_id ");
-            sqlUtil.addParameter(goodsId);
-            sqlUtil.addWhere(" and m.status=1 ");
-//            sqlUtil.addWhere(" and gm.goods_id=? ");
-            if(typeArray!=null && typeArray.length>0){
-                if(typeArray.length==1 && "".equals(typeArray[0])){//前台没有选择分类时，默认传进一个空字符串
+            /*
+             * 查询数据库中的配方
+             */
+            List<Record> dbList=null;
+            {
+                SelectUtil sqlUtil = new SelectUtil(" from (select gm.id as gm_id,m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,ifnull(gm.net_num,0) as net_num ,ifnull(gm.gross_num,0) as gross_num,m.purchase_price as price,gm.total_price,ifnull(gm.sort,100000) as gm_sort,m.sort as m_sort ");
+                sqlUtil.append(" from  material m , goods_material gm");
+                sqlUtil.addWhere(" and gm.goods_id =? ", goodsId);
+                sqlUtil.addWhere(" and m.id=gm.material_id and m.status=1 ");
+                sqlUtil.addWhere(" ) as a");
+                sqlUtil.order(" order by a.gm_sort,m_sort,a.a.id");
 
-                }else {
-                    sqlUtil.in("and m.type_2 in ", typeArray);
+                StringBuilder sql = sqlUtil.getSQL();
+                List paraList = sqlUtil.getParameterList();
+                if (Config.devMode) {
+                    System.out.println(sql);
+                    System.out.println(paraList);
+                }
+                dbList=Db.find("select * " + sql.toString(), paraList.toArray());
+
+            }
+
+            /*
+            查询选中的商品，并且该商品不在上面的配方中
+             */
+            List selectList=null;
+            {
+                List<String> selectIdList=new ArrayList();
+                if (StringUtils.isNotEmpty(checkedIds)) {
+                    String[] array = checkedIds.split(",");
+                    if(dbList!=null && !dbList.isEmpty()){
+                        for(String id:array) {
+                            for (Record r : dbList) {
+                                String materialId = r.get("id");
+                                if (materialId.equals(id)){
+
+                                }else{
+                                    selectIdList.add(id);
+                                }
+                            }
+                        }
+                    }else{
+                        selectIdList.addAll(Arrays.asList(array));
+                    }
+                }
+                if(!selectIdList.isEmpty()) {
+                    SelectUtil sqlUtil = new SelectUtil(" from (select '',m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,0 as net_num ,0 as gross_num,m.purchase_price as price,0 as total_price,100000 as gm_sort,m.sort as m_sort ");
+                    sqlUtil.append(" from  material m ");
+                    sqlUtil.addWhere(" m.status=1 ");
+                    if (StringUtils.isNotEmpty(checkedIds)) {
+                        String[] array = checkedIds.split(",");
+                        sqlUtil.in(" and id in ", selectIdList.toArray());//)
+                    }
+                    sqlUtil.addWhere(" and m.status=1 ");
+                    sqlUtil.addWhere(" ) as a");
+                    sqlUtil.order(" order by a.gm_sort,m_sort,a.a.id");
+
+                    StringBuilder sql = sqlUtil.getSQL();
+                    List paraList = sqlUtil.getParameterList();
+                    if (Config.devMode) {
+                        System.out.println(sql);
+                        System.out.println(paraList);
+                    }
+                    selectList = Db.find("select * " + sql.toString(), paraList.toArray());
+
                 }
             }
-//            sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
-            sqlUtil.addWhere(" and m.wm_type=?",SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING,wm_type);
-
-            StringBuilder sql=sqlUtil.getSelectSQL();
-            List list=sqlUtil.getParameterList();
-
-            if(org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
-                String key2 = key + "%";
-//                if (list != null && !list.isEmpty()) {
-                    sql.append(" and (m.code like ? or m.name like ? or m.pinyin like ? )");
-//                } else {
-//                    sql.append(" where (m.code like ? or m.name like ? or m.pinyin like ? )");
-//
-//                }
-                list.add(key2);
-                list.add(key2);
-                list.add(key2);
+            /*
+            将数据库中的配方，选中的的原材料整合到一起
+             */
+            List<Record> mList=new ArrayList();
+            if(dbList!=null && !dbList.isEmpty()) {
+                mList.addAll(dbList);
             }
-            sql.append(" ) as a");
-            String select=" from (select gm.id as gm_id,m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,ifnull(gm.net_num,0) as net_num ,ifnull(gm.gross_num,0) as gross_num,m.purchase_price as price,gm.total_price,ifnull(gm.sort,100000) as gm_sort,m.sort as m_sort ";
-            sql.insert(0,select);
-            sql.append(" order by a.gm_sort,m_sort,a.a.id");
-            if(Config.devMode){
-                System.out.println(sql);
+            if(selectList!=null && !selectList.isEmpty()) {
+                mList.addAll(selectList);
             }
-            Page<Record> page = Db.paginate(pageNum, pageSize, "select * ",sql.toString(),list.toArray() );
-            if(page!=null){
-                jhm.putCode(1).put("data",page);
-            }else{
-                jhm.putCode(-1).putMessage("请重试！");
+            List mList2=new ArrayList();
+            if (StringUtils.isNotEmpty(checkedIds)) {
+                String[] array = checkedIds.split(",");
+                if(mList!=null && !mList.isEmpty()){
+                    for(String id:array) {
+                        for (Record r : mList) {
+                            String materialId = r.get("id");
+                            if (materialId.equals(id)){
+                                mList2.add(r);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            /*
+            查询其他数据（不是配方的原材料，也不是选中的原材料）
+             */
+            {
+                SelectUtil sqlUtil = new SelectUtil(" from (select '',m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,0 as net_num ,0 as gross_num,m.purchase_price as price,0 as total_price,100000 as gm_sort,m.sort as m_sort ");
+                sqlUtil.append(" from material  m ");
+                sqlUtil.addWhere(" m.status=1 ");
+                if (StringUtils.isNotEmpty(checkedIds)) {
+                    String[] array = checkedIds.split(",");
+                    sqlUtil.in(" and id not in ", array);//)
+                }
+                if (typeArray != null && typeArray.length > 0) {
+                    if (typeArray.length == 1 && "".equals(typeArray[0])) {//前台没有选择分类时，默认传进一个空字符串
+
+                    } else {
+                        sqlUtil.in("and m.type_2 in ", typeArray);
+                    }
+                }
+                sqlUtil.addWhere(" and m.wm_type=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, wm_type);
+                if (org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
+                    String key2 = key + "%";
+                    sqlUtil.addWhere(" and (m.code like ? or m.name like ? or m.pinyin like ? )");
+                    sqlUtil.addParameter(key2);
+                    sqlUtil.addParameter(key2);
+                    sqlUtil.addParameter(key2);
+                }
+                sqlUtil.addWhere(" ) as a");
+                sqlUtil.order(" order by a.gm_sort,m_sort,a.a.id");
+
+                StringBuilder sql = sqlUtil.getSQL();
+                List paraList = sqlUtil.getParameterList();
+                if (Config.devMode) {
+                    System.out.println(sql);
+                    System.out.println(paraList);
+                }
+
+
+
+                Page<Record> page = Db.paginate(pageNum, pageSize, "select * ", sql.toString(), paraList.toArray());
+                page.getList().addAll(0,mList2);
+                if(page!=null){
+                    jhm.putCode(1).put("data",page);
+                }else{
+                    jhm.putCode(-1).putMessage("请重试！");
+                }
             }
         }catch (Exception e){
             e.printStackTrace();
