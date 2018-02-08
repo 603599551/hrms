@@ -165,7 +165,7 @@ public class SQLUtil {
      * @param array 添加指定参数
      * @return
      */
-    public SQLUtil in(String sqlStr,Object ... array){
+    public SQLUtil in(String sqlStr,Object[] array){
         where.append(" "+sqlStr+" ( ");
         if(array!=null && array.length>0) {
             for (int i = 0, length = array.length; i < length; i++) {
