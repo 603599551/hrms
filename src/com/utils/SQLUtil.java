@@ -72,7 +72,10 @@ public class SQLUtil {
         this.where.append(" "+where+" ");
         return this;
     }
-
+    public SQLUtil order(String str){
+        this.where.append(" "+where+" ");
+        return this;
+    }
     /**
      * 拼装where条件
      * @param where 必须以and或者or开头
@@ -157,6 +160,7 @@ public class SQLUtil {
     }
     /**
      * 构建sql的where条件的in部分
+     * 例子：sql.in("and jr_class in","1","2","3");
      * @param sqlStr 拼装sql，必须有in或者not in，不能有小括号(
      * @param array 添加指定参数
      * @return

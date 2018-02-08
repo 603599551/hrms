@@ -58,6 +58,7 @@ public class StoreCtrl extends BaseCtrl {
         record.set("modifier_id",usu.getUserId());
         record.set("create_time",dateTime);
         record.set("modify_time",dateTime);
+        record.set("status",1);
         try {
             boolean b = Db.save("store", record);
             if (b) {
@@ -84,7 +85,26 @@ public class StoreCtrl extends BaseCtrl {
         return i;
     }
     public void deleteById(){
+        String id=getPara("id");
+        JsonHashMap jhm=new JsonHashMap();
+        if(org.apache.commons.lang.StringUtils.isEmpty(id)){
+            jhm.putCode(-1).putMessage("请传入ID！");
+            renderJson(jhm);
+            return;
+        }
+        try {
 
+            int i = Db.delete("update store set `status`=-1 where id=? ", id);
+            if(i>0){
+                jhm.putCode(1).putMessage("删除成功！");
+            }else{
+                jhm.putCode(-1).putMessage("删除失败！");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jhm);
     }
 
     /**
@@ -92,6 +112,7 @@ public class StoreCtrl extends BaseCtrl {
      */
     public void stop(){
         String id=getPara("id");
+        String status=getPara("status");
         JsonHashMap jhm=new JsonHashMap();
         if(org.apache.commons.lang.StringUtils.isEmpty(id)){
             jhm.putCode(-1).putMessage("id不能为空！");
@@ -99,7 +120,7 @@ public class StoreCtrl extends BaseCtrl {
             return ;
         }
         try {
-            int i = Db.update("update store set status=? where id=?", 3,id);
+            int i = Db.update("update store set status=? where id=?", status,id);
             if(i>0){
                 jhm.putCode(1).putMessage("停用操作成功！");
             }else{
@@ -150,12 +171,7 @@ public class StoreCtrl extends BaseCtrl {
         }
         UserSessionUtil usu=new UserSessionUtil(getRequest());
         String sortStr=json.getString("sort");
-        int sort=1;
-        try{
-            sort=Integer.parseInt(sortStr);
-        }catch (Exception e){
-            sort=nextSort(DbUtil.queryMax("Store","sort"));
-        }
+
         String uuid= json.getString("id");
         String dateTime= DateTool.GetDateTime();
         Record record=new Record();
@@ -164,7 +180,17 @@ public class StoreCtrl extends BaseCtrl {
         record.set("address",json.getString("address"));
         record.set("phone",json.getString("phone"));
         record.set("desc",json.getString("desc"));
-        record.set("sort",sort);
+        if(org.apache.commons.lang.StringUtils.isEmpty(sortStr)){
+
+        }else {
+            int sort=1;
+            try{
+                sort=Integer.parseInt(sortStr);
+            }catch (Exception e){
+                sort=nextSort(DbUtil.queryMax("Store","sort"));
+            }
+            record.set("sort", sort);
+        }
 //        record.set("creater_id",usu.getUserId());
         record.set("modifier_id",usu.getUserId());
 //        record.set("create_time",dateTime);
@@ -193,11 +219,17 @@ public class StoreCtrl extends BaseCtrl {
         int pageSize= NumberUtils.parseInt(pageSizeStr,10);
         JsonHashMap jhm=new JsonHashMap();
         try {
-            SQLUtil sql = SQLUtil.initSelectSQL("from store");
-            sql.addWhere(" and name=? ", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, key);
-            sql.addWhere(" or phone=? ", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, key);
-            sql.append(" order by modify_time desc ");
-            Page<Record> page = Db.paginate(pageNum, pageSize, "select id,name,ifnull(address,'') as address,ifnull(phone,'') as phone", sql.toString(), sql.getParameterArray());
+            SQLUtil sqlUtil = SQLUtil.initSelectSQL("from store");
+            sqlUtil.in(" and status  in ", new Object[]{0,1});
+            StringBuilder sql=sqlUtil.getSelectSQL();
+            List paraList=sqlUtil.getParameterList();
+            if(org.apache.commons.lang.StringUtils.isNotEmpty(key)){
+                sql.append(" and (name=? or phone=?) ");
+                paraList.add(key);
+                paraList.add(key);
+            }
+            sql.append(" order by status desc,sort,id");
+            Page<Record> page = Db.paginate(pageNum, pageSize, "select id,name,ifnull(address,'') as address,ifnull(phone,'') as phone,status,case status when 1 then '启用' when 0 then '停用' end as status_text ", sql.toString(), paraList.toArray());
             jhm.putCode(1).put("data",page);
         }catch (Exception e){
             e.printStackTrace();

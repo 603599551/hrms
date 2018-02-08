@@ -2,6 +2,7 @@ package com.ss.organization.controllers;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bean.UserBean;
+import com.jfinal.Config;
 import com.jfinal.KEY;
 import com.jfinal.core.Controller;
 import com.jfinal.plugin.activerecord.Db;
@@ -106,7 +107,7 @@ public class StaffCtrl extends Controller{
         //处理部门
         String dept=(String)paraMap.get("dept");
         if(StringUtils.isNotEmpty(dept)) {
-            Record deptRecord = Db.findFirst("select * from dept where id=?", dept);
+            Record deptRecord = Db.findFirst("select id,name from dept where id=? union all select id,name from store where id=?", dept,dept);
             if (deptRecord != null) {
                 String deptName = deptRecord.get("name");
                 r.set("dept_name", deptName);
@@ -218,23 +219,12 @@ public class StaffCtrl extends Controller{
     }
     public void query(){
         Map paraMap = RequestTool.getParameterMap(getRequest());
-        String db_tb ="staff";
         int pageNum = NumberUtils.parseInt(paraMap.get("pageNum"), 1);
         int pageSize = NumberUtils.parseInt(paraMap.get("pageSize"), 15);
         String keyword=getPara("keyword");
         String deptId=getPara("dept");
         String jobId=getPara("job");
         String statusId=getPara("status");
-        String fields = (String) paraMap.get("fields");
-        String where = (String) paraMap.get("where");
-        String order = (String) paraMap.get("order");
-        if(db_tb==null || "".equals(db_tb)){
-            Map map=new HashMap();
-            map.put("code",-1);
-            map.put("msg","dbObj不能为空！");
-            renderJson(map);
-            return ;
-        }
         if(statusId==null || "".equals(statusId)){
             statusId="5";
         }
@@ -248,61 +238,40 @@ public class StaffCtrl extends Controller{
         if(pageSize>50){
             pageSize = 50;
         }
-        if(where==null){
-            where="";
-        }
+        StringBuilder whereEx = new StringBuilder(" from staff s left join (select id,name from dept  union all select id,name from store ) as dept on s.dept=dept.id where 1=1 ");
+        List paraList=new ArrayList();
         if(keyword!=null && !"".equals(keyword)){
-            keyword = "%"+keyword + "%";
-            where=where +" and (phone like '"+keyword+"' or name like '"+keyword+"' or pinyin like '"+keyword+"' )";
+            keyword = keyword + "%";
+            whereEx.append(" and (phone like ? or name like ? or pinyin like ? )");
+            paraList.add(keyword);
+            paraList.add(keyword);
+            paraList.add(keyword);
         }
-        if(deptId!=null && !"".equals(deptId)){
-            where=where +" and dept='"+deptId+"'";
+        if(deptId!=null && !"".equals(deptId) && !"0".equals(deptId) ){
+            whereEx.append(" and dept=?");
+            paraList.add(deptId);
         }
-        if(jobId!=null && !"".equals(jobId)){
-            where=where +" and job='"+jobId+"'";
+        if(jobId!=null && !"".equals(jobId)&& !"0".equals(jobId)){
+            whereEx.append(" and job=?");
+            paraList.add(jobId);
         }
-        if(statusId!=null){
-            where=where +" and status='"+statusId+"'";
+        if(StringUtils.isNotEmpty(statusId)){
+            whereEx.append(" and status=?");
+            paraList.add(statusId);
         }
         try {
 
         /*
         处理select部分
          */
-            String select = "select *  ";
-            if (fields != null && !"".equals(fields)) {
-                select = "select " + fields;
+            String select = "select s.id,s.name,case gender when 0 then '女' when 1 then '男' end as gender_text,phone,dept.name as dept_text,(select name from job where id=s.job) as job_text  ";
+            whereEx.append(" order by create_time desc ,id");
+            if(Config.devMode){
+                System.out.println(whereEx);
+                System.out.println(paraList);
             }
-            select = select ;
-
-            String whereEx = " from " + db_tb+" where 1=1 ";
-            if (where == null || "".equals(where)) {
-
-            } else {
-                where=where.trim();
-                //如果传进的where前面是and，则去掉
-                if(where.startsWith("and")){
-                    where=where.substring("and".length());
-                }
-                whereEx = whereEx + " and "+where;
-            }
-            if(order==null || "".equals(order)) {
-                order=" order by create_time desc ";
-            }
-            whereEx = whereEx + " " + order;
-            Page<Record> page = Db.paginate(pageNum, pageSize, select, whereEx);
+            Page<Record> page = Db.paginate(pageNum, pageSize, select, whereEx.toString(),paraList.toArray());
             List<Record> list=page.getList();
-            //过滤掉密码
-            for(Record r:list){
-                Object genderObj=r.get("gender");
-                int gender=NumberUtils.parseInt(genderObj,0);
-                if(gender==0){
-                    r.set("gender","女");
-                }else if(gender==1){
-                    r.set("gender","男");
-                }
-                r.remove("password");
-            }
             renderJson(page);
         }catch(Exception e){
             e.printStackTrace();

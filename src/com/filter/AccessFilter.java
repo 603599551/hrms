@@ -17,6 +17,7 @@ import com.alibaba.fastjson.JSON;
 
 import com.utils.UserSessionUtil;
 import easy.web.UrlKit;
+import utils.bean.JsonHashMap;
 
 /**
  * @author mym
@@ -85,13 +86,12 @@ public class AccessFilter implements Filter{
 			}else{
 				return true;
 			}
-		}else if(servletPath.startsWith("/api/safe")){
+		}else if(servletPath.startsWith("/mgr")){
 			if(usu.getUserBean()==null){
-				Map reMap=new HashMap();
-				reMap.put("code",-1000);
-				reMap.put("msg","请先登录！");
+				JsonHashMap jhm=new JsonHashMap();
+				jhm.putCode(-1).putMessage("请先登录！");
 				try {
-					String jsonStr=JSON.toJSONString(reMap);
+					String jsonStr=JSON.toJSONString(jhm);
 					resp.getWriter().write(jsonStr);
 				} catch (IOException e) {
 					e.printStackTrace();
