@@ -295,7 +295,11 @@ public class GoodsCtrl extends BaseCtrl {
             r.set("status",state);
             r.set("desc",desc);
 
+<<<<<<< HEAD
             boolean b=Db.save("goods",r);
+=======
+            boolean b=Db.update("goods",r);
+>>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
             if(b){
                 jhm.putCode(1).putMessage("保存成功！");
             }else{
@@ -326,8 +330,16 @@ public class GoodsCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         try {
             SQLUtil sqlUtil = new SQLUtil(" from goods g");
+<<<<<<< HEAD
             sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
 
+=======
+            if(org.apache.commons.lang.StringUtils.isNotEmpty(status)) {
+                sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
+            }else{
+                sqlUtil.in("and status in", new Object[]{0,1});
+            }
+>>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
 
             StringBuilder sql=sqlUtil.getSelectSQL();
             List paraList=sqlUtil.getParameterList();
@@ -356,7 +368,11 @@ public class GoodsCtrl extends BaseCtrl {
                 paraList.add(type);
                 paraList.add(type);
             }
+<<<<<<< HEAD
             sql.append(" order by status desc,sort,id");
+=======
+            sql.append(" order by status desc,sort,create_time desc,id");
+>>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
             String select="select g.*,(select name from goods_type gt where gt.id=g.type_1) as type_1_text,(select name from goods_type gt where gt.id=g.type_2) as type_2_text,case g.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=g.wm_type) as wm_type_text,(select name from goods_unit where id=g.unit) as goods_unit_text";
             Page<Record> page = Db.paginate(pageNum, pageSize, select,sql.toString(),paraList.toArray() );
             if(page!=null){
@@ -435,9 +451,38 @@ public class GoodsCtrl extends BaseCtrl {
                 renderJson(jhm);
                 return;
             }
+<<<<<<< HEAD
 //            String[] idArray = ids.split(",");
 //        StringBuilder sql=new StringBuilder("delete from goods where id in ");
             SQLUtil sqlUtil = new SQLUtil("delete from goods  ");
+=======
+            /*
+            判断要删除的商品，如果已经设置原材料，就不删除
+            SQLUtil sqlUtil2=new SQLUtil("select count(id) as count,goods_id,(select name from goods where id=gm.goods_id) as name from goods_material gm ");
+            sqlUtil2.in(" and goods_id in ",idArray);
+            sqlUtil2.addWhere("group by goods_id");
+            List<Record> list=Db.find(sqlUtil2.toString(),sqlUtil2.getParameterArray());
+            if(list!=null && !list.isEmpty()){
+                StringBuilder str=new StringBuilder();
+                for(Record r:list){
+                    Object countObj=r.get("count");
+                    int count=NumberUtils.parseInt(countObj,0);
+                    String name=r.get("name");
+                    if(count>0) {
+                        str.append(name);
+                        str.append("、");
+                    }
+                }
+                str.delete(str.length()-1,str.length());
+                str.append(" 已经设置配方，不能删除！");
+                jhm.putCode(-1).putMessage(str.toString());
+                renderJson(jhm);
+                return;
+            }
+            */
+
+            SQLUtil sqlUtil = new SQLUtil("update goods set status=-1 ");
+>>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
             sqlUtil.in(" id in ", idArray);
 
             int i = Db.update(sqlUtil.toString(), sqlUtil.getParameterArray());
