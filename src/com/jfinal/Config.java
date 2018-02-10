@@ -2,6 +2,7 @@ package com.jfinal;
 
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
+import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
 import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
@@ -91,8 +92,8 @@ public class Config extends JFinalConfig {
 
 	@Override
 	public void configInterceptor(Interceptors interceptors) {
-		// 事务控制器
-//		interceptors.add(new TxByActionKeyRegex("(.*save.*|.*update.*|.*del.*)",true));
+		// 给service增加事务控制，过滤方法名为save*，update*，delete*
+		interceptors.addGlobalServiceInterceptor(new TxByMethodRegex("(save.*|update.*|delete.*)"));
 	}
 
 	@Override

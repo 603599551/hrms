@@ -7,6 +7,7 @@ import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import com.ss.controllers.BaseCtrl;
+import com.ss.goods.services.MaterialService;
 import com.ss.services.MaterialTypeService;
 import com.ss.services.SettingService;
 import com.utils.HanyuPinyinHelper;
@@ -435,12 +436,11 @@ public class MaterialCtrl extends BaseCtrl {
         }
         renderJson(jhm);
     }
-
+    MaterialService materialService=enhance(MaterialService.class);
     /**
      * 删除原材料，逻辑删除
      * 配方中的原材料，是真删除
      */
-    @Before(Tx.class)
     public void deleteByIds(){
         String[] idArray=getParaValues("ids");
         JsonHashMap jhm=new JsonHashMap();
@@ -450,18 +450,8 @@ public class MaterialCtrl extends BaseCtrl {
                 renderJson(jhm);
                 return;
             }
-            SQLUtil sqlUtil = new SQLUtil("update material set status=-1 ");
-            sqlUtil.in(" id in ", idArray);
-            int i = Db.update(sqlUtil.toString(), sqlUtil.getParameterArray());
-
-            SQLUtil sqlUtil12=new SQLUtil("delete from goods_material ");
-            sqlUtil12.in (" and material_id in ",idArray);
-            int j = Db.update(sqlUtil12.toString(), sqlUtil12.getParameterArray());
-            if (i > 0) {
-                jhm.putCode(1).putMessage("删除成功！");
-            } else {
-                jhm.putCode(-1).putMessage("删除失败！");
-            }
+            materialService.deleteByIds(idArray);
+            jhm.putCode(1).putMessage("删除成功！");
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage(e.toString());
