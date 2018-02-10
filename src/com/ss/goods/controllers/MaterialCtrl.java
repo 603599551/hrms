@@ -7,6 +7,7 @@ import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import com.ss.controllers.BaseCtrl;
+import com.ss.goods.services.MaterialService;
 import com.ss.services.MaterialTypeService;
 import com.ss.services.SettingService;
 import com.utils.HanyuPinyinHelper;
@@ -383,15 +384,11 @@ public class MaterialCtrl extends BaseCtrl {
                 String[] typeArray=type.split(",");
                 sqlUtil.in("and type_2 in ",  typeArray);
             }
-<<<<<<< HEAD
-            sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
-=======
             if(StringUtils.isNotEmpty(status)) {
                 sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
             }else{
                 sqlUtil.in("and status in", new Object[]{0,1});
             }
->>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
             sqlUtil.addWhere(" and wm_type=?",SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING,wx_type);
 
             StringBuilder sql=sqlUtil.getSelectSQL();
@@ -409,11 +406,7 @@ public class MaterialCtrl extends BaseCtrl {
                 list.add(key2);
                 list.add(key2);
             }
-<<<<<<< HEAD
-            sql.append(" order by status desc ,sort,id ");
-=======
             sql.append(" order by status desc ,sort,create_time desc,id ");
->>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
             String select="select m.*,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text";
             Page<Record> page = Db.paginate(pageNum, pageSize, select,sql.toString(),list.toArray() );
             if(page!=null){
@@ -443,15 +436,11 @@ public class MaterialCtrl extends BaseCtrl {
         }
         renderJson(jhm);
     }
-
-<<<<<<< HEAD
-=======
+    MaterialService materialService=enhance(MaterialService.class);
     /**
      * 删除原材料，逻辑删除
      * 配方中的原材料，是真删除
      */
-    @Before(Tx.class)
->>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
     public void deleteByIds(){
         String[] idArray=getParaValues("ids");
         JsonHashMap jhm=new JsonHashMap();
@@ -461,27 +450,8 @@ public class MaterialCtrl extends BaseCtrl {
                 renderJson(jhm);
                 return;
             }
-<<<<<<< HEAD
-//            String[] idArray = ids.split(",");
-//        StringBuilder sql=new StringBuilder("delete from goods where id in ");
-            SQLUtil sqlUtil = new SQLUtil("delete from material  ");
-            sqlUtil.in(" id in ", idArray);
-
-            int i = Db.update(sqlUtil.toString(), sqlUtil.getParameterArray());
-=======
-            SQLUtil sqlUtil = new SQLUtil("update material set status=-1 ");
-            sqlUtil.in(" id in ", idArray);
-            int i = Db.update(sqlUtil.toString(), sqlUtil.getParameterArray());
-
-            SQLUtil sqlUtil12=new SQLUtil("delete from goods_material ");
-            sqlUtil12.in (" and material_id in ",idArray);
-            int j = Db.update(sqlUtil12.toString(), sqlUtil12.getParameterArray());
->>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
-            if (i > 0) {
-                jhm.putCode(1).putMessage("删除成功！");
-            } else {
-                jhm.putCode(-1).putMessage("删除失败！");
-            }
+            materialService.deleteByIds(idArray);
+            jhm.putCode(1).putMessage("删除成功！");
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage(e.toString());

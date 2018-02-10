@@ -8,5 +8,6 @@
 
 <a href="mgr/dailySummary/importDailySummary">导入数据</a>
 <a href="mgr/dailySummary/getSecurityStock?time=2018-02-09">安存预估</a>
+<a href="mgr/dailySummary/test">测试事务</a>
   </body>
 </html>

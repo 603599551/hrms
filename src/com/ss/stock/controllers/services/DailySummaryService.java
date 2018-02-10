@@ -2,7 +2,9 @@ package com.ss.stock.controllers.services;
 
 import com.bean.UserBean;
 import com.jfinal.aop.Before;
+import com.jfinal.aop.Duang;
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.IAtom;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import easy.util.DateTool;
@@ -10,6 +12,7 @@ import easy.util.UUIDTool;
 import net.sf.json.JSONObject;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -160,14 +163,25 @@ public class DailySummaryService {
         List<Record> dailySummaryList = Db.find("select * from daily_summary where store_id=? and imp_time=?", userBean.get("store_id"), sale_time);
         if(dailySummaryList != null && dailySummaryList.size() > 0){
             String daily_summary_id = dailySummaryList.get(0).getStr("id");
-            //daily_summary 主键删除
-            Db.deleteById("daily_summary", daily_summary_id);
-            //imp_daily_summary 关联daily_summary_id字段删除
-            Db.delete("delete from imp_daily_summary where daily_summary_id=?", daily_summary_id);
-            //sale_goods 关联daily_summary_id字段删除
-            Db.delete("delete from sale_goods where daily_summary_id=?", daily_summary_id);
-            //sale_goods_material 关联daily_summary_id字段删除
-            Db.delete("delete from sale_goods_material where daily_summary_id=?", daily_summary_id);
+            //添加事务管理
+            boolean success = Db.tx(new IAtom() {
+                public boolean run() throws SQLException {
+                    try {
+                        //daily_summary 主键删除
+                        Db.deleteById("daily_summary", daily_summary_id);
+                        //imp_daily_summary 关联daily_summary_id字段删除
+                        Db.delete("delete from imp_daily_summary where daily_summary_id=?", daily_summary_id);
+                        //sale_goods 关联daily_summary_id字段删除
+                        Db.delete("delete from sale_goods where daily_summary_id=?", daily_summary_id);
+                        //sale_goods_material 关联daily_summary_id字段删除
+                        Db.delete("delete from sale_goods_material where daily_summary_id=?", daily_summary_id);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                    return true;
+                }
+            });
         }
     }
 
@@ -222,14 +236,25 @@ public class DailySummaryService {
         for(Record r : impDailySummaryList){
             r.set("daily_summary_id", daily_summary.getStr("id"));
         }
-        //保存销售数据的总表数据
-        Db.save("daily_summary", daily_summary);
-        //保存导入的原始数据
-        Db.batchSave("imp_daily_summary", impDailySummaryList, impDailySummaryList.size());
-        //保存销售商品数据
-        Db.batchSave("sale_goods", saleGoodsList, saleGoodsList.size());
-        //保存销售商品原材料数据
-        Db.batchSave("sale_goods_material", saleGoodsMaterialList, saleGoodsMaterialList.size());
+        //添加事务管理
+        boolean success = Db.tx(new IAtom() {
+            public boolean run() throws SQLException {
+                try {
+                    //保存销售数据的总表数据
+                    Db.save("daily_summary", daily_summary);
+                    //保存导入的原始数据
+                    Db.batchSave("imp_daily_summary", impDailySummaryList, impDailySummaryList.size());
+                    //保存销售商品数据
+                    Db.batchSave("sale_goods", saleGoodsList, saleGoodsList.size());
+                    //保存销售商品原材料数据
+                    Db.batchSave("sale_goods_material", saleGoodsMaterialList, saleGoodsMaterialList.size());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+                return true;
+            }
+        });
     }
 
     /**
@@ -576,6 +601,7 @@ public class DailySummaryService {
         String[] timeArr = getAllTime(imp_time);
         List<Record> dailySummaryList = Db.find("select * from daily_summary where imp_time in (?,?,?,?,?,?,?,?,?,?,?)", timeArr);
         List<Record> dailySummaryGroupByImpTimeList = Db.find("select * from daily_summary where imp_time in (?,?,?,?,?,?,?,?,?,?,?) group by imp_time", timeArr);
+        List<Record> lastYearDailySummaryGroupByImpTimeList = Db.find("select * from daily_summary where imp_time=? group by imp_time", timeArr[timeArr.length - 1]);
 
         if(dailySummaryList != null && dailySummaryList.size() > 0){
             //获取所有用到的原料id
@@ -604,7 +630,7 @@ public class DailySummaryService {
              *      List：当前原料在当前时间的消耗量
              */
             List<List<String>> tbodyList = new ArrayList<>();
-            int eveyMaterialMapSize = dailySummaryGroupByImpTimeList.size();
+            int eveyMaterialMapSize = dailySummaryGroupByImpTimeList.size() - lastYearDailySummaryGroupByImpTimeList.size();
             for(String material_id : materialIdList){
                 List<String> list = new ArrayList<>();
                 Map<String, Record> eveyMaterial_map = materialId_time_record_map.get(material_id);
@@ -660,12 +686,11 @@ public class DailySummaryService {
             total += getDouble(totalList.get(i));
         }
         total /= eveyMaterialMapSize;
-        if(eveyMaterialMapSize == totalList.size()){
-            total = total + getDouble(totalList.get(10)) / 2;
+        if(eveyMaterialMapSize == totalList.size() - 1){
+            total = (total + getDouble(totalList.get(10))) / 2;
         }
         BigDecimal b = new BigDecimal(total);
         total = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         return total + "";
     }
-
 }

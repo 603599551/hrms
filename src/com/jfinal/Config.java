@@ -2,18 +2,21 @@ package com.jfinal;
 
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
+import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
 import com.jfinal.plugin.druid.DruidPlugin;
+import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
+import com.ss.controllers.HomeCtrl;
+import com.ss.controllers.LoginCtrl;
 import com.ss.controllers.MenuCtrl;
-import com.ss.goods.controllers.GoodsTypeCtrl;
-import com.ss.goods.controllers.GoodsUnitCtrl;
-import com.ss.goods.controllers.MaterialTypeCtrl;
+import com.ss.controllers.UserCtrl;
+import com.ss.goods.controllers.*;
 import com.ss.organization.controllers.DeptCtrl;
 import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
 import com.ss.organization.controllers.StoreCtrl;
-import com.ss.stock.controllers.ImportXlsCtrl;
+import com.ss.stock.controllers.DailySummaryCtrl;
 
 import java.io.File;
 
@@ -40,6 +43,7 @@ public class Config extends JFinalConfig {
 
 	@Override
 	public void configRoute(Routes routes) {
+		routes.add("/",HomeCtrl.class);
 		routes.add("/mgr/menu",MenuCtrl.class);
 		routes.add("/mgr/dept",DeptCtrl.class);
 		routes.add("/mgr/staff",StaffCtrl.class);
@@ -49,7 +53,15 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/goodsType",GoodsTypeCtrl.class);
 		routes.add("/mgr/materialType",MaterialTypeCtrl.class);
 
-		routes.add("/mgr/importXls", ImportXlsCtrl.class);
+		routes.add("/mgr/goodsMaterial",GoodsMaterialCtrl.class);
+		routes.add("/mgr/goods",GoodsCtrl.class);
+		routes.add("/mgr/goodsInitForm", GoodsInitFormCtrl.class);
+		routes.add("/mgr/material", MaterialCtrl.class);
+		routes.add("/mgr/bomMgr", BomMgrCtrl.class);
+		routes.add("/login", LoginCtrl.class);
+		routes.add("/mgr/user", UserCtrl.class);
+
+		routes.add("/mgr/dailySummary", DailySummaryCtrl.class);
 	}
 
 	@Override
@@ -76,11 +88,15 @@ public class Config extends JFinalConfig {
 		ActiveRecordPlugin activeRecordPlugin = new ActiveRecordPlugin(druidPlugin);
 //        activeRecordPlugin.addMapping("news","id", News.class);
 		plugins.add(activeRecordPlugin);
+
+		// ehcache缓存插件
+		plugins.add(new EhCachePlugin());
 	}
 
 	@Override
 	public void configInterceptor(Interceptors interceptors) {
-
+		// 给service增加事务控制，过滤方法名为save*，update*，delete*
+		interceptors.addGlobalServiceInterceptor(new TxByMethodRegex("(save.*|update.*|delete.*)"));
 	}
 
 	@Override

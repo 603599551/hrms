@@ -43,10 +43,7 @@ public class LoginCtrl extends BaseCtrl{
                 ub.setRealName(r.getStr("name" ));
                 ub.setDeptId(r.getStr("dept"));
                 ub.setDeptName(r.getStr("dept_name"));
-<<<<<<< HEAD
                 ub.put("store_id", r.getStr("dept"));
-=======
->>>>>>> 1e87921712629b8aca6b484f4c9f47c4942cdc69
                 Object job=r.get("job");
                 if(job==null)
                     job="";

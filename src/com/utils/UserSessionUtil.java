@@ -21,8 +21,11 @@ public class UserSessionUtil {
         userBean=(UserBean)session.getAttribute(KEY.SESSION_USER);
         if (Config.devMode) {//
             userBean=new UserBean();
-            Record r = Db.findFirst("select * from staff where id=?", "60a6f36a65f341c78ee07c9fc250e916");
-//            Record r = Db.findFirst("select * from staff where id=?", "1");
+            //长大店长
+//            Record r = Db.findFirst("select * from staff where id=?", "60a6f36a65f341c78ee07c9fc250e916");
+            //红旗街店长
+//            Record r = Db.findFirst("select * from staff where id=?", "713765d2815845efbbdeafc6ede3310c");
+            Record r = Db.findFirst("select * from staff where id=?", "1");
             userBean.setId(r.get("id"));
             userBean.setName(r.getStr("username"));
             userBean.setRealName(r.getStr("name" ));
