@@ -46,8 +46,5 @@ public class BomMgrService extends BaseService {
         } else {
             int n=Db.update("update goods set bom_status=? , bom_time=? ,total_bom_price=? where id=?", 0, null, totalPriceObj, goodsId);
         }
-        Record r=new Record();
-        r.set("id",UUIDTool.getUUID()+"123");
-        Db.save("menu",r);
     }
 }
