@@ -1,8 +1,7 @@
-package com.ss.stock.controllers.services;
+package com.ss.stock.services;
 
 import com.bean.UserBean;
 import com.jfinal.aop.Before;
-import com.jfinal.aop.Duang;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
 import com.jfinal.plugin.activerecord.Record;

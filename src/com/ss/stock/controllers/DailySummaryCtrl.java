@@ -4,7 +4,7 @@ import com.bean.UserBean;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
-import com.ss.stock.controllers.services.DailySummaryService;
+import com.ss.stock.services.DailySummaryService;
 import com.utils.FileUtil;
 import com.utils.HanyuPinyinHelper;
 import com.utils.UserSessionUtil;

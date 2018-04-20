@@ -17,6 +17,8 @@ import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
 import com.ss.organization.controllers.StoreCtrl;
 import com.ss.stock.controllers.DailySummaryCtrl;
+import com.store.order.controllers.GoodsAndGoodsTypeTreeCtrl;
+import com.store.order.controllers.StoreOrderManagerCtrl;
 
 import java.io.File;
 
@@ -60,8 +62,11 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/bomMgr", BomMgrCtrl.class);
 		routes.add("/login", LoginCtrl.class);
 		routes.add("/mgr/user", UserCtrl.class);
+		routes.add("/mgr/goodsAndGoodsTypeTree", GoodsAndGoodsTypeTreeCtrl.class);
 
 		routes.add("/mgr/dailySummary", DailySummaryCtrl.class);
+
+		routes.add("/mgr/storeOrderManager", StoreOrderManagerCtrl.class);
 	}
 
 	@Override

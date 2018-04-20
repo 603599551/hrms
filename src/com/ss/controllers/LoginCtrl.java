@@ -16,6 +16,11 @@ public class LoginCtrl extends BaseCtrl{
         JsonHashMap jhm=new JsonHashMap();
         try{
             JSONObject json=RequestTool.getJson(getRequest());
+            if(json==null){
+                jhm.putCode(-1).putMessage("请求数据不能为空！");
+                renderJson(jhm);
+                return;
+            }
             String username=json.getString("username");
             String password=json.getString("password");
 
