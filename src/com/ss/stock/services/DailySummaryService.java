@@ -23,8 +23,8 @@ public class DailySummaryService {
     private static DailySummaryService me;
     private static String TIME_VISION = "";
 
-    private static Map<String, Map<String, Object>> dataMap;
-    private static Map<String, Record> storeMap;
+    public static Map<String, Map<String, Object>> dataMap;
+    public static Map<String, Record> storeMap;
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 

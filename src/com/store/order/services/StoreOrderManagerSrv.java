@@ -21,14 +21,13 @@ public class StoreOrderManagerSrv {
     }
 
     @Before(Tx.class)
-    public Map goodsToMaterial(Map map){
+    public Map goodsToMaterial(Map map, String storeOrderUUID){
         Map resultMap=new HashMap();
-        JSONObject jsonObject=(JSONObject)map.get("data");
+        JSONObject jsonObject=(JSONObject)map.get("jsonObject");
         String arriveDate=jsonObject.getString("arriveDate");
         String wantDate=jsonObject.getString("wantDate");
         JSONArray goodsArray=jsonObject.getJSONArray("list");
 
-        String storeOrderUUID= UUIDTool.getUUID();
         String dateTime= DateTool.GetDateTime();
 
         Record storeOrderR=new Record();
@@ -47,9 +46,9 @@ public class StoreOrderManagerSrv {
             String id=jsonObj.getString("id");
             int number=jsonObj.getInteger("number");
 
-            List<Record> materialList= Db.find("select a.net_num,a.gross_num,a.total_price,b.id, b.name,b.code,b.attribute_2,b.unit,(select name from goods_unit where goods_unit.id=b.id) from goods_material a,material b where a.goods_id=? and a.material_id=b.id ");
+            //List<Record> materialList= Db.find("select a.net_num,a.gross_num,a.total_price,b.id, b.name,b.code,b.attribute_2,b.unit,(select name from goods_unit where goods_unit.id=b.id) from goods_material a,material b where a.goods_id=? and a.material_id=b.id ");
 
-            process(materialMap,materialList,number);
+            //process(materialMap,materialList,number);
         }
         List<Record> reList=new ArrayList<>();
         Iterator<Map.Entry<String,Record>> it=materialMap.entrySet().iterator();

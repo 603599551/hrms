@@ -18,6 +18,8 @@ import com.ss.organization.controllers.StaffCtrl;
 import com.ss.organization.controllers.StoreCtrl;
 import com.ss.stock.controllers.DailySummaryCtrl;
 import com.store.order.controllers.GoodsAndGoodsTypeTreeCtrl;
+import com.store.order.controllers.MaterialAndMaterialTypeTreeCtrl;
+import com.store.order.controllers.StoreOrderCtrl;
 import com.store.order.controllers.StoreOrderManagerCtrl;
 
 import java.io.File;
@@ -63,6 +65,8 @@ public class Config extends JFinalConfig {
 		routes.add("/login", LoginCtrl.class);
 		routes.add("/mgr/user", UserCtrl.class);
 		routes.add("/mgr/goodsAndGoodsTypeTree", GoodsAndGoodsTypeTreeCtrl.class);
+		routes.add("/mgr/materialAndMaterialTypeTreeCtrl", MaterialAndMaterialTypeTreeCtrl.class);
+		routes.add("/mgr/storeOrderCtrl", StoreOrderCtrl.class);
 
 		routes.add("/mgr/dailySummary", DailySummaryCtrl.class);
 
