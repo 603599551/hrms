@@ -74,6 +74,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/storeOrderManager", StoreOrderManagerCtrl.class);
 		routes.add("/mgr/dict", DictionaryCtrl.class);
 		routes.add("/mgr/logistics/storeOrder", com.logistics.order.controllers.StoreOrderCtrl.class);
+		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
 	}
 
 	@Override
