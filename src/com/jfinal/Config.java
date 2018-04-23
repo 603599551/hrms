@@ -1,5 +1,6 @@
 package com.jfinal;
 
+import com.common.controllers.DictionaryCtrl;
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
@@ -71,6 +72,8 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/dailySummary", DailySummaryCtrl.class);
 
 		routes.add("/mgr/storeOrderManager", StoreOrderManagerCtrl.class);
+		routes.add("/mgr/dict", DictionaryCtrl.class);
+		routes.add("/mgr/logistics/storeOrder", com.logistics.order.controllers.StoreOrderCtrl.class);
 	}
 
 	@Override
