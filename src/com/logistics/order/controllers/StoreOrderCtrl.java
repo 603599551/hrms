@@ -9,10 +9,12 @@ import com.ss.controllers.BaseCtrl;
 import com.store.order.services.StoreOrderManagerSrv;
 import com.utils.RequestTool;
 import com.utils.SQLUtil;
+import com.utils.SelectUtil;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
+import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
 import java.util.HashMap;
@@ -49,7 +51,6 @@ public class StoreOrderCtrl extends BaseCtrl {
 //            String status=jsonObject.getString("status");
 //            String pageNumStr=getPara("pageNum");
 //            String pageSizeStr=getPara("pageSize");
-            Map paraMap=getParaMap();
             String[] arrivalDate=getParaValues("arrivalDate");
             String orderType=getPara("orderType");
             String orderCode=getPara("orderCode");
@@ -61,7 +62,11 @@ public class StoreOrderCtrl extends BaseCtrl {
             int pageNum= NumberUtils.parseInt(pageNumStr,1);
             int pageSize=NumberUtils.parseInt(pageSizeStr,10);
 
-            SQLUtil sqlUtil = new SQLUtil(" from store_order ");
+            if(StringUtils.isNotEmpty(status)){
+                status="1";
+            }
+
+            SelectUtil sqlUtil = new SelectUtil(" from store_order ");
             if(arrivalDate!=null) {
                 sqlUtil.addWhere("and ?<=arrive_date", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, arrivalDate[0]);
                 sqlUtil.addWhere("and arrive_date<=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, arrivalDate[1]);
@@ -72,13 +77,33 @@ public class StoreOrderCtrl extends BaseCtrl {
             sqlUtil.addWhere("and order_number=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderCode);
             sqlUtil.order(" order by arrive_date ");
             String sqlExceptSelect=sqlUtil.toString();
-            Page<Record> page=Db.paginate(pageNum, pageSize,select,sqlExceptSelect,sqlUtil.getParameterArray());
+            Page<Record> page=Db.paginate(pageNum, pageSize,select,sqlExceptSelect,sqlUtil.getParameterList().toArray());
             jhm.putCode(1).put("data",page);
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage(e.toString());
         }
         renderJson(jhm);
+    }
+
+    /**
+     * 接收订单
+     */
+    public void accept(){
+        String id=getPara("id");
+        JsonHashMap jhm=new JsonHashMap();
+        String datetime=DateTool.GetDateTime();
+        try {
+            int i=Db.update("update store_order set status=?,accept_time=? where id=?", 2, datetime,id);
+            jhm.putCode(1).putMessage("接收成功！");
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+    }
+
+    public void buildOutStorage(){
+
     }
     /*
 

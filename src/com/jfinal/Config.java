@@ -22,6 +22,7 @@ import com.store.order.controllers.GoodsAndGoodsTypeTreeCtrl;
 import com.store.order.controllers.MaterialAndMaterialTypeTreeCtrl;
 import com.store.order.controllers.StoreOrderCtrl;
 import com.store.order.controllers.StoreOrderManagerCtrl;
+import com.warehouse.controllers.WarehouseManagerCtrl;
 
 import java.io.File;
 
@@ -75,6 +76,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/dict", DictionaryCtrl.class);
 		routes.add("/mgr/logistics/storeOrder", com.logistics.order.controllers.StoreOrderCtrl.class);
 		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
+		routes.add("/mgr/warehouse/warehouseManager", WarehouseManagerCtrl.class);
 	}
 
 	@Override
