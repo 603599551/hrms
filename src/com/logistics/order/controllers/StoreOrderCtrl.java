@@ -62,7 +62,7 @@ public class StoreOrderCtrl extends BaseCtrl {
             int pageNum= NumberUtils.parseInt(pageNumStr,1);
             int pageSize=NumberUtils.parseInt(pageSizeStr,10);
 
-            if(StringUtils.isNotEmpty(status)){
+            if(StringUtils.isEmpty(status)){
                 status="1";
             }
 
@@ -102,13 +102,50 @@ public class StoreOrderCtrl extends BaseCtrl {
         }
     }
 
-    public void buildOutStorage(){
-
-    }
-    /*
-
+    /**
+     * 生成出库单
      */
-    public void modifyOrder(){
+    public void buildOutStorage(){
+        JsonHashMap jhm=new JsonHashMap();
 
+        jhm.putCode(1).putMessage("生成出库单成功！");
+        renderJson(jhm);
+    }
+    /**
+     * 查看订单详细信息
+     */
+    public void showOrderDetailsById(){
+        String id=getPara("id");
+        JsonHashMap jsonHashMap=new JsonHashMap();
+        String sql="select *,(select name from store where store.id=store_order.store_id) as store_text,substr(create_time,1,16) as create_time_short from store_order where id=?";
+        try{
+            Record r=Db.findFirst(sql,id);
+            List<Record> list=Db.find("select *,(select name from goods_unit where goods_unit.id=store_order_material.unit) as unit_text from store_order_material where store_order_id=? order by sort ",id);
+            jsonHashMap.putCode(1).put("order",r).put("orderDetailsList",list);
+        }catch (Exception e){
+            e.printStackTrace();
+            jsonHashMap.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jsonHashMap);
+    }
+
+    /**
+     * 关闭订单
+     */
+    public void closeOrder(){
+        String id=getPara("id");
+        JsonHashMap jsonHashMap=new JsonHashMap();
+        try{
+            int n=Db.update("update store_order set status=? where id=?",5,id);
+            if(n>0){
+                jsonHashMap.putCode(1).putMessage("关闭订单成功！");
+            }else{
+                jsonHashMap.putCode(1).putMessage("查无此订单！");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jsonHashMap.putMessage("发生错误："+e.toString());
+        }
+        renderJson(jsonHashMap);
     }
 }

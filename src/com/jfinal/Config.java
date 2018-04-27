@@ -8,6 +8,7 @@ import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
+import com.logistics.order.controllers.OutWarehouseOrderCtrl;
 import com.ss.controllers.HomeCtrl;
 import com.ss.controllers.LoginCtrl;
 import com.ss.controllers.MenuCtrl;
@@ -75,6 +76,10 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/storeOrderManager", StoreOrderManagerCtrl.class);
 		routes.add("/mgr/dict", DictionaryCtrl.class);
 		routes.add("/mgr/logistics/storeOrder", com.logistics.order.controllers.StoreOrderCtrl.class);
+		/*
+		物流出库订单
+		 */
+		routes.add("/mgr/logistics/outWarehouseOrder", OutWarehouseOrderCtrl.class);
 		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
 		routes.add("/mgr/warehouse/warehouseManager", WarehouseManagerCtrl.class);
 	}
