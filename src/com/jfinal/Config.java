@@ -1,5 +1,6 @@
 package com.jfinal;
 
+import com.common.controllers.DictionaryCtrl;
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
@@ -7,6 +8,7 @@ import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
+import com.logistics.order.controllers.OutWarehouseOrderCtrl;
 import com.ss.controllers.HomeCtrl;
 import com.ss.controllers.LoginCtrl;
 import com.ss.controllers.MenuCtrl;
@@ -21,6 +23,7 @@ import com.store.order.controllers.GoodsAndGoodsTypeTreeCtrl;
 import com.store.order.controllers.MaterialAndMaterialTypeTreeCtrl;
 import com.store.order.controllers.StoreOrderCtrl;
 import com.store.order.controllers.StoreOrderManagerCtrl;
+import com.warehouse.controllers.WarehouseManagerCtrl;
 
 import java.io.File;
 
@@ -71,6 +74,14 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/dailySummary", DailySummaryCtrl.class);
 
 		routes.add("/mgr/storeOrderManager", StoreOrderManagerCtrl.class);
+		routes.add("/mgr/dict", DictionaryCtrl.class);
+		routes.add("/mgr/logistics/storeOrder", com.logistics.order.controllers.StoreOrderCtrl.class);
+		/*
+		物流出库订单
+		 */
+		routes.add("/mgr/logistics/outWarehouseOrder", OutWarehouseOrderCtrl.class);
+		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
+		routes.add("/mgr/warehouse/warehouseManager", WarehouseManagerCtrl.class);
 	}
 
 	@Override
