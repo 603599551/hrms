@@ -19,7 +19,7 @@ public class UserSessionUtil {
     public UserSessionUtil(HttpServletRequest request){
         HttpSession session=request.getSession();
         userBean=(UserBean)session.getAttribute(KEY.SESSION_USER);
-        if (Config.devMode) {//
+        if (true) {//
             userBean=new UserBean();
             //长大店长
 //            Record r = Db.findFirst("select * from staff where id=?", "60a6f36a65f341c78ee07c9fc250e916");

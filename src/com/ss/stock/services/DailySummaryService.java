@@ -23,8 +23,9 @@ public class DailySummaryService {
     private static DailySummaryService me;
     private static String TIME_VISION = "";
 
-    public static Map<String, Map<String, Object>> dataMap;
-    public static Map<String, Record> storeMap;
+    private static Map<String, Map<String, Object>> dataMap;
+    public static Map<String, Map<String, Object>> dataGoodsIdMap;
+    private static Map<String, Record> storeMap;
 
     private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -32,6 +33,7 @@ public class DailySummaryService {
         super();
         dataMap = new HashMap<>();
         storeMap = new HashMap<>();
+        dataGoodsIdMap = new HashMap<>();
         init();
     }
 
@@ -124,6 +126,13 @@ public class DailySummaryService {
             for(Record r : storeList){
                 storeMap.put(r.getStr("name"), r);
             }
+        }
+
+        Iterator<Entry<String, Map<String, Object>>> dataMapIt = dataMap.entrySet().iterator();
+        while(dataMapIt.hasNext()){
+            Entry<String, Map<String, Object>> entry = dataMapIt.next();
+            Record goods = (Record) entry.getValue().get("data");
+            dataGoodsIdMap.put(goods.getStr("gid"), entry.getValue());
         }
     }
 

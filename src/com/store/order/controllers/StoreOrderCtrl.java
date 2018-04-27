@@ -62,7 +62,7 @@ public class StoreOrderCtrl extends BaseCtrl {
             sog.set("number", number);
             storeOrderGoodsList.add(sog);
 
-            List<Record> goodsMaterialList = (List<Record>) dailySummaryService.dataMap.get(goodsId).get("materialList");
+            List<Record> goodsMaterialList = (List<Record>) dailySummaryService.dataGoodsIdMap.get(goodsId).get("materialList");
             for(Record r : goodsMaterialList){
                 Record materialR = materialMap.get(r.getStr("id"));
                 if(materialR != null){

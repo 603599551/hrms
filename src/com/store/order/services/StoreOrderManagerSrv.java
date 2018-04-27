@@ -2,13 +2,16 @@ package com.store.order.services;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.bean.UserBean;
 import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import com.utils.RequestTool;
+import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
+import utils.bean.JsonHashMap;
 
 import java.util.*;
 
@@ -20,8 +23,14 @@ public class StoreOrderManagerSrv {
         return me;
     }
 
+    /**
+     * 整理数据，向store_order和store_order_goods表出入数据
+     * @param map 前台传入参数
+     * @param storeOrderUUID store_order的主键
+     * @param userBean 用户信息
+     */
     @Before(Tx.class)
-    public Map goodsToMaterial(Map map, String storeOrderUUID){
+    public void goodsToMaterial(Map map, String storeOrderUUID, UserBean userBean){
         Map resultMap=new HashMap();
         JSONObject jsonObject=(JSONObject)map.get("jsonObject");
         String arriveDate=jsonObject.getString("arriveDate");
@@ -37,28 +46,148 @@ public class StoreOrderManagerSrv {
         storeOrderR.set("want_date",wantDate);
         storeOrderR.set("create_time",dateTime);
         storeOrderR.set("status","1");
+        storeOrderR.set("store_id",userBean.get("store_id"));
+        storeOrderR.set("creater_id",userBean.getId());
         Db.save("store_order",storeOrderR);
 
 
         Map<String,Record> materialMap=new LinkedHashMap();
-        for(Object obj:goodsArray){
-            JSONObject jsonObj=(JSONObject)obj;
-            String id=jsonObj.getString("id");
-            int number=jsonObj.getInteger("number");
-
-            //List<Record> materialList= Db.find("select a.net_num,a.gross_num,a.total_price,b.id, b.name,b.code,b.attribute_2,b.unit,(select name from goods_unit where goods_unit.id=b.id) from goods_material a,material b where a.goods_id=? and a.material_id=b.id ");
-
-            //process(materialMap,materialList,number);
+        List<Record> goodsList = Db.find("select * from goods");
+        Map<String, Record> goodsMap = new HashMap<>();
+        for(Record r : goodsList){
+            goodsMap.put(r.getStr("id"), r);
         }
-        List<Record> reList=new ArrayList<>();
-        Iterator<Map.Entry<String,Record>> it=materialMap.entrySet().iterator();
-        while(it.hasNext()){
-            Map.Entry entry=it.next();
-            reList.add((Record)entry.getValue());
-        }
-        resultMap.put("list",reList);
 
-        return resultMap;
+        List<Record> storeOrderGoodsList = new ArrayList<>();
+        for(int i = 0; i < goodsArray.size(); i++){
+            JSONObject jsonObj = goodsArray.getJSONObject(i);
+            String goodsId = jsonObj.getString("id");
+            Record goods = goodsMap.get(goodsId);
+            int number = jsonObj.getInteger("number");
+            Object store_id = userBean.get("store_id");
+            Record sog = new Record();
+            sog.set("id", UUIDTool.getUUID());
+            sog.set("store_order_id", storeOrderUUID);
+            sog.set("store_id", store_id);
+            sog.set("goods_id", goodsId);
+            sog.set("code", goods.getStr("code"));
+            sog.set("name", goods.getStr("name"));
+            sog.set("pinyin", goods.getStr("pinyin"));
+            sog.set("price", goods.getStr("price"));
+            sog.set("wm_type", goods.getStr("wm_type"));
+            sog.set("attribute_1", goods.getStr("attribute_1"));
+            sog.set("attribute_2", goods.getStr("attribute_2"));
+            sog.set("unit", goods.getStr("unit"));
+            sog.set("sort", i);
+            sog.set("type_1", goods.getStr("type_1"));
+            sog.set("type_2", goods.getStr("type_2"));
+            sog.set("number", number);
+            storeOrderGoodsList.add(sog);
+
+        }
+        Db.batchSave("store_order_goods", storeOrderGoodsList, storeOrderGoodsList.size());
+
+    }
+    /**
+     * 添加订单原材料门店修改过的数据
+     *      订单原材料已经存放到数据库中，但是门店修改后还要修改数量，其实这个方法是一个修改方法
+     * 参数：
+     *       stroe_order_material_id
+     *       number：want_num和send_num字段数据。send_num数据还需要物流再次修改，但是要将门店数据提交，所以这里也添加
+     *       nextOneNum：next1_order_num字段数据，方便以后查询
+     *       nextTwoNum：next2_order_num字段数据，方便以后查询
+     *
+     */
+    @Before(Tx.class)
+    public void addStoreOrderMaterial(JSONObject jsonObject, UserSessionUtil usu) throws Exception{
+        JSONArray jsonArray = jsonObject.getJSONArray("list");
+        List<Record> saveList = null;
+        Map<String, Record> saveMap = new HashMap<>();
+        String orderId = "";
+        String sql = "select * from store_order_material_temporary ";
+        if(jsonArray != null && jsonArray.size() > 0){
+            sql += " where id in (null,";
+            for(int i = 0; i < jsonArray.size(); i++){
+                JSONObject json = jsonArray.getJSONObject(i);
+                if(json.get("id") != null){
+                    sql += "'" + json.getString("stroe_order_material_id") + "',";
+                }
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            sql += ")";
+            saveList = Db.find(sql);
+        }
+        if(saveList != null && saveList.size() > 0){
+            orderId = saveList.get(0).getStr("store_order_id");
+            for(Record r : saveList){
+                saveMap.put(r.getStr("id"), r);
+            }
+        }else{
+            saveList = new ArrayList<>();
+        }
+
+
+        List<Record> materialList = Db.find("select * from material");
+        Map<String, Record> materialMap = new HashMap<>();
+        if(materialList != null && materialList.size() > 0){
+            for(Record r : materialList){
+                materialMap.put(r.getStr("id"), r);
+            }
+        }
+        if(jsonArray != null && jsonArray.size() > 0){
+            for(int i = 0; i < jsonArray.size(); i++){
+                JSONObject json = jsonArray.getJSONObject(i);
+                if(json.getString("stroe_order_material_id") != null && json.getString("stroe_order_material_id").length() > 0){
+                    Record saveR = saveMap.get(json.getString("stroe_order_material_id"));
+                    saveR.set("want_num", json.get("number"));
+                    saveR.set("send_num", json.get("number"));
+                    saveR.set("next1_order_num", json.get("nextOneNum"));
+                    saveR.set("next2_order_num", json.get("nextTwoNum"));
+                    //saveList.add(saveR);
+                }else{
+                    Record saveR = materialMap.get(json.getString("id"));
+                    String id = UUIDTool.getUUID();
+                    saveR.set("id", id);
+                    saveR.set("store_order_id", orderId);
+                    saveR.set("store_id", usu.getUserBean().get("store_id"));
+                    saveR.set("material_id", json.getString("id"));
+                    saveR.set("use_num", json.getString("number"));
+                    saveR.set("send_num", json.getString("number"));
+                    saveR.set("status", 8);
+                    saveR.set("want_num", json.getString("number"));
+                    saveR.set("next1_order_num", json.getString("nextOneNum"));
+                    saveR.set("next2_order_num", json.getString("nextTwoNum"));
+
+                    saveR.remove("creater_id");
+                    saveR.remove("modifier_id");
+                    saveR.remove("create_time");
+                    saveR.remove("modify_time");
+                    saveR.remove("desc");
+                    saveR.remove("unitname");
+                    saveList.add(saveR);
+                }
+            }
+        }
+        Db.batchSave("store_order_material", saveList, saveList.size());
+        /*
+        try{
+            if(jsonArray != null && jsonArray.size() > 0){
+                for(int i = 0; i < jsonArray.size(); i++){
+                    JSONObject json = jsonArray.getJSONObject(i);
+                    Record r = new Record();
+                    //TODO 和前台沟通这个字段应该用什么key：stroe_order_material_id ? id
+                    r.set("id", json.get("id"));
+                    r.set("want_num", json.get("number"));
+                    r.set("send_num", json.get("number"));
+                    r.set("next1_order_num", json.get("nextOneNum"));
+                    r.set("next2_order_num", json.get("nextTwoNum"));
+                    Db.update("store_order_material", r);
+                }
+            }
+        }catch (Exception e){
+            throw e;
+        }
+        */
     }
 
     private void process(Map<String,Record> reMap,List<Record> materialList,int number){
