@@ -68,8 +68,9 @@ public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Consta
             List resultList = service.addMaterial2MaterialType(materialTypeList2, materialList);
             jhm.putCode(1).put("tree", resultList);
         }catch (ParseException e){
-            jhm.putCode(0).putMessage("查询失败！");
-            renderJson(jhm);
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("查询失败！");
         }
+        renderJson(jhm);
     }
 }
