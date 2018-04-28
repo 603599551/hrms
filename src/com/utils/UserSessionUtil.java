@@ -25,7 +25,7 @@ public class UserSessionUtil {
 //            Record r = Db.findFirst("select * from staff where id=?", "60a6f36a65f341c78ee07c9fc250e916");
             //红旗街店长
 //            Record r = Db.findFirst("select * from staff where id=?", "713765d2815845efbbdeafc6ede3310c");
-            Record r = Db.findFirst("select * from staff where id=?", "1");
+            Record r = Db.findFirst("select sta.*, sto.city city from staff sta, store sto where sta.dept=sto.id and sta.id=?", "1");
             userBean.setId(r.get("id"));
             userBean.setName(r.getStr("username"));
             userBean.setRealName(r.getStr("name" ));
@@ -39,6 +39,7 @@ public class UserSessionUtil {
             userBean.setJobId((String)job);
             userBean.setJobName(r.getStr("job_name"));
             userBean.put("store_id", r.getStr("dept"));
+            userBean.put("city", r.getStr("city"));
 
             userId = userBean.getId();
             realName = userBean.getRealName();

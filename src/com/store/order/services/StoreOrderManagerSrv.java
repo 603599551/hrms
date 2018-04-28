@@ -47,6 +47,7 @@ public class StoreOrderManagerSrv {
         storeOrderR.set("create_time",dateTime);
         storeOrderR.set("status","10");
         storeOrderR.set("type", "day");
+        storeOrderR.set("city", userBean.get("city"));
         storeOrderR.set("store_id",userBean.get("store_id"));
         storeOrderR.set("creater_id",userBean.getId());
         Db.save("store_order",storeOrderR);
@@ -156,6 +157,7 @@ public class StoreOrderManagerSrv {
                     saveR.set("send_num", json.getString("number"));
                     saveR.set("status", 10);
                     saveR.set("type", "day");
+                    saveR.set("city", usu.getUserBean().get("city"));
                     saveR.set("want_num", json.getString("number"));
                     saveR.set("next1_order_num", json.getString("nextOneNum"));
                     saveR.set("next2_order_num", json.getString("nextTwoNum"));
