@@ -45,7 +45,7 @@ public class StoreOrderManagerSrv {
         storeOrderR.set("arrive_date",arriveDate);
         storeOrderR.set("want_date",wantDate);
         storeOrderR.set("create_time",dateTime);
-        storeOrderR.set("status","1");
+        storeOrderR.set("status","10");
         storeOrderR.set("store_id",userBean.get("store_id"));
         storeOrderR.set("creater_id",userBean.getId());
         Db.save("store_order",storeOrderR);
