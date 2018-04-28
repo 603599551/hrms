@@ -1,6 +1,7 @@
 package com.jfinal;
 
 import com.common.controllers.DictionaryCtrl;
+import com.common.controllers.SelectDataBuilderCtrl;
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
@@ -82,6 +83,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/logistics/outWarehouseOrder", OutWarehouseOrderCtrl.class);
 		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
 		routes.add("/mgr/warehouse/warehouseManager", WarehouseManagerCtrl.class);
+		routes.add("/mgr/common/selectDataBuilder", SelectDataBuilderCtrl.class);
 	}
 
 	@Override
