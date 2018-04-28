@@ -66,7 +66,8 @@ public class DailySummaryService {
         sql.append("gt.wm_type          gwm_type,");
         sql.append("gt.attribute_1      gattr_1,");
         sql.append("gt.attribute_2      gattr_2,");
-        sql.append("ggu.name            gunit,");
+//        sql.append("ggu.name            gunit,");
+        sql.append("(select name from goods_unit where goods_unit.id=gt.unit)            gunit,");
         sql.append("gt.sort             gsort,");
         sql.append("gt.type_1           gtype_1,");
         sql.append("gt.type_2           gtype_2,");
@@ -81,7 +82,7 @@ public class DailySummaryService {
         sql.append("m.wm_type           mstock_type,");
         sql.append("m.attribute_1       mattr_1,");
         sql.append("m.attribute_2       mattr_2,");
-        sql.append("mgu.name            munit,");
+        sql.append("(select name from goods_unit where goods_unit.id=m.unit)            munit,");
         sql.append("m.sort              msort,");
         sql.append("m.type_1            mtype_1,");
         sql.append("m.type_2            mtype_2,");
@@ -93,13 +94,13 @@ public class DailySummaryService {
         sql.append(" from goods gt,");
         sql.append("        (select max(modify_time) modify_time, code from goods GROUP BY code) a,");
         sql.append("        goods_material gm,");
-        sql.append("        material m,");
-        sql.append("        goods_unit ggu, ");
-        sql.append("        goods_unit mgu");
+        sql.append("        material m ");
+//        sql.append("        goods_unit ggu, ");
+//        sql.append("        goods_unit mgu");
         sql.append(" where gt.code = a.code");
         sql.append(" and gt.modify_time = a.modify_time");
-        sql.append(" and gt.unit = ggu.id");
-        sql.append(" and m.unit = mgu.id");
+//        sql.append(" and gt.unit = ggu.id");
+//        sql.append(" and m.unit = mgu.id");
         sql.append(" and gt.id=gm.goods_id");
         sql.append(" and m.id = gm.material_id;");
 
@@ -143,12 +144,12 @@ public class DailySummaryService {
      */
     public static DailySummaryService getMe(){
         boolean initFlag = TIME_VISION.equals(DateTool.GetDate());
-        if(!initFlag){
+//        if(!initFlag){
             me = new DailySummaryService();
-        }
-        if(me == null){
-            me = new DailySummaryService();
-        }
+//        }
+//        if(me == null){
+//            me = new DailySummaryService();
+//        }
         return me;
     }
 
