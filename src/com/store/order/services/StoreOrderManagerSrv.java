@@ -153,7 +153,7 @@ public class StoreOrderManagerSrv {
                     saveR.set("material_id", json.getString("id"));
                     saveR.set("use_num", json.getString("number"));
                     saveR.set("send_num", json.getString("number"));
-                    saveR.set("status", 8);
+                    saveR.set("status", 10);
                     saveR.set("want_num", json.getString("number"));
                     saveR.set("next1_order_num", json.getString("nextOneNum"));
                     saveR.set("next2_order_num", json.getString("nextTwoNum"));
