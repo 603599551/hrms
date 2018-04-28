@@ -113,7 +113,12 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
         for(int i = 0; i < idArr.size(); i++){
             String goodsId = idArr.get(i);
             int number = numberArr.get(i);
-            List<Record> goodsMaterialList = (List<Record>) dailySummaryService.dataGoodsIdMap.get(goodsId).get("materialList");
+
+            Map goodsIdMap=dailySummaryService.dataGoodsIdMap.get(goodsId);
+            if(goodsIdMap==null){
+                continue;
+            }
+            List<Record> goodsMaterialList = (List<Record>) goodsIdMap.get("materialList");
             for(Record r : goodsMaterialList){
                 Record materialR = materialMap.get(r.getStr("mid"));
                 if(materialR != null){
