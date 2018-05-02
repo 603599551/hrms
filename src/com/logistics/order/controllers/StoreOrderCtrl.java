@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
+import com.logistics.order.services.StoreOrderSrv;
 import com.ss.controllers.BaseCtrl;
 import com.store.order.services.StoreOrderManagerSrv;
 import com.utils.RequestTool;
@@ -91,25 +92,46 @@ public class StoreOrderCtrl extends BaseCtrl {
      */
     public void accept(){
         String id=getPara("id");
+        UserSessionUtil usu=new UserSessionUtil(getRequest());
         JsonHashMap jhm=new JsonHashMap();
         String datetime=DateTool.GetDateTime();
         try {
-            int i=Db.update("update store_order set status=?,accept_time=? where id=?", 2, datetime,id);
-            jhm.putCode(1).putMessage("接收成功！");
+            int i=Db.update("update store_order set status=?,accepter_id=?,accept_time=? where id=?", 20, usu.getUserId(),datetime,id);
+            if(i>0) {
+                jhm.putCode(1).putMessage("接收成功！");
+            }else{
+                jhm.putCode(0).putMessage("接收失败！");
+            }
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage(e.toString());
         }
+        renderJson(jhm);
     }
 
     /**
      * 生成出库单
+     * 要根据原材料所在仓库，分别生成出库单
      */
-    public void buildOutStorage(){
+    public void buildOutOrder(){
+        /*
+        门店订单id
+         */
+        String storeOrderId=getPara("id");
+        UserSessionUtil usu=new UserSessionUtil(getRequest());
         JsonHashMap jhm=new JsonHashMap();
 
-        jhm.putCode(1).putMessage("生成出库单成功！");
-        renderJson(jhm);
+        try {
+            StoreOrderSrv storeOrderSrv = enhance(StoreOrderSrv.class);
+            jhm=storeOrderSrv.buildOutWarehouse(storeOrderId,usu);
+
+            renderJson(jhm);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putMessage(e.toString());
+
+            renderJson(jhm);
+        }
     }
     /**
      * 查看订单详细信息

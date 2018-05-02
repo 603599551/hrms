@@ -9,7 +9,7 @@ import utils.bean.JsonHashMap;
 import java.util.List;
 
 /**
- * 显示门店
+ * 显示门店下拉列表
  */
 public class StoreCtrl extends BaseCtrl {
 
