@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Title</title>
+    <style>
+        body{
+            font-family:SimHei;
+        }
+        .color{
+            color: green;
+        }
+        .pos{
+            position:absolute;
+            left:200px;
+            top:5px;
+            width: 200px;
+            font-size: 10px;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="color pos">
+    你好，${name}
+</div>
+<div>
+    <table border="1px">
+        <thead>
+            <tr><td>姓名</td><td>年龄</td></tr>
+        </thead>
+        <tbody>${table}</tbody>
+    </table>
+</div>
+</body>
+</html>
