@@ -39,7 +39,9 @@ public class HanyuPinyinHelper {
     public static String getFirstLettersUp(String ChineseLanguage){
         return getFirstLetters(ChineseLanguage ,HanyuPinyinCaseType.UPPERCASE);
     }
-
+    /**
+     返回每个汉字拼音首字母，且小写
+     */
     public static String getFirstLettersLo(String ChineseLanguage){
         return getFirstLetters(ChineseLanguage ,HanyuPinyinCaseType.LOWERCASE);
     }
