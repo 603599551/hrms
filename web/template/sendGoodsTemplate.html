@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="gbk"/>
+    <title>Document</title>
+    <style>
+        /* CSS reset */
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        /* CSS 的初始化 */
+        html {
+            font-size: 12px;
+            font-family: SimHei;
+            color: #333;
+        }
+        a {
+            color: #333;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #333;
+            text-decoration: none;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-size: inherit;
+            font-weight: normal;
+        }
+        em, i {
+            font-style: normal;
+        }
+        ul, ol, li {
+            list-style: none;
+        }
+        img {
+            display: block;
+            border: none;
+        }
+        .clear {
+            clear: both;
+        }
+        .clearFix:after {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            clear: both;
+        }
+        /* CSS 的初始化 END */
+
+
+        .main {
+            width: 690px;
+            margin: 0 auto;
+        }
+
+        .order-title {
+            padding: 10px 0;
+        }
+
+
+        .order-list {
+            width: 100%;
+        }
+        .order-list > tbody tr td,
+        .order-list > tbody tr th {
+            border: 1px solid #ddd;
+            padding: 7px 8px;
+        }
+        .order-list > thead > tr > td {
+            width: 100%;
+            padding: 10px 0;
+        }
+
+
+        .order-top {
+            width: 100%;
+        }
+        .order-top tr td,
+        .order-top tr th {
+            padding: 5px 0;
+        }
+
+
+        .table-style-01 > tbody tr th,
+        .table-style-01 > tbody tr td {
+            border-style: dotted;
+        }
+        .pageNext{page-break-after: always;}
+    </style>
+</head>
+<body>
+<div class="main">
+    ${table}
+    ${firstPage}
+    <h5 class="order-title">货物差异：此处差异必须入账</h5>
+    <table class="order-list table-style-01">
+        <tbody>
+        <tr>
+            <th>物料编码</th>
+            <th>物料名称</th>
+            <th>规格</th>
+            <th width="10%">单位</th>
+            <th>多送量</th>
+            <th>少送量</th>
+            <th>应送量</th>
+            <th width="10%">备注</th>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        </tbody>
+    </table>
+    ${secondPage}
+    <h5 class="order-title">返货</h5>
+    <table class="order-list table-style-01">
+        <tbody>
+        <tr>
+            <th>物料编码</th>
+            <th>物料名称</th>
+            <th width="10%">单位</th>
+            <th>数量</th>
+            <th>当此货</th>
+            <th>退货单</th>
+            <th width="10%">备注</th>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>是   否</td>
+            <td>是   否</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>是   否</td>
+            <td>是   否</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>是   否</td>
+            <td>是   否</td>
+            <td></td>
+        </tr>
+        </tbody>
+    </table>
+    ${thirdPage}
+    <h5 class="order-title">托运信息</h5>
+    <table class="order-list table-style-01">
+        <tbody>
+        <tr>
+            <th>物品名称</th>
+            <th width="10%">单位</th>
+            <th width="10%">数量</th>
+            <th>存储条件</th>
+            <th>发货人</th>
+            <th>接受地点</th>
+            <th>接收人</th>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        </tbody>
+    </table>
+    <h5 class="order-title"></h5>
+    <table class="order-top">
+        <tr>
+            <td colspan="3">蓝周转箱（大）到店个数_____________个，返回个数_____________个，欠_____________个</td>
+        </tr>
+        <tr>
+            <td colspan="3">手擀箱（蓝）到店个数_____________个，返回个数_____________个，欠_____________个</td>
+        </tr>
+        <tr>
+            <td colspan="3">手擀箱（白）到店个数_____________个，返回个数_____________个，欠_____________个</td>
+        </tr>
+        <tr>
+            <td colspan="3">切面箱到店个数_____________个，返回个数_____________个，欠_____________个</td>
+        </tr>
+        <tr>
+            <td colspan="3">鸡蛋箱到店个数_____________个，返回个数_____________个，欠_____________个</td>
+        </tr>
+        <tr>
+            <td colspan="3">计划到店时间________时________分；实际到店时间________时________分；实际离店时间________时________分</td>
+        </tr>
+        <tr>
+            <td>接货经理签字：________________</td><td>司机签字：________________</td><td>制单人：${creater_name}</td>
+        </tr>
+        <tr>
+            <td colspan="3">注：此送货单一式两份，白联餐厅留存，粉联物流收回，请将周转箱数量及返货数量准确填写，如出现差异以粉联为准</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

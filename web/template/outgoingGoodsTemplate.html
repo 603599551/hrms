@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="gbk"/>
+    <title>Document</title>
+    <style>
+        /* CSS reset */
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        /* CSS 的初始化 */
+        html {
+            font-size: 12px;
+            font-family: SimHei;
+            color: #333;
+        }
+        a {
+            color: #333;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #333;
+            text-decoration: none;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-size: inherit;
+            font-weight: normal;
+        }
+        em, i {
+            font-style: normal;
+        }
+        ul, ol, li {
+            list-style: none;
+        }
+        img {
+            display: block;
+            border: none;
+        }
+        .clear {
+            clear: both;
+        }
+        .clearFix:after {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            clear: both;
+        }
+        /* CSS 的初始化 END */
+
+
+        .main {
+            width: 690px;
+            margin: 0 auto;
+        }
+
+        .order-title {
+            padding: 10px 0;
+        }
+
+
+        .order-list {
+            width: 100%;
+        }
+        .order-list > tbody tr td,
+        .order-list > tbody tr th {
+            border: 1px solid #ddd;
+            padding: 7px 8px;
+        }
+        .order-list > thead > tr > td {
+            width: 100%;
+            padding: 10px 0;
+        }
+
+
+        .order-top {
+            width: 100%;
+        }
+        .order-top tr td,
+        .order-top tr th {
+            padding: 5px 0;
+        }
+
+
+        .table-style-01 > tbody tr th,
+        .table-style-01 > tbody tr td {
+            border-style: dotted;
+        }
+        .pageNext{page-break-after: always;}
+    </style>
+</head>
+<body>
+<div class="main">
+    ${table}
+    <h5 class="order-title"></h5>
+    <table class="order-top">
+        <tr>
+            <td>库管员：________________</td><td>领货人：________________</td><td>制单人：${creater_name}</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

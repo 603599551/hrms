@@ -1,4 +1,4 @@
-jdbcUrl = jdbc:mysql://localhost:3308/security_stock?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
+jdbcUrl = jdbc:mysql://localhost:3308/mdm?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
 username = root
 password = 
 devMode = true
