@@ -465,7 +465,7 @@ public class GoodsCtrl extends BaseCtrl {
             */
 
             SQLUtil sqlUtil = new SQLUtil("update goods set status=-1 ");
-            sqlUtil.in(" id in ", idArray);
+            sqlUtil.in(" and id in ", idArray);
 
             int i = Db.update(sqlUtil.toString(), sqlUtil.getParameterArray());
             if (i > 0) {

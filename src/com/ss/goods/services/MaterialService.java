@@ -11,7 +11,7 @@ public class MaterialService extends BaseService {
      */
     public void deleteByIds(String[] idArray){
         SQLUtil sqlUtil = new SQLUtil("update material set status=-1 ");
-        sqlUtil.in(" id in ", idArray);
+        sqlUtil.in(" and id in ", idArray);
         int i = Db.update(sqlUtil.toString(), sqlUtil.getParameterArray());
 
         SQLUtil sqlUtil12=new SQLUtil("delete from goods_material ");
