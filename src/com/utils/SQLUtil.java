@@ -73,7 +73,7 @@ public class SQLUtil {
         return this;
     }
     public SQLUtil order(String str){
-        this.where.append(" "+where+" ");
+        this.where.append(" "+str+" ");
         return this;
     }
     /**
@@ -203,11 +203,13 @@ public class SQLUtil {
             return sql;
         }else{//有where条件
             StringBuilder sql0=new StringBuilder(sql);
-            sql0.append(" where ");
-            if(where0.startsWith("and")){
+            String firstKeyword=where0.substring(0,where0.indexOf(" "));
+            if(firstKeyword.equals("and")){
+                sql0.append(" where ");
                 where0=where0.substring("and".length());
                 sql0.append(where0);
-            }else if(where0.startsWith("or")){
+            }else if(firstKeyword.equals("or")){
+                sql0.append(" where ");
                 where0=where0.substring("or".length());
                 sql0.append(where0);
             }else{
