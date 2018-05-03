@@ -168,7 +168,9 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                 saveR.set("material_id", r.getStr("id"));
                 saveR.set("use_num", r.getStr("number"));
                 saveR.set("send_num", 0);
-                saveR.set("status", 8);
+                saveR.set("status", 10);
+                saveR.set("type", "day");
+                saveR.set("city", usu.getUserBean().get("city"));
                 saveR.set("want_num", r.getStr("number"));
                 saveR.set("next1_order_num", r.getStr("nextOneNum"));
                 saveR.set("next2_order_num", r.getStr("nextTwoNum"));

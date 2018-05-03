@@ -24,6 +24,7 @@ import com.store.order.controllers.GoodsAndGoodsTypeTreeCtrl;
 import com.store.order.controllers.MaterialAndMaterialTypeTreeCtrl;
 import com.store.order.controllers.StoreOrderCtrl;
 import com.store.order.controllers.StoreOrderManagerCtrl;
+import com.store.print.PrintCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
 
 import java.io.File;
@@ -84,6 +85,10 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
 		routes.add("/mgr/warehouse/warehouseManager", WarehouseManagerCtrl.class);
 		routes.add("/mgr/common/selectDataBuilder", SelectDataBuilderCtrl.class);
+
+		//打印Ctrl
+		routes.add("/mgr/print/print", PrintCtrl.class);
+
 	}
 
 	@Override
