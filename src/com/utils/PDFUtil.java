@@ -72,7 +72,17 @@ public class PDFUtil {
         //解决图片相对路径的问题 图片现在没有加进来，时间紧迫后期需要再研究
         //render.getSharedContext().setBaseURL("file://C:/Users/szsw/Desktop/dist/");
 //        render.getSharedContext();
-        render.layout();
-        render.createPDF(new FileOutputStream(dest));
+        FileOutputStream fos = null;
+        try{
+            fos = new FileOutputStream(dest);
+            render.layout();
+            render.createPDF(fos);
+        }catch (Exception e){
+            throw e;
+        }finally {
+            if(fos != null){
+                fos.close();
+            }
+        }
     }
 }

@@ -1,0 +1,35 @@
+<table class="order-list">
+        <thead style="display:table-header-group">
+        <tr>
+            <td colspan="5">
+                <table class="order-top">
+                    <tr>
+                        <th colspan="2" align="center">送货单</th>
+                    </tr>
+                    <tr>
+                        <td width="60%">送货单位：${send_company}</td>
+                        <td>送货日期：${send_date}</td>
+                    </tr>
+                    <tr>
+                        <td width="60%">地址：${send_address}</td>
+                        <td>餐厅名称：${store_name}</td>
+                    </tr>
+                    <tr>
+                        <td width="60%">客服电话：${phone}</td>
+                        <td>单据号：${order_num}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th>物料编码</th>
+            <th>规格</th>
+            <th width="10%">单位</th>
+            <th>名称</th>
+            <th width="15%">应收数量</th>
+        </tr>
+        ${table}
+        </tbody>
+    </table>
