@@ -20,12 +20,10 @@ import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
 import com.ss.organization.controllers.StoreCtrl;
 import com.ss.stock.controllers.DailySummaryCtrl;
-import com.store.order.controllers.GoodsAndGoodsTypeTreeCtrl;
-import com.store.order.controllers.MaterialAndMaterialTypeTreeCtrl;
-import com.store.order.controllers.StoreOrderCtrl;
-import com.store.order.controllers.StoreOrderManagerCtrl;
+import com.store.order.controllers.*;
 import com.store.print.PrintCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
+import com.warehouse.controllers.WarehouseStockMaterialTreeCtrl;
 
 import java.io.File;
 
@@ -85,9 +83,17 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
 		routes.add("/mgr/warehouse/warehouseManager", WarehouseManagerCtrl.class);
 		routes.add("/mgr/common/selectDataBuilder", SelectDataBuilderCtrl.class);
+		/*
+		门店订单
+		 */
+		//门店退货单
+		routes.add("/mgr/store/returnGoods", ReturnGoodsCtrl.class);
+		//门店接收订单
+		routes.add("/mgr/store/storeOrderReceiver", StoreOrderReceiverCtrl.class);
 
 		//打印Ctrl
 		routes.add("/mgr/print/print", PrintCtrl.class);
+		routes.add("/mgr/warehouse/warehouseStockMaterialTree", WarehouseStockMaterialTreeCtrl.class);
 
 	}
 
