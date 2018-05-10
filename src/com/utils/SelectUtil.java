@@ -3,6 +3,7 @@ package com.utils;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -20,6 +21,14 @@ public class SelectUtil {
      */
     public static final int NOT_EMPTY_STRING=101;
 
+    /**
+     * 下划线
+     */
+    public static int WILDCARD_UNDERSCODE=200;
+    /**
+     * 星号
+     */
+    public static int WILDCARD_ASTERISK=201;
     /**
      * 不为null，而且不为空字符串
      */
@@ -91,6 +100,35 @@ public class SelectUtil {
     public SelectUtil addWhere(String where, Object obj){
 
         return addWhere(where,NONE,obj);
+    }
+
+    /**
+     * 拼装like sql语句
+     * @param where
+     * @param wildcard1 匹配类型。NONE表示无，WILDCARD_UNDERSCODE表示_，WILDCARD_ASTERISK表示*
+     * @param keyword
+     * @param wildcard2
+     * @return
+     */
+    public SelectUtil like(String where, int wildcard1,String keyword,int wildcard2){
+        if(keyword==null || "".equals(keyword)){
+            return this;
+        }else {
+            String keyword2=keyword;
+            if(wildcard1==WILDCARD_UNDERSCODE){
+                keyword2="_"+keyword2;
+            }
+            if(wildcard1==WILDCARD_ASTERISK){
+                keyword2="*"+keyword2;
+            }
+            if(wildcard2==WILDCARD_UNDERSCODE){
+                keyword2=keyword2+"_";
+            }
+            if(wildcard2==WILDCARD_ASTERISK){
+                keyword2=keyword2+"*";
+            }
+            return addWhere(where, keyword2);
+        }
     }
 
     /**
@@ -249,6 +287,12 @@ public class SelectUtil {
     }
 
     public static void main(String[] args) {
+        SelectUtil selectUtil=new SelectUtil("select * from store_order ");
+        String orderCode="";
+        selectUtil.like("and order_number like ?",WILDCARD_UNDERSCODE,orderCode,NONE);
+
+        System.out.println(selectUtil.toString());
+        System.out.println(Arrays.toString(selectUtil.getParameters()));
         /*
         String type="";
         String status="";
@@ -272,45 +316,45 @@ public class SelectUtil {
         sqlUtil.order(" order by status desc ,sort,id ");
         String select="select m.*,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text";
 */
-        String goodsId="11111";
-        String[] typeArray=new String[]{"1","2"};
-        String wm_type="3";
-        String key="mym";
-
-        String select=" select gm.id as gm_id,m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,ifnull(gm.net_num,0) as net_num ,ifnull(gm.gross_num,0) as gross_num,m.purchase_price as price,gm.total_price,ifnull(gm.sort,100000) as gm_sort,m.sort as m_sort ";
-        SelectUtil sqlUtil = new SelectUtil(select);
-        sqlUtil.append(" from material m left join ( select * from goods_material where goods_id=?) gm on m.id=gm.material_id ");
-        sqlUtil.addParameter(goodsId);
-        sqlUtil.addWhere(" and m.status=1 ");
-//            sqlUtil.addWhere(" and gm.goods_id=? ");
-        if(typeArray!=null && typeArray.length>0){
-            if(typeArray.length==1 && "".equals(typeArray[0])){//前台没有选择分类时，默认传进一个空字符串
-
-            }else {
-                sqlUtil.in("and m.type_2 in ", typeArray);
-            }
-        }
-        sqlUtil.addWhere(" and m.wm_type=?",SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING,wm_type);
-
-        if(org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
-            String key2 = key + "%";
-
-            sqlUtil.addWhere(" and (m.code like ? or m.name like ? or m.pinyin like ? )");
-            sqlUtil.addParameter(key2);
-            sqlUtil.addParameter(key2);
-            sqlUtil.addParameter(key2);
-        }
-
-        StringBuilder sql=sqlUtil.getSQL();
-        StringBuilder sql2=new StringBuilder("select * from (");
-        sql2.append(sql);
-        sql2.append(") as a");
-        sql2.append(" order by a.gm_sort,m_sort,a.a.id");
-
-
-
-        System.out.println(sql2.toString());
-        System.out.println(sqlUtil.getParameterList());
+//        String goodsId="11111";
+//        String[] typeArray=new String[]{"1","2"};
+//        String wm_type="3";
+//        String key="mym";
+//
+//        String select=" select gm.id as gm_id,m.id, m.yield_rate/100 as yield_rate,m.name as name,m.code,m.purchase_price,m.balance_price,(select name from material_type where id=m.type_1) as type_1_text,(select name from material_type where id=m.type_2) as type_2_text,case m.status when 1 then '启用' when 0 then '停用' end as status_text,(select name from wm_type where id=m.wm_type) as wm_type_text,(select name from goods_unit where id=m.unit) as goods_unit_text,ifnull(gm.net_num,0) as net_num ,ifnull(gm.gross_num,0) as gross_num,m.purchase_price as price,gm.total_price,ifnull(gm.sort,100000) as gm_sort,m.sort as m_sort ";
+//        SelectUtil sqlUtil = new SelectUtil(select);
+//        sqlUtil.append(" from material m left join ( select * from goods_material where goods_id=?) gm on m.id=gm.material_id ");
+//        sqlUtil.addParameter(goodsId);
+//        sqlUtil.addWhere(" and m.status=1 ");
+////            sqlUtil.addWhere(" and gm.goods_id=? ");
+//        if(typeArray!=null && typeArray.length>0){
+//            if(typeArray.length==1 && "".equals(typeArray[0])){//前台没有选择分类时，默认传进一个空字符串
+//
+//            }else {
+//                sqlUtil.in("and m.type_2 in ", typeArray);
+//            }
+//        }
+//        sqlUtil.addWhere(" and m.wm_type=?",SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING,wm_type);
+//
+//        if(org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
+//            String key2 = key + "%";
+//
+//            sqlUtil.addWhere(" and (m.code like ? or m.name like ? or m.pinyin like ? )");
+//            sqlUtil.addParameter(key2);
+//            sqlUtil.addParameter(key2);
+//            sqlUtil.addParameter(key2);
+//        }
+//
+//        StringBuilder sql=sqlUtil.getSQL();
+//        StringBuilder sql2=new StringBuilder("select * from (");
+//        sql2.append(sql);
+//        sql2.append(") as a");
+//        sql2.append(" order by a.gm_sort,m_sort,a.a.id");
+//
+//
+//
+//        System.out.println(sql2.toString());
+//        System.out.println(sqlUtil.getParameterList());
 
     }
 }
