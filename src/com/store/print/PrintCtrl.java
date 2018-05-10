@@ -4,6 +4,9 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import com.utils.PDFUtil;
+import com.utils.UserSessionUtil;
+import easy.util.DateTool;
+import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 
 import java.io.*;
@@ -32,7 +35,7 @@ public class PrintCtrl extends BaseCtrl {
         if(orderId == null || orderId.length() < 1){
             orderId = "b983b3ee8fee4ef2b11e502bedc911d7";
         }
-        Record dataRecord = Db.findFirst("SELECT so.arrive_date send_date, s.address send_address, s.name store_name, so.order_number order_num FROM store_order so, store s WHERE so.store_id=s.id and so.id=?", orderId);
+        Record dataRecord = Db.findFirst("SELECT so.arrive_date send_date, s.address send_address, s.name store_name, so.order_number order_num, so.status sostatus FROM store_order so, store s WHERE so.store_id=s.id and so.id=?", orderId);
         if(dataRecord == null){
             jhm.putCode(-1).putMessage("订单号有错误，请确认订单！");
             renderJson(jhm);
@@ -106,6 +109,7 @@ public class PrintCtrl extends BaseCtrl {
         try {
             pdfUtil.createPdf(content, this.getRequest().getSession().getServletContext().getRealPath("") + "/pdf/a.pdf");
             this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/a.pdf");
+            createPrintDetails(orderId, dataRecord);
 //            this.getRequest().getRequestDispatcher(getRequest().getContextPath()  + "/pdf/a.pdf");
         } catch (Exception e) {
             e.printStackTrace();
@@ -186,6 +190,23 @@ public class PrintCtrl extends BaseCtrl {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void createPrintDetails(String orderId, Record dataRecord){
+        List<Record> printDetailsList = Db.find("select * from print_details where order_id=? order by sort", orderId);
+        int sort = 1;
+        if(printDetailsList != null && printDetailsList.size() > 0){
+            sort += printDetailsList.get(printDetailsList.size() - 1).getInt("sort");
+        }
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        Record printDetails = new Record();
+        printDetails.set("id", UUIDTool.getUUID());
+        printDetails.set("order_id", orderId);
+        printDetails.set("print_date", DateTool.GetDateTime());
+        printDetails.set("sort", sort);
+        printDetails.set("creater_id", usu.getUserId());
+        printDetails.set("status", dataRecord.getStr("sostatus"));
+        Db.save("print_details", printDetails);
     }
 
 }

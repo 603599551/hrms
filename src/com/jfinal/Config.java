@@ -22,6 +22,7 @@ import com.ss.organization.controllers.StoreCtrl;
 import com.ss.stock.controllers.DailySummaryCtrl;
 import com.store.order.controllers.*;
 import com.store.print.PrintCtrl;
+import com.warehouse.controllers.StoreStockCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
 import com.warehouse.controllers.WarehouseStockMaterialTreeCtrl;
 
@@ -94,6 +95,8 @@ public class Config extends JFinalConfig {
 		//打印Ctrl
 		routes.add("/mgr/print/print", PrintCtrl.class);
 		routes.add("/mgr/warehouse/warehouseStockMaterialTree", WarehouseStockMaterialTreeCtrl.class);
+		//门店盘点
+		routes.add("/mgr/storeStock", StoreStockCtrl.class);
 
 	}
 
