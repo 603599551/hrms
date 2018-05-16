@@ -21,7 +21,7 @@ public class MaterialTypeService {
      * @param list
      * @return
      */
-    public List sort(List<Record> list){
+    public List<Map> sort(List<Record> list){
         this.list=new ArrayList<>(list);
         List<Map> reList=new ArrayList();
 
