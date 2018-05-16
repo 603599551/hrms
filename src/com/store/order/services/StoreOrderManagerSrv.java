@@ -3,6 +3,7 @@ package com.store.order.services;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bean.UserBean;
+import com.common.services.OrderNumberGenerator;
 import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
@@ -38,10 +39,11 @@ public class StoreOrderManagerSrv {
         JSONArray goodsArray=jsonObject.getJSONArray("list");
 
         String dateTime= DateTool.GetDateTime();
+        OrderNumberGenerator orderNumberGenerator = new OrderNumberGenerator();
 
         Record storeOrderR=new Record();
         storeOrderR.set("id",storeOrderUUID);
-        storeOrderR.set("order_number","");
+        storeOrderR.set("order_number",orderNumberGenerator.getStoreOrderNumber());
         storeOrderR.set("arrive_date",arriveDate);
         storeOrderR.set("want_date",wantDate);
         storeOrderR.set("create_time",dateTime);

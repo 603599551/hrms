@@ -1,5 +1,6 @@
 package com.store.order.services;
 
+import com.common.services.OrderNumberGenerator;
 import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ReturnGoodsService {
+
+    private OrderNumberGenerator orderNumberGenerator = new OrderNumberGenerator();
 
     @Before(Tx.class)
     public void addOrder(List<Record> saveList, UserSessionUtil usu, String returnTime){
@@ -108,7 +111,7 @@ public class ReturnGoodsService {
      * @return
      */
     private String createOrderNumber(){
-        return "00000";
+        return orderNumberGenerator.getReturnOrderNumber();
     }
 
 }
