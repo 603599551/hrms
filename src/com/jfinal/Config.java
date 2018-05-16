@@ -24,7 +24,7 @@ import com.store.order.controllers.*;
 import com.store.print.PrintCtrl;
 import com.warehouse.controllers.StoreStockCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
-import com.warehouse.controllers.WarehouseStockMaterialTreeCtrl;
+import com.logistics.order.controllers.WarehouseStockMaterialTreeCtrl;
 
 import java.io.File;
 

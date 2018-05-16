@@ -1,4 +1,4 @@
-package com.warehouse.controllers;
+package com.logistics.order.controllers;
 
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
@@ -14,15 +14,44 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 仓库库存原材料树
+ * 显示仓库库存原材料树
  */
 public class WarehouseStockMaterialTreeCtrl extends BaseCtrl{
+    /**
+     * 查询仓库库存原材料信息
+     *
+     * id: '原材料id-批号',
+     tid: '有值', // warehouse_out_order_material表的id。table 中用的，分类树给空串就行
+     label: '原材料名称(批号)',
+     search_text: '原材料名称-批号-拼音头', // 搜索条件
+     material_id: '原材料id',
+     name: '原材料名称',
+     code: '编号',
+     attribute_2: '规格',
+     unit_text: '单位',
+     want_num: '订货数量',
+     security_stock: '安存数量',
+     batch_code: '批号',
+     send_number: '出货数量',
+     warehouseStockNumber: '库存数量',
+     isEdit: true, // 三级树中加就行
+     warehouse_stock_id:''//库存（warehouse_stock）id
+     */
     public void index(){
         JsonHashMap jhm=new JsonHashMap();
+        /*
+        查询material_type原材料分类sql
+         */
         String sql="select id,parent_id,code,name as label from material_type order by sort,id";
-        String warehouseStockSql="select CONCAT(a.material_id,'-',batch_code) as id,'' as tid,a.material_id,a.code,a.name,CONCAT(a.name,'(',batch_code,')') as label,a.batch_code,a.number as warehouseStockNumber,(select name from goods_attribute where id=b.attribute_2) as attribute_2_text,(SELECT goods_unit.name FROM goods_unit WHERE id=b.unit) unit_text,0 as want_num,0 as send_number,CONCAT(a.name,'-',batch_code,'-',b.pinyin) as search_text,b.type_2 from warehouse_stock a left join material b on a.material_id=b.id order by a.material_id,a.batch_code,a.id";
+        /*
+        查询仓库库存原材料信息
+        material表的status字段为1
+         */
+        String warehouseStockSql="select a.warehouse_id,a.id as warehouse_stock_id,CONCAT(a.material_id,'-',batch_code) as id,'' as tid,a.material_id,a.code,a.name,CONCAT(a.name,'(',batch_code,')') as label,a.batch_code,a.number as warehouseStockNumber,(select name from goods_attribute where id=b.attribute_2) as attribute_2_text,(SELECT goods_unit.name FROM goods_unit WHERE id=b.unit) unit_text,0 as want_num,0 as send_number,CONCAT(a.name,'-',batch_code,'-',b.pinyin) as search_text,b.type_2 from warehouse_stock a left join material b on a.material_id=b.id where b.`status` =1 order by a.material_id,a.batch_code,a.id";
         try {
-
+            /*
+            查询分类并给分类加拼音
+             */
             List<Record> typeList = Db.find(sql);
             for(Record r:typeList){
                 String name=r.getStr("label");
