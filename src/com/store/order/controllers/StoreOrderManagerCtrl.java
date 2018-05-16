@@ -63,8 +63,6 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                     numberArr[i] = obj.getString("number");
                 }
             }
-            //TODO 测试数据
-            getSession().setAttribute("store_order_id", storeOrderUUID);
             jhm.putCode(1).put("arriveDate",arriveDate).put("wantDate",wantDate).put("id",storeOrderUUID);
         }catch (Exception e){
             e.printStackTrace();
@@ -106,6 +104,13 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
             }
         }
 
+        List<Record> stockList = Db.find("select * from store_stock where store_id=?", usu.getUserBean().get("store_id"));
+        Map<String, Record> stockMap = new HashMap<>();
+        if(stockList != null && stockList.size() > 0){
+            for(Record r : stockList){
+                stockMap.put(r.getStr("material_id"), r);
+            }
+        }
         DailySummaryService dailySummaryService = DailySummaryService.getMe();
         Map<String, Record> materialMap = new HashMap<>();
         List<Record> result = new ArrayList<>();
@@ -121,6 +126,7 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
             List<Record> goodsMaterialList = (List<Record>) goodsIdMap.get("materialList");
             for(Record r : goodsMaterialList){
                 Record materialR = materialMap.get(r.getStr("mid"));
+                Record stockR = stockMap.get(r.getStr("mid"));
                 if(materialR != null){
                     //TODO 暂时用r净料数量计算
                     materialR.set("actual_order", getInt(materialR.getDouble("actual_order") + r.getDouble("gmnet_num") * number));
@@ -132,8 +138,11 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                     materialR.set("code", r.getStr("mcode"));
                     materialR.set("unit_text", r.getStr("munit"));
                     materialR.set("actual_order", getInt(r.getDouble("gmnet_num") * number));
-                    //TODO 库存量暂时按照0算
-                    materialR.set("stock", 0);
+                    if(stockR != null){
+                        materialR.set("stock", stockR.getInt("number"));
+                    }else{
+                        materialR.set("stock", 0);
+                    }
                     materialR.set("nextOneNum", 0);
                     materialR.set("nextOneGetNum", 0);
                     materialR.set("nextTwoNum", 0);
