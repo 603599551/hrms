@@ -34,7 +34,7 @@ public class StoreOrderSrv {
             String status=storeOrderRecord.getStr("status");
             String orderNumber=storeOrderRecord.getStr("order_number");
             if("10".equals(status)){
-                jhm.putCode(0).putMessage("没有接收该订单，不能生成出库单！");
+                jhm.putCode(0).putMessage("请先接收该订单，然后生成出库单！");
                 return jhm;
             }
             if("30".equals(status)){

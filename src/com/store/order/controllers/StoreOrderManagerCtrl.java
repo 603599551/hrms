@@ -129,7 +129,8 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                 Record stockR = stockMap.get(r.getStr("mid"));
                 if(materialR != null){
                     //TODO 暂时用r净料数量计算
-                    materialR.set("actual_order", getDouble(materialR.getDouble("actual_order") + r.getDouble("gmnet_num") * number));
+                    double actual_order = new Double(String.format("%.2f", getDouble(materialR.getDouble("actual_order") + r.getDouble("gmnet_num") * number)));
+                    materialR.set("actual_order", actual_order);
                 }else{
                     materialR = new Record();
                     materialMap.put(r.getStr("mid"), materialR);
@@ -137,7 +138,8 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                     materialR.set("name", r.getStr("mname"));
                     materialR.set("code", r.getStr("mcode"));
                     materialR.set("unit_text", r.getStr("munit"));
-                    materialR.set("actual_order", getDouble(r.getDouble("gmnet_num") * number));
+                    double actual_order = new Double(String.format("%.2f", getDouble(r.getDouble("gmnet_num") * number)));
+                    materialR.set("actual_order", actual_order);
                     if(stockR != null){
                         materialR.set("stock", stockR.getInt("number"));
                     }else{
@@ -171,7 +173,6 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                 Record saveR = materialAllMap.get(r.getStr("id"));
                 String id = UUIDTool.getUUID();
                 saveR.set("id", id);
-                //TODO 这个是将store_order_material表主键数据传给前台，用于用户修改want_num用
                 r.set("stroe_order_material_id", id);
                 saveR.set("store_order_id", orderId);
                 saveR.set("store_id", usu.getUserBean().get("store_id"));
