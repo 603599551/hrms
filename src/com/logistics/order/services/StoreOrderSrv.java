@@ -20,6 +20,9 @@ public class StoreOrderSrv {
     /**
      * 生成出库单
      * 要根据原材料所在仓库，分别生成出库单
+     *
+     * 生成记录保存在store_order表，store_order_material表
+     * 不向warehouse_out_order_material_detail插入记录
      */
     @Before(Tx.class)
     public JsonHashMap buildOutWarehouse(String storeOrderId,UserSessionUtil usu) throws Exception{
@@ -57,10 +60,14 @@ public class StoreOrderSrv {
             查询门店订单表（原材料明细表）
              */
 //            String sql="select a.store_id,a.material_id,a.code,a.name,a.want_num,b.warehouse_id,b.batch_code,b.number as warehouse_stock_num from store_order_material a left join warehouse_stock b on a.material_id=b.material_id where store_order_id=? order by sort";
-            String sql="select a.store_id,a.material_id,a.code,a.name,a.want_num,b.id as warehouse_stock_id,b.warehouse_id from store_order_material a left join warehouse_stock b on a.material_id=b.material_id where store_order_id=? order by sort";
+            /*
+             * 库存表warehouse_stock，同一原材料有不同的批号，所以此sql语句要根据material_id过滤重复的记录
+             */
+            String sql="select a.store_id,a.material_id,a.code,a.name,a.want_num,b.id as warehouse_stock_id,b.warehouse_id from store_order_material a left join (select * from warehouse_stock group by material_id )  b on a.material_id=b.material_id where store_order_id=? order by sort";
             List<Record> list=Db.find(sql,storeOrderId);
             Map resultMap= process(storeOrderRecord,list);
 
+            Db.update("update store_order set status=? where id=?","30",storeOrderId);
             jhm.putCode(1).putMessage("生成成功！");
         }catch (Exception e){
             throw e;
@@ -84,7 +91,7 @@ public class StoreOrderSrv {
         for(Record r:recordList){
             String materialId=r.getStr("material_id");
             Object warehouse_stock_id=r.get("warehouse_stock_id");//库存数量
-            storeId=r.get("store_id");//库存数量
+            storeId=r.get("store_id");//门店
             if(warehouse_stock_id==null){//库存中没有该原材料
 
             }else{
@@ -152,6 +159,45 @@ public class StoreOrderSrv {
      * @param warehouseIdList
      * @param warehouseOutOrderMaterialListMap
      */
+//    private void doSave(Record storeOrderRecord,List<String> warehouseIdList,Map<String,List<Record>> warehouseOutOrderMaterialListMap){
+//        String datetime= DateTool.GetDateTime();
+//        String storeOrderId=storeOrderRecord.getStr("id");
+//        String storeId=storeOrderRecord.getStr("store_id");
+//        String storeOrderNumber=storeOrderRecord.getStr("order_number");
+//        String city=storeOrderRecord.getStr("city");
+//        String type=storeOrderRecord.getStr("type");
+//        for(String warehouseId :warehouseIdList){
+//            String warehouseOutOrderUUID=UUIDTool.getUUID();
+//            String outOrderNumber=buildOrderNumber(warehouseId);
+//
+//            Record warehouseOutOrderR=new Record();
+//            warehouseOutOrderR.set("id",warehouseOutOrderUUID);
+//            warehouseOutOrderR.set("store_id",storeId);
+//            warehouseOutOrderR.set("warehouse_id",warehouseId);
+//            warehouseOutOrderR.set("order_number",outOrderNumber);
+//            warehouseOutOrderR.set("out_time",datetime);
+//            warehouseOutOrderR.set("store_order_id",storeOrderId);
+//            warehouseOutOrderR.set("store_order_number",storeOrderNumber);
+//            warehouseOutOrderR.set("city",city);
+//            warehouseOutOrderR.set("creater_id",usu.getUserId());
+//            warehouseOutOrderR.set("create_time",datetime);
+//            warehouseOutOrderR.set("status",10);//出库单状态：新建
+//            warehouseOutOrderR.set("type",type);
+//            /*
+//            保存出库订单
+//             */
+//            Db.save("warehouse_out_order",warehouseOutOrderR);
+//
+//            /*
+//            保存出库订单明细表（原材料）
+//             */
+//            List<Record> warehouseOutOrderMaterialList=(List<Record>)warehouseOutOrderMaterialListMap.get(warehouseId);
+//            for(Record warehouseOutOrderMaterialR:warehouseOutOrderMaterialList){
+//                warehouseOutOrderMaterialR.set("warehouse_out_order_id",warehouseOutOrderUUID);
+//                Db.save("warehouse_out_order_material",warehouseOutOrderMaterialR);
+//            }
+//        }
+//    }
     private void doSave(Record storeOrderRecord,List<String> warehouseIdList,Map<String,List<Record>> warehouseOutOrderMaterialListMap){
         String datetime= DateTool.GetDateTime();
         String storeOrderId=storeOrderRecord.getStr("id");
@@ -159,6 +205,9 @@ public class StoreOrderSrv {
         String storeOrderNumber=storeOrderRecord.getStr("order_number");
         String city=storeOrderRecord.getStr("city");
         String type=storeOrderRecord.getStr("type");
+
+        List<Record> saveWarehouseOutOrderList=new ArrayList();
+        List<Record> saveWarehouseOutOrderMaterialList=new ArrayList();
         for(String warehouseId :warehouseIdList){
             String warehouseOutOrderUUID=UUIDTool.getUUID();
             String outOrderNumber=buildOrderNumber(warehouseId);
@@ -179,17 +228,22 @@ public class StoreOrderSrv {
             /*
             保存出库订单
              */
-            Db.save("warehouse_out_order",warehouseOutOrderR);
-
+//            Db.save("warehouse_out_order",warehouseOutOrderR);
+            saveWarehouseOutOrderList.add(warehouseOutOrderR);
             /*
             保存出库订单明细表（原材料）
              */
             List<Record> warehouseOutOrderMaterialList=(List<Record>)warehouseOutOrderMaterialListMap.get(warehouseId);
             for(Record warehouseOutOrderMaterialR:warehouseOutOrderMaterialList){
                 warehouseOutOrderMaterialR.set("warehouse_out_order_id",warehouseOutOrderUUID);
-                Db.save("warehouse_out_order_material",warehouseOutOrderMaterialR);
+//                Db.save("warehouse_out_order_material",warehouseOutOrderMaterialR);
+                saveWarehouseOutOrderMaterialList.add(warehouseOutOrderMaterialR);
             }
         }
+
+        Db.batchSave("warehouse_out_order",saveWarehouseOutOrderList,50);
+        Db.batchSave("warehouse_out_order_material",saveWarehouseOutOrderMaterialList,50);
+
     }
     private String buildOrderNumber(String warehouseId){
         OrderNumberGenerator service=new OrderNumberGenerator();

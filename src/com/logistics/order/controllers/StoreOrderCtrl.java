@@ -90,6 +90,23 @@ public class StoreOrderCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         String datetime=DateTool.GetDateTime();
         try {
+            Record r=Db.findFirst("select * from store_order where id=?",id);
+            if(r==null){
+                jhm.putCode(0).putMessage("查无此订单！");
+                renderJson(jhm);
+                return;
+            }else{
+                String status=r.getStr("status");
+                if("20".equals(status)){
+                    jhm.putCode(0).putMessage("已经接收订单！");
+                    renderJson(jhm);
+                    return;
+                }else if("30".equals(status)){
+                    jhm.putCode(0).putMessage("已经生成出库单！");
+                    renderJson(jhm);
+                    return;
+                }
+            }
             int i=Db.update("update store_order set status=?,accepter_id=?,accept_time=? where id=?", 20, usu.getUserId(),datetime,id);
             if(i>0) {
                 jhm.putCode(1).putMessage("接收成功！");
