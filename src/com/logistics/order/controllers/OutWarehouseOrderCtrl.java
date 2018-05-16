@@ -1,14 +1,19 @@
 package com.logistics.order.controllers;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.logistics.order.services.OutWarehouseOrderSrv;
+import com.logistics.order.services.StoreOrderSrv;
 import com.ss.controllers.BaseCtrl;
+import com.utils.RequestTool;
 import com.utils.SelectUtil;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物流出库单
@@ -25,7 +30,7 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
         String warehouseId=getPara("warehouseId");
 
         JsonHashMap jhm=new JsonHashMap();
-        String sql="select id,order_number,(select name from store where store.id=warehouse_out_order.store_id) as store_text ,(select name from warehouse where warehouse.id=warehouse_out_order.warehouse_id) as warehourse_text ,out_time,status,case status when '10' then '新建' when '20' then '出库' end as status_text from warehouse_out_order";
+        String sql="select id,order_number,(select name from store where store.id=warehouse_out_order.store_id) as store_text ,(select name from warehouse where warehouse.id=warehouse_out_order.warehouse_id) as warehourse_text ,out_time,status,case status when '10' then '新建' when '20' then '保存' when '30' then '出库' when '40' then '完成'  end as status_text from warehouse_out_order";
         try{
             SelectUtil selectSQL=new SelectUtil(sql);
             if(StringUtils.isNotEmpty(orderNum)) {
@@ -34,6 +39,9 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
             selectSQL.addWhere(" and substr(out_time,1,10)=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,outDate);
             selectSQL.addWhere(" and store_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,storeId);
             selectSQL.addWhere(" and warehouse_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,warehouseId);
+            selectSQL.in("and status in ",new Object[]{"10","20"});
+            //@todo 下面代码为debug模式，调试成功后，必须注释下面代码，放开上面代码 author:mym
+//            selectSQL.in("and status in ",new Object[]{"10","20","30","40"});
             selectSQL.order(" order by out_time");
             String sqlAll=selectSQL.toString();
             List<Record> list=Db.find(sqlAll,selectSQL.getParameters());
@@ -52,7 +60,7 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
         String id=getPara("id");
         JsonHashMap jhm=new JsonHashMap();
         try {
-            OutWarehouseOrderSrv service = new OutWarehouseOrderSrv();
+            OutWarehouseOrderSrv service = enhance(OutWarehouseOrderSrv.class);
             List list = service.showDetailsById(id);
             jhm.putCode(1).put("list", list);
         }catch (Exception e){
@@ -67,13 +75,39 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
      * 保存出库单中的物料出库数量
      */
     public void save(){
-
+        JsonHashMap jhm=new JsonHashMap();
+        try {
+            JSONObject json=RequestTool.getJson(getRequest());
+            String id=json.getString("id");
+            JSONArray array=json.getJSONArray("list");
+            if(array==null || array.isEmpty()){
+                jhm.putCode(0).putMessage("传入list数据为空！");
+            }else {
+                OutWarehouseOrderSrv service = enhance(OutWarehouseOrderSrv.class);
+                jhm = service.save(id, array);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jhm);
     }
     /**
      * 保存出库单中的物料出库数，并出库
      */
     public void out(){
-
+        JsonHashMap jhm=new JsonHashMap();
+        try {
+            JSONObject json=RequestTool.getJson(getRequest());
+            String id=json.getString("id");
+            JSONArray array=json.getJSONArray("list");
+            OutWarehouseOrderSrv service = enhance(OutWarehouseOrderSrv.class);
+            jhm=service.out(id,array);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jhm);
     }
 
     /**
@@ -94,7 +128,7 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
     /**
      * 显示打印历史信息
      */
-    public void showPrintHistory(){
+    public void showPrintHistoryList(){
 
     }
 }
