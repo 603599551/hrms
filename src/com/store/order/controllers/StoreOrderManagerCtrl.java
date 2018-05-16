@@ -129,7 +129,7 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                 Record stockR = stockMap.get(r.getStr("mid"));
                 if(materialR != null){
                     //TODO 暂时用r净料数量计算
-                    materialR.set("actual_order", getInt(materialR.getDouble("actual_order") + r.getDouble("gmnet_num") * number));
+                    materialR.set("actual_order", getDouble(materialR.getDouble("actual_order") + r.getDouble("gmnet_num") * number));
                 }else{
                     materialR = new Record();
                     materialMap.put(r.getStr("mid"), materialR);
@@ -137,7 +137,7 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                     materialR.set("name", r.getStr("mname"));
                     materialR.set("code", r.getStr("mcode"));
                     materialR.set("unit_text", r.getStr("munit"));
-                    materialR.set("actual_order", getInt(r.getDouble("gmnet_num") * number));
+                    materialR.set("actual_order", getDouble(r.getDouble("gmnet_num") * number));
                     if(stockR != null){
                         materialR.set("stock", stockR.getInt("number"));
                     }else{
@@ -149,8 +149,9 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                     materialR.set("nextTwoGetNum", 0);
                     result.add(materialR);
                 }
-                int actualOrder = getInt(materialR.get("nextOneGetNum")) + getInt(materialR.get("nextTwoGetNum")) + getInt(materialR.get("stock")) - getInt(materialR.get("nextOneNum")) - getInt(materialR.get("nextTwoNum"));
-                actualOrder = getInt(materialR.get("actual_order")) - actualOrder;
+                double actualOrder = getDouble(materialR.get("nextOneGetNum")) + getDouble(materialR.get("nextTwoGetNum")) + getDouble(materialR.get("stock")) - getDouble(materialR.get("nextOneNum")) - getDouble(materialR.get("nextTwoNum"));
+                //actualOrder = Math.ceil(actualOrder);
+                actualOrder = Math.ceil(getDouble(materialR.get("actual_order")) - actualOrder);
                 materialR.set("number", actualOrder);
             }
         }
@@ -178,8 +179,8 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                 saveR.set("use_num", r.getStr("number"));
                 saveR.set("send_num", 0);
                 saveR.set("status", 10);
-                saveR.set("type", "day");
-                saveR.set("city", usu.getUserBean().get("city"));
+                //saveR.set("type", "day");
+                //saveR.set("city", usu.getUserBean().get("city"));
                 saveR.set("want_num", r.getStr("number"));
                 saveR.set("next1_order_num", r.getStr("nextOneNum"));
                 saveR.set("next2_order_num", r.getStr("nextTwoNum"));
@@ -190,10 +191,14 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                 saveR.remove("modify_time");
                 saveR.remove("desc");
                 saveR.remove("unitname");
+                saveR.remove("storage_condition");
+                saveR.remove("type");
+                saveR.remove("city");
+                saveR.remove("shelf_life");
                 saveList.add(saveR);
             }
         }
-        Db.batchSave("store_order_material_temporary", saveList, saveList.size());
+        Db.batchSave("store_order_material", saveList, saveList.size());
         //3
         //2
         Date wantDate = sdf.parse(wantDateStr);
@@ -295,8 +300,10 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
                             剩余总量 = 明天到货量 + 后天到货量 + 库存量 - 明天预计消耗量 - 后天预计消耗量
                             总需求量从前台传入
                  */
-                int actualOrder = getInt(materialR.get("nextOneGetNum")) + getInt(materialR.get("nextTwoGetNum")) + getInt(materialR.get("stock")) - getInt(materialR.get("nextOneNum")) - getInt(materialR.get("nextTwoNum"));
-                actualOrder = getInt(materialR.get("actual_order")) - actualOrder;
+                //int actualOrder = getInt(materialR.get("nextOneGetNum")) + getInt(materialR.get("nextTwoGetNum")) + getInt(materialR.get("stock")) - getInt(materialR.get("nextOneNum")) - getInt(materialR.get("nextTwoNum"));
+                //actualOrder = getInt(materialR.get("actual_order")) - actualOrder;
+                double actualOrder = getDouble(materialR.get("nextOneGetNum")) + getDouble(materialR.get("nextTwoGetNum")) + getDouble(materialR.get("stock")) - getDouble(materialR.get("nextOneNum")) - getDouble(materialR.get("nextTwoNum"));
+                actualOrder = Math.ceil(getDouble(materialR.get("actual_order")) - actualOrder);
                 materialR.set("number", actualOrder);
             }
         }
@@ -309,7 +316,26 @@ public class StoreOrderManagerCtrl extends BaseCtrl{
      * @param obj
      * @return
      */
-    private int getInt(Object obj){
+    private double getDouble(Object obj){
+        if(obj != null && obj.toString().trim().length() > 0 && !"null".equalsIgnoreCase(obj.toString())){
+            if(obj instanceof Double){
+                double result = new Double(obj.toString());
+                return result;
+            }else if(obj instanceof Integer){
+                return new Double(obj.toString());
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * 将obj转化成int类型
+     *      如果为空返回0
+     *      如果是double类型，将double转化成int
+     * @param obj
+     * @return
+     */
+    private int getInts(Object obj){
         if(obj != null && obj.toString().trim().length() > 0 && !"null".equalsIgnoreCase(obj.toString())){
             if(obj instanceof Double){
                 double result = new Double(obj.toString());

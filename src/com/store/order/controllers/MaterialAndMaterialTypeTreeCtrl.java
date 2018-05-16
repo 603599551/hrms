@@ -9,10 +9,7 @@ import com.utils.Constants;
 import utils.bean.JsonHashMap;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Constants {
 
@@ -35,12 +32,27 @@ public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Consta
             String paramDateOne = sdf.format(new Date(wantDate.getTime() + ONE_DAY_TIME));
             String paramDateTwo = sdf.format(new Date(wantDate.getTime() + ONE_DAY_TIME * 2));
 
+            String sql = "select som.* from store_order so, store_order_material som where so.id=som.store_order_id and arrive_date=? ";
+            List<Record> oneList = Db.find(sql, paramDateOne);
+            List<Record> twoList = Db.find(sql, paramDateTwo);
+            Map<String, Record> oneMap = new HashMap<>();
+            Map<String, Record> twoMap = new HashMap<>();
+            if(oneList != null && oneList.size() > 0){
+                for(Record r : oneList){
+                    oneMap.put(r.getStr("material_id"), r);
+                }
+            }
+            if(twoList != null && twoList.size() > 0){
+                for(Record r : twoList){
+                    twoMap.put(r.getStr("material_id"), r);
+                }
+            }
+
             if (materialList != null && materialList.size() > 0) {
                 for (Record r : materialList) {
                     //整理昨天和前天的数据
-                    String sql = "select som.* from store_order so, store_order_material som where so.id=som.store_order_id and arrive_date=? and som.material_id=? ";
-                    Record one = Db.findFirst(sql, paramDateOne, r.getStr("id"));
-                    Record two = Db.findFirst(sql, paramDateTwo, r.getStr("id"));
+                    Record one = oneMap.get(r.getStr("id"));
+                    Record two = twoMap.get(r.getStr("id"));
                     r.set("isEdit", true);
                     r.set("actual_order", "0");
                     r.set("stock", "0");
