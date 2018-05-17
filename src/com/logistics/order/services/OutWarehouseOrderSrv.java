@@ -410,16 +410,16 @@ public class OutWarehouseOrderSrv {
             jhm.putCode(0).putMessage("无此订单记录！");
             return jhm;
         }else{
-            //@todo 下面代码为debug模式，调试成功后，必须注释下面代码 author:mym
+            // 下面代码为debug模式，调试成功后，必须取消注释下面代码 author:mym
             String status=r.getStr("status");
-//            if("30".equals(status)){
-//                jhm.putCode(0).putMessage("此订单已经出库，不能再次修改！");
-//                return jhm;
-//            }
-//            if("40".equals(status)){
-//                jhm.putCode(0).putMessage("此订单已经完成，不能再次修改！");
-//                return jhm;
-//            }
+            if("30".equals(status)){
+                jhm.putCode(0).putMessage("此订单已经出库，不能再次修改！");
+                return jhm;
+            }
+            if("40".equals(status)){
+                jhm.putCode(0).putMessage("此订单已经完成，不能再次修改！");
+                return jhm;
+            }
         }
 //        Map<String,Integer> warehouseOutOrderMaterialMap=new HashMap();
         List<WarehouseOutOrderMaterialDetailBean> warehouseOutOrderMaterialDetailBeanList =new ArrayList<>();
@@ -599,17 +599,17 @@ public class OutWarehouseOrderSrv {
             jhm.putCode(0).putMessage("无此订单记录！");
             return jhm;
         }else{
-            //@todo 下面代码为校验代码，为了debug调试，所以注释掉，调试成功后，必须取消注释下面代码 author:mym
-//            String status=r.getStr("status");
-//            storeOrderId=r.getStr("store_order_id");
-//            if("30".equals(status)){
-//                jhm.putCode(0).putMessage("此订单已经出库，不能再次出库！");
-//                return jhm;
-//            }
-//            if("40".equals(status)){
-//                jhm.putCode(0).putMessage("此订单已经完成，不能再次出库！");
-//                return jhm;
-//            }
+            // 下面代码为校验代码，为了debug调试，所以注释掉，调试成功后，必须取消注释下面代码 author:mym
+            String status=r.getStr("status");
+            storeOrderId=r.getStr("store_order_id");
+            if("30".equals(status)){
+                jhm.putCode(0).putMessage("此订单已经出库，不能再次出库！");
+                return jhm;
+            }
+            if("40".equals(status)){
+                jhm.putCode(0).putMessage("此订单已经完成，不能再次出库！");
+                return jhm;
+            }
         }
         String store_order_id=r.getStr("store_order_id");
         List<WarehouseOutOrderMaterialDetailBean> warehouseOutOrderMaterialDetailBeanList =new ArrayList<>();

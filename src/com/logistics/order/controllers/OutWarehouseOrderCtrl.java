@@ -40,7 +40,7 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
             selectSQL.addWhere(" and store_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,storeId);
             selectSQL.addWhere(" and warehouse_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,warehouseId);
             selectSQL.in("and status in ",new Object[]{"10","20"});
-            //@todo 下面代码为debug模式，调试成功后，必须注释下面代码，放开上面代码 author:mym
+            // 下面代码为debug模式，调试成功后，必须注释下面代码，放开上面代码 author:mym
 //            selectSQL.in("and status in ",new Object[]{"10","20","30","40"});
             selectSQL.order(" order by out_time");
             String sqlAll=selectSQL.toString();

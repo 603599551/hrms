@@ -1,5 +1,6 @@
 package com.logistics.order.services;
 
+import com.common.services.OrderNumberGenerator;
 import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
@@ -173,7 +174,7 @@ public class StoreOrderSrv {
             warehouseOutOrderR.set("city",city);
             warehouseOutOrderR.set("creater_id",usu.getUserId());
             warehouseOutOrderR.set("create_time",datetime);
-            warehouseOutOrderR.set("status",20);
+            warehouseOutOrderR.set("status",10);//出库单状态：新建
             warehouseOutOrderR.set("type",type);
             /*
             保存出库订单
@@ -191,6 +192,7 @@ public class StoreOrderSrv {
         }
     }
     private String buildOrderNumber(String warehouseId){
-        return "待生成";
+        OrderNumberGenerator service=new OrderNumberGenerator();
+        return service.getOutWarehouseOrderNumber();
     }
 }
