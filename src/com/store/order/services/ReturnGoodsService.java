@@ -99,6 +99,10 @@ public class ReturnGoodsService {
         }
     }
 
+    public void finishOrder(){
+
+    }
+
     /**
      * 生成订单编号的方法，暂时没有确定规律，以后统一按照规律生成
      * @return
