@@ -4,9 +4,6 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import easy.util.DateTool;
-import easy.util.UUIDTool;
-
-import java.util.Date;
 
 /**
  * 生成订单编号的公共类
@@ -17,9 +14,13 @@ public class OrderNumberGenerator extends BaseCtrl{
      */
     static final int LENGTH=4;
     /**
-     * 出库
+     * 仓库出库订单类型
      */
-    static final String TYPE_CK="ck";
+    static final String TYPE_CK="CK";
+    /**
+     * 门店采购订单类型
+     */
+    static final String TYPE_CD="CD";
     /**
      * 生成出库单号
      * @return
@@ -49,6 +50,39 @@ public class OrderNumberGenerator extends BaseCtrl{
             Db.save("order_number",saveR);
 
             reStr=getNumber(TYPE_CK,date,LENGTH,1);
+        }
+        return reStr.replace("-","");
+    }
+
+    /**
+     * 生成门店订单号
+     * @return
+     */
+    public synchronized String getStoreOrderNumber(){
+        String reStr="";
+        String date= DateTool.GetDate();
+        Record r=Db.findFirst("select * from order_number where type=?",TYPE_CD);
+        if(r!=null){//如果有记录就继续判断
+            String dateInR=r.getStr("date");
+            if(date.equals(dateInR)){//如果日期相同
+                int number=r.getInt("number");
+                number++;
+                reStr=getNumber(TYPE_CD,date,LENGTH,number);
+                Db.update("update order_number set number=? where type=?",number,TYPE_CD);
+            }else{//如果数据库中的日期不是当前系统日期
+                Db.update("update order_number set date=?,number=? where type=?",date,1,TYPE_CD);
+                reStr=getNumber(TYPE_CD,date,LENGTH,1);
+            }
+        }else{//如果没有记录就添加记录
+            Record saveR=new Record();
+            saveR.set("date",date);
+            saveR.set("type",TYPE_CD);
+            saveR.set("number",1);
+            saveR.set("remark","门店采购订单号");
+
+            Db.save("order_number",saveR);
+
+            reStr=getNumber(TYPE_CD,date,LENGTH,1);
         }
         return reStr.replace("-","");
     }
