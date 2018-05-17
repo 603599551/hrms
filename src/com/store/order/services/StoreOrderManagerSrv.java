@@ -157,8 +157,8 @@ public class StoreOrderManagerSrv {
                     saveR.set("use_num", json.getString("number"));
                     saveR.set("send_num", json.getString("number"));
                     saveR.set("status", 10);
-                    saveR.set("type", "day");
-                    saveR.set("city", usu.getUserBean().get("city"));
+                    //saveR.set("type", "day");
+                    //saveR.set("city", usu.getUserBean().get("city"));
                     saveR.set("want_num", json.getString("number"));
                     saveR.set("next1_order_num", json.getString("nextOneNum"));
                     saveR.set("next2_order_num", json.getString("nextTwoNum"));
@@ -169,6 +169,8 @@ public class StoreOrderManagerSrv {
                     saveR.remove("modify_time");
                     saveR.remove("desc");
                     saveR.remove("unitname");
+                    saveR.remove("storage_condition");
+                    saveR.remove("shelf_life");
                     saveList.add(saveR);
                 }
             }

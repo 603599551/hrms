@@ -102,8 +102,12 @@ public class ReturnGoodsService {
         }
     }
 
-    public void finishOrder(){
-
+    @Before(Tx.class)
+    public void finishOrder(String orderId){
+        Record order = Db.findById("select * from return_order where id=?", orderId);
+        order.set("status", 3);
+        Db.update("return_order", order);
+        //TODO 修改物流库存信息和门店库存信息
     }
 
     /**

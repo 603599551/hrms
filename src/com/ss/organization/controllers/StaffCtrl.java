@@ -242,7 +242,7 @@ public class StaffCtrl extends Controller{
         List paraList=new ArrayList();
         if(keyword!=null && !"".equals(keyword)){
             keyword = keyword + "%";
-            whereEx.append(" and (phone like ? or name like ? or pinyin like ? )");
+            whereEx.append(" and (phone like ? or s.name like ? or pinyin like ? )");
             paraList.add(keyword);
             paraList.add(keyword);
             paraList.add(keyword);
@@ -265,7 +265,7 @@ public class StaffCtrl extends Controller{
         处理select部分
          */
             String select = "select s.id,s.name,case gender when 0 then '女' when 1 then '男' end as gender_text,phone,dept.name as dept_text,(select name from job where id=s.job) as job_text  ";
-            whereEx.append(" order by create_time desc ,id");
+            whereEx.append(" order by create_time desc ,s.id");
             if(Config.devMode){
                 System.out.println(whereEx);
                 System.out.println(paraList);

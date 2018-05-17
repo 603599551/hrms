@@ -17,6 +17,7 @@ import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 
+import java.text.ParseException;
 import java.util.*;
 
 public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
@@ -78,7 +79,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         JsonHashMap jhm = new JsonHashMap();
         UserSessionUtil usu = new UserSessionUtil(this.getRequest());
         Page<Record> orderList = null;
-        String status = getPara("status");
+        String status = getPara("state");
         String orderId = getPara("orderCode");
 
         String sql = " from return_order ro, dictionary d, store s where s.id=ro.store_id and d.value=ro.status and d.parent_id=500 ";
@@ -133,23 +134,62 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
     /**
      * 物流显示退货单详情，当status=2（已接收）可以修改原料数据
      */
-    public void showDetailByOrderIdAndLogistics(){
+    public void showDetailByOrderIdAndLogistics() throws ParseException {
         String orderId = getPara("orderId");
+        //warehouse_stock  batch_code
+        String today = DateTool.GetDate();
+        String one_year_before = sdf.format(new Date(sdf.parse(today).getTime() - ONE_YEAR_TIME));
+        List<Record> batchCodeMaterialList = Db.find("select * from warehouse_stock where create_time between ? and ?", one_year_before, today);
+        Map<String, List<Record>> batchCodeMaterialMap = new HashMap<>();
+        if(batchCodeMaterialList != null && batchCodeMaterialList.size() > 0){
+            for(Record r : batchCodeMaterialList){
+                List<Record> list = batchCodeMaterialMap.get(r.getStr("material_id"));
+                if(list == null){
+                    list = new ArrayList<>();
+                    batchCodeMaterialMap.put(r.getStr("material_id"), list);
+                }
+                Record listR = new Record();
+                listR.set("id", r.getStr("batch_code"));
+                listR.set("name", r.getStr("batch_code"));
+                list.add(listR);
+            }
+        }
+        /*
+        订单编号，门店名称，原料名称，规格，数量，单位，批号，原因
+return_order_id，store_name，name，attribute2_text，number，unit_text，batch_code，reason
+         */
         List<Record> materialOrderList = Db.find("select rom.*, ro.status rostatus, (select name from goods_unit gu where gu.id=rom.unit) unit_text from return_order_material rom, return_order ro where rom.return_order_id=ro.id and return_order_id=? order by sort", orderId);
+        boolean isRecive = false;
+        boolean isFinish = false;
         if(materialOrderList != null && materialOrderList.size() > 0){
             for(Record r : materialOrderList){
+                if("1".equals(r.getStr("rostatus"))){
+                    isRecive = true;
+                }
                 if("2".equals(r.getStr("rostatus"))){
-                    r.set("isEdit", true);
-                }else{
-                    r.set("isEdit", false);
+                    isFinish = true;
                 }
                 r.set("id", r.getStr("material_id"));
                 r.set("number", r.getInt("return_num"));
                 r.set("remark", r.getStr("reason"));
+                List<Record> list = batchCodeMaterialMap.get(r.getStr("material_id"));
+                if(list == null){
+                    List<Record> batchCodeMaterialByIdList = Db.find("select * from warehouse_stock where material_id=?", r.getStr("material_id"));
+                    list = new ArrayList<>();
+                    if(batchCodeMaterialByIdList != null && batchCodeMaterialByIdList.size() > 0){
+                        for(Record mbiR : batchCodeMaterialByIdList){
+                            Record listR = new Record();
+                            listR.set("id", mbiR.getStr("batch_code"));
+                            listR.set("name", mbiR.getStr("batch_code"));
+                            list.add(listR);
+                        }
+                    }
+                }
+                r.set("batch_code", list);
             }
         }
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("materialOrderList", materialOrderList);
+        jhm.put("materialOrderList", materialOrderList).put("isRecive", isRecive).put("isFinish", isFinish);
         renderJson(jhm);
     }
 
@@ -230,6 +270,8 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         renderJson(jhm);
     }
 
+
+
     /**
      * 接收退货单
      */
@@ -247,9 +289,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
      */
     public void finishOrder(){
         String orderId = getPara("orderId");
-        Record order = Db.findById("select * from return_order where id=?", orderId);
-        order.set("status", 3);
-        Db.update("return_order", order);
+        returnGoodsService.finishOrder(orderId);
         JsonHashMap jhm = new JsonHashMap();
         jhm.putMessage("完成退货单！");
         renderJson(jhm);
