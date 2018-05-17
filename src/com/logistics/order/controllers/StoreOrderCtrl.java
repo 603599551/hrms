@@ -1,14 +1,10 @@
 package com.logistics.order.controllers;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.logistics.order.services.StoreOrderSrv;
 import com.ss.controllers.BaseCtrl;
-import com.store.order.services.StoreOrderManagerSrv;
-import com.utils.RequestTool;
 import com.utils.SQLUtil;
 import com.utils.SelectUtil;
 import com.utils.UserSessionUtil;
@@ -18,9 +14,7 @@ import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 物流接收门店订单
@@ -142,7 +136,7 @@ public class StoreOrderCtrl extends BaseCtrl {
         String sql="select *,(select name from store where store.id=store_order.store_id) as store_text,substr(create_time,1,16) as create_time_short from store_order where id=?";
         try{
             Record r=Db.findFirst(sql,id);
-            List<Record> list=Db.find("select *,(select name from goods_unit where goods_unit.id=store_order_material.unit) as unit_text from store_order_material where store_order_id=? order by sort ",id);
+            List<Record> list=Db.find("select *,(select name from goods_unit where goods_unit.id=store_order_material.unit) as unit_text,(select name from goods_attribute where store_order_material.attribute_2=goods_attribute.id) as attribute_2_text from store_order_material where store_order_id=? order by sort ",id);
             jsonHashMap.putCode(1).put("order",r).put("orderDetailsList",list);
         }catch (Exception e){
             e.printStackTrace();
