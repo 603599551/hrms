@@ -1,4 +1,4 @@
-package com.warehouse.controllers;
+package com.store.order.controllers;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
