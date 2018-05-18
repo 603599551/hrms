@@ -1,5 +1,7 @@
 package com.store.order.services;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.services.OrderNumberGenerator;
 import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
@@ -61,7 +63,41 @@ public class ReturnGoodsService {
     }
 
     @Before(Tx.class)
-    public void doReturn(Record order, UserSessionUtil usu) throws Exception{
+    public void doReturn(JSONObject jsonObject) throws Exception{
+        String returnOrderId = jsonObject.getString("id");
+        JSONArray jsonArray = jsonObject.getJSONArray("list");
+        List<Record> returnOrderMaterialList = Db.find("select * from return_order_material where return_order_id=?", returnOrderId);
+        Map<String, Record> returnOrderMaterialMap = new HashMap<>();
+        if(returnOrderMaterialList != null && returnOrderMaterialList.size() > 0){
+            for(Record r : returnOrderMaterialList){
+                returnOrderMaterialMap.put(r.getStr("material_id"), r);
+            }
+        }
+        List<Record> romUpdateList = new ArrayList<>();
+        if(jsonArray != null && jsonArray.size() > 0){
+            for(int i = 0; i < jsonArray.size(); i++){
+                JSONObject obj = jsonArray.getJSONObject(i);
+                String materialId = obj.getString("material_id");
+                String batchCode = obj.getString("batch_code_text");
+                Record rom = returnOrderMaterialMap.get(materialId);
+                rom.set("receive_num", rom.getDouble("return_num"));
+                rom.set("batch_code", batchCode);
+                romUpdateList.add(rom);
+            }
+        }
+        if(romUpdateList != null && romUpdateList.size() > 0){
+            for(Record r : romUpdateList){
+                Db.update("return_order_material", r);
+            }
+        }
+        Record r = new Record();
+        r.set("id", returnOrderId);
+        r.set("status", 2);
+        Db.update("return_order", r);
+    }
+
+    @Before(Tx.class)
+    public void doReturn_bak(Record order, UserSessionUtil usu) throws Exception{
         Db.update("return_order", order);
         List<Record> returnOrderMaterialList = Db.find("select * from return_order_material where return_order_id=?", order.getStr("id"));
         List<Record> storeStockList = Db.find("select * from store_stock where store_id=?", usu.getUserBean().get("store_id"));
@@ -103,11 +139,40 @@ public class ReturnGoodsService {
     }
 
     @Before(Tx.class)
-    public void finishOrder(String orderId){
-        Record order = Db.findById("select * from return_order where id=?", orderId);
-        order.set("status", 3);
-        Db.update("return_order", order);
-        //TODO 修改物流库存信息和门店库存信息
+    public void finishOrder(JSONObject jsonObject){
+        String returnOrderId = jsonObject.getString("id");
+        JSONArray jsonArray = jsonObject.getJSONArray("list");
+        List<Record> returnOrderMaterialList = Db.find("select * from return_order_material where return_order_id=?", returnOrderId);
+        Map<String, Record> returnOrderMaterialMap = new HashMap<>();
+        if(returnOrderMaterialList != null && returnOrderMaterialList.size() > 0){
+            for(Record r : returnOrderMaterialList){
+                returnOrderMaterialMap.put(r.getStr("material_id"), r);
+            }
+        }
+        List<Record> wsUpdateList = new ArrayList<>();
+        if(jsonArray != null && jsonArray.size() > 0){
+            for(int i = 0; i < jsonArray.size(); i++){
+                JSONObject obj = jsonArray.getJSONObject(i);
+                String materialId = obj.getString("material_id");
+                String batchCode = obj.getString("batch_code_text");
+                Record rom = returnOrderMaterialMap.get(materialId);
+                Record ws = Db.findFirst("select * from warehouse_stock where batch_code=? and material_id=?", batchCode, materialId);
+                double number = ws.getDouble("number") + rom.getDouble("return_num");
+                ws.set("number", number);
+                rom.set("receive_num", rom.getDouble("return_num"));
+                rom.set("batch_code", batchCode);
+                wsUpdateList.add(ws);
+            }
+        }
+        if(wsUpdateList != null && wsUpdateList.size() > 0){
+            for(Record r : wsUpdateList){
+                Db.update("warehouse_stock", r);
+            }
+        }
+        Record r = new Record();
+        r.set("id", returnOrderId);
+        r.set("status", 3);
+        Db.update("return_order", r);
     }
 
     /**

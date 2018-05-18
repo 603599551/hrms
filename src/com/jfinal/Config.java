@@ -23,7 +23,7 @@ import com.ss.organization.controllers.StoreCtrl;
 import com.ss.stock.controllers.DailySummaryCtrl;
 import com.store.order.controllers.*;
 import com.store.print.PrintCtrl;
-import com.warehouse.controllers.StoreStockCtrl;
+import com.store.order.controllers.StoreStockCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
 import com.warehouse.controllers.WarehouseStockCtrl;
 
