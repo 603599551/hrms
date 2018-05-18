@@ -4,17 +4,23 @@ import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
-import com.sun.prism.impl.Disposer;
 import com.utils.RequestTool;
 import com.utils.SelectUtil;
 import com.utils.UserSessionUtil;
+import com.warehouse.services.WarehouseManagerSrv;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import utils.bean.JsonHashMap;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 仓库管理
@@ -184,5 +190,107 @@ public class WarehouseManagerCtrl extends BaseCtrl {
     @Override
     public void index() {
         super.index();
+    }
+
+    /**
+     * 导出原材料到excel
+     */
+    public void export(){
+        //拼装生成excel的临时目录，及文件名
+        String tempPath=getRequest().getServletContext().getRealPath("temp");
+        File tempFile=new File(tempPath);
+        if(!tempFile.exists()){
+            tempFile.mkdirs();
+        }
+        String uuid=UUIDTool.getUUID();
+        File tempXlsFile=new File(tempFile,uuid+".xls");
+
+        /*
+        读取模板文件
+         */
+        String excelTempPath=getRequest().getServletContext().getRealPath("excel_template");
+        File excelTempFile=new File(excelTempPath);
+        HSSFWorkbook workbook=null;
+        try {
+            FileInputStream fis = new FileInputStream(new File(excelTempFile,"初始化物流仓库库存模板.xls"));
+            workbook = new HSSFWorkbook(fis);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        //查询数据库
+        String sql="select (select name from material_type where material_type.id=material.type_2)as type_2,(select name from wm_type where wm_type.id=material.wm_type) as wm_type,code,name,(select name from goods_unit where goods_unit.id=material.unit) as unit from material";
+        List<Record> list=Db.find(sql);
+
+        //获取第一个工作簿
+        HSSFSheet sheet = workbook.getSheetAt(0);
+        int rownum=2;
+        for(Record r:list){
+            String type_2=r.getStr("type_2");
+            String wm_type=r.getStr("wm_type");
+            String code=r.getStr("code");
+            String name=r.getStr("name");
+            String material=r.getStr("material");
+            String unit=r.getStr("unit");
+
+
+            //创建行,行号作为参数传递给createRow()方法,第一行从0开始计算
+            HSSFRow row = sheet.createRow(rownum);
+            //创建单元格,row已经确定了行号,列号作为参数传递给createCell(),第一列从0开始计算
+            HSSFCell cell0 = row.createCell(0);
+            //设置单元格的值,即C1的值(第一行,第三列)
+            cell0.setCellValue(type_2);
+
+            HSSFCell cell1 = row.createCell(1);
+            cell1.setCellValue(wm_type);
+
+            HSSFCell cell2 = row.createCell(2);
+            cell2.setCellValue(code);
+
+            HSSFCell cell3 = row.createCell(3);
+            cell3.setCellValue(name);
+
+            HSSFCell cell4 = row.createCell(4);
+            cell4.setCellValue(unit);
+
+            rownum++;
+        }
+
+        FileOutputStream fos=null;
+        //输出到磁盘中
+        try {
+
+            fos = new FileOutputStream(tempXlsFile);
+            workbook.write(fos);
+        }catch (Exception e) {
+            e.printStackTrace();
+
+        }finally {
+            try {
+                fos.close();
+            }catch (Exception e){
+
+            }
+
+        }
+        renderText("导出成功！");
+    }
+
+    /**
+     * 导入excel到数据库中
+     */
+    public void imp(){
+        File file=new File("f:\\idea-workspace\\security_stock\\web\\upload_temp\\1.xls");
+        UserSessionUtil usu=new UserSessionUtil(getRequest());
+        WarehouseManagerSrv srv = enhance(WarehouseManagerSrv.class);
+        try {
+            srv.doImp(file, "2", usu);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void main(String[] args) {
+
     }
 }
