@@ -10,6 +10,7 @@ import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import com.logistics.order.controllers.OutWarehouseOrderCtrl;
+import com.logistics.order.controllers.StoreScrapCtrl;
 import com.ss.controllers.HomeCtrl;
 import com.ss.controllers.LoginCtrl;
 import com.ss.controllers.MenuCtrl;
@@ -89,6 +90,10 @@ public class Config extends JFinalConfig {
 		 */
 		//门店退货单
 		routes.add("/mgr/store/returnGoods", ReturnGoodsCtrl.class);
+		//门店废弃单
+		routes.add("/mgr/store/storeScrapManager", StoreScrapManagerCtrl.class);
+		//物流处理废弃单
+		routes.add("/mgr/store/storeScrap", StoreScrapCtrl.class);
 		//门店接收订单
 		routes.add("/mgr/store/storeOrderReceiver", StoreOrderReceiverCtrl.class);
 
