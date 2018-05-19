@@ -144,24 +144,55 @@ public class ReturnGoodsService {
         JSONArray jsonArray = jsonObject.getJSONArray("list");
         List<Record> returnOrderMaterialList = Db.find("select * from return_order_material where return_order_id=?", returnOrderId);
         Map<String, Record> returnOrderMaterialMap = new HashMap<>();
+        String store_id = null;
         if(returnOrderMaterialList != null && returnOrderMaterialList.size() > 0){
+            store_id = returnOrderMaterialList.get(0).getStr("store_id");
             for(Record r : returnOrderMaterialList){
                 returnOrderMaterialMap.put(r.getStr("material_id"), r);
             }
         }
+        Map<String, Record> storeStockMaterialMap = new HashMap<>();
+        if(store_id != null){
+            List<Record> storeStackMaterialList = Db.find("select * from store_stock where store_id=?", store_id);
+            if(storeStackMaterialList != null && storeStackMaterialList.size() > 0){
+                for(Record r : storeStackMaterialList){
+                    storeStockMaterialMap.put(r.getStr("material_id"), r);
+                }
+            }
+        }
+        List<Record> warehouseStockList = Db.find("select * from warehouse_stock");
+        Map<String, Map<String, Record>> wsMaterialBatchCodeMap = new HashMap<>();
+        if(warehouseStockList != null && warehouseStockList.size() > 0){
+            for(Record r : warehouseStockList){
+                Map<String, Record> batchCodeMap = wsMaterialBatchCodeMap.get(r.getStr("material_id"));
+                if(batchCodeMap == null){
+                    batchCodeMap = new HashMap<>();
+                    wsMaterialBatchCodeMap.put(r.getStr("material_id"), batchCodeMap);
+                }
+                batchCodeMap.put(r.getStr("batch_code"), r);
+            }
+        }
         List<Record> wsUpdateList = new ArrayList<>();
+        List<Record> SSMUpdateList = new ArrayList<>();
         if(jsonArray != null && jsonArray.size() > 0){
             for(int i = 0; i < jsonArray.size(); i++){
                 JSONObject obj = jsonArray.getJSONObject(i);
                 String materialId = obj.getString("material_id");
                 String batchCode = obj.getString("batch_code_text");
                 Record rom = returnOrderMaterialMap.get(materialId);
-                Record ws = Db.findFirst("select * from warehouse_stock where batch_code=? and material_id=?", batchCode, materialId);
+                //Record ws = Db.findFirst("select * from warehouse_stock where batch_code=? and material_id=?", batchCode, materialId);
+                Record ws = wsMaterialBatchCodeMap.get(materialId).get(batchCode);
                 double number = ws.getDouble("number") + rom.getDouble("return_num");
                 ws.set("number", number);
                 rom.set("receive_num", rom.getDouble("return_num"));
                 rom.set("batch_code", batchCode);
                 wsUpdateList.add(ws);
+                Record storeStockMaterial = storeStockMaterialMap.get(obj.getString("material_id"));
+                number = new Double(String.format("%.2f", storeStockMaterial.getDouble("number") - rom.getDouble("return_num")));
+                Record updateSSM = new Record();
+                updateSSM.set("id", storeStockMaterial.getStr("id"));
+                updateSSM.set("number", number);
+                SSMUpdateList.add(updateSSM);
             }
         }
         if(wsUpdateList != null && wsUpdateList.size() > 0){
@@ -169,6 +200,12 @@ public class ReturnGoodsService {
                 Db.update("warehouse_stock", r);
             }
         }
+        if(SSMUpdateList != null && SSMUpdateList.size() > 0){
+            for(Record r : SSMUpdateList){
+                Db.update("store_stock", r);
+            }
+        }
+
         Record r = new Record();
         r.set("id", returnOrderId);
         r.set("status", 3);

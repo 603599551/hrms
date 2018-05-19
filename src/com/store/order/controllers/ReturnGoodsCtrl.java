@@ -117,9 +117,9 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         if(materialOrderList != null && materialOrderList.size() > 0){
             for(Record r : materialOrderList){
                 if("1".equals(r.getStr("rostatus"))){
-                    r.set("isEdit", true);
+//                    r.set("isEdit", true);
                 }else{
-                    r.set("isEdit", false);
+//                    r.set("isEdit", false);
                 }
                 r.set("id", r.getStr("material_id"));
                 r.set("number", r.getInt("return_num"));
@@ -160,10 +160,10 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         if(materialOrderList != null && materialOrderList.size() > 0){
             for(Record r : materialOrderList){
                 if("1".equals(r.getStr("rostatus"))){
-                    isRecive = true;
+//                    isRecive = true;
                 }
                 if("2".equals(r.getStr("rostatus"))){
-                    isFinish = true;
+//                    isFinish = true;
                 }
                 r.set("id", r.getStr("material_id"));
                 r.set("number", r.getInt("return_num"));

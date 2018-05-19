@@ -7,6 +7,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import com.ss.stock.services.DailySummaryService;
 import com.store.order.services.StoreOrderManagerSrv;
+import com.utils.Constants;
 import com.utils.RequestTool;
 import com.utils.UserSessionUtil;
 import easy.util.UUIDTool;
@@ -19,10 +20,7 @@ import java.util.*;
 /**
  * 门店订单管理
  */
-public class StoreOrderManagerCtrl extends BaseCtrl{
-
-    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static final long ONE_DAY_TIME = 1000 * 60 *60 * 24;
+public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
 
     /**
      * 商品转原材料

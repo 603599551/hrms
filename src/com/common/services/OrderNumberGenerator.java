@@ -26,6 +26,10 @@ public class OrderNumberGenerator extends BaseCtrl{
      */
     static final String TYPE_TD = "TD";
     /**
+     * 门店引单退货单类型
+     */
+    static final String TYPE_CH = "CH";
+    /**
      * 生成出库单号
      * @return
      */
@@ -92,7 +96,7 @@ public class OrderNumberGenerator extends BaseCtrl{
     }
 
     /**
-     * 生成门店订单号
+     * 生成门店退货单号
      * @return
      */
     public synchronized String getReturnOrderNumber(){
@@ -120,6 +124,39 @@ public class OrderNumberGenerator extends BaseCtrl{
             Db.save("order_number",saveR);
 
             reStr=getNumber(TYPE_TD,date,LENGTH,1);
+        }
+        return reStr.replace("-","");
+    }
+
+    /**
+     * 生成门店引单退货单号
+     * @return
+     */
+    public synchronized String getStoreScrapNumber(){
+        String reStr="";
+        String date= DateTool.GetDate();
+        Record r=Db.findFirst("select * from order_number where type=?",TYPE_CH);
+        if(r!=null){//如果有记录就继续判断
+            String dateInR=r.getStr("date");
+            if(date.equals(dateInR)){//如果日期相同
+                int number=r.getInt("number");
+                number++;
+                reStr=getNumber(TYPE_CH,date,LENGTH,number);
+                Db.update("update order_number set number=? where type=?",number,TYPE_CH);
+            }else{//如果数据库中的日期不是当前系统日期
+                Db.update("update order_number set date=?,number=? where type=?",date,1,TYPE_CH);
+                reStr=getNumber(TYPE_CH,date,LENGTH,1);
+            }
+        }else{//如果没有记录就添加记录
+            Record saveR=new Record();
+            saveR.set("date",date);
+            saveR.set("type",TYPE_CH);
+            saveR.set("number",1);
+            saveR.set("remark","门店采购订单号");
+
+            Db.save("order_number",saveR);
+
+            reStr=getNumber(TYPE_CH,date,LENGTH,1);
         }
         return reStr.replace("-","");
     }
