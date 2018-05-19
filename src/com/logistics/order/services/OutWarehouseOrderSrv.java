@@ -13,7 +13,10 @@ import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OutWarehouseOrderSrv {
 
@@ -49,7 +52,7 @@ public class OutWarehouseOrderSrv {
         /*
         查询该订单的出库原材料
          */
-        String sql="select a.id as tid,a.material_id,a.code,a.name,(select name from goods_attribute where id=a.attribute_2) attribute_2_text ,(select name from goods_unit where goods_unit.id=a.unit) as unit_text,a.want_num,a.send_num,'' as search_text,0 as send_number from warehouse_out_order_material a left join material b on a.material_id=b.id where a.warehouse_out_order_id=?";
+        String sql="select a.id as tid,a.material_id,a.code,a.name,(select name from goods_attribute where id=a.attribute_2) attribute_2_text ,(select name from goods_unit where goods_unit.id=a.unit) as unit_text,a.want_num,a.send_num,'' as search_text,0 as send_number from warehouse_out_order_material a left join material b on a.material_id=b.id where a.warehouse_out_order_id=? order by b.sort";
         List<Record> warehouseOutOrderMaterialList=Db.find(sql,id);
 
         //获取安存
@@ -92,6 +95,7 @@ public class OutWarehouseOrderSrv {
     private List buildWarehouseOutOrderMaterialDetail(String id,List<String> materialIdList,List<Record> warehouseOutOrderMaterialList){
         SelectUtil selectSQL=new SelectUtil("select a.*,(select name from goods_attribute where goods_attribute.id=a.attribute_2) as attribute_2_text,(select name from goods_unit where goods_unit.id=a.unit) as unit_text,b.pinyin,c.number as warehouse_stock_num from warehouse_out_order_material_detail a left join material b on a.material_id=b.id  left join warehouse_stock c on a.material_id=c.material_id and a.batch_code=c.batch_code  ");
         selectSQL.in(" and a.material_id in ",materialIdList.toArray());
+        selectSQL.addWhere(" and a.warehouse_out_order_id=?",id);
         selectSQL.order(" order by a.material_id,a.batch_code ");//按照批号排序
         List<Record> dataList=Db.find(selectSQL.toString(),selectSQL.getParameters());
 
@@ -381,6 +385,9 @@ public class OutWarehouseOrderSrv {
     }
     /**
      * 保存出库订单
+     * 如果提交的数据中，如果原订单就有的原材料，那么将此数据保存到warehouse_out_order_material_detail表中，并将数量更新warehouse_out_order_material表
+     * 如果原订单没有的原材料，那么是从树上点击添加的原材料，那么将此数据保存到warehouse_out_order_material_detail表中，store_order_material表、并将数量更新warehouse_out_order_material表，
+     *
      * @param id 订单编号。warehouse_out_order表的主键id
      * @param array 提交的数据
      *              array是json数组，json有以下元素
@@ -405,13 +412,13 @@ public class OutWarehouseOrderSrv {
      */
     public JsonHashMap save(String id, JSONArray array){
         JsonHashMap jhm=new JsonHashMap();
-        Record r=Db.findById("warehouse_out_order",id);
-        if(r==null){
+        Record warehouseOutOrderR=Db.findById("warehouse_out_order",id);
+        if(warehouseOutOrderR==null){
             jhm.putCode(0).putMessage("无此订单记录！");
             return jhm;
         }else{
             // 下面代码为debug模式，调试成功后，必须取消注释下面代码 author:mym
-            String status=r.getStr("status");
+            String status=warehouseOutOrderR.getStr("status");
             if("30".equals(status)){
                 jhm.putCode(0).putMessage("此订单已经出库，不能再次修改！");
                 return jhm;
@@ -423,11 +430,20 @@ public class OutWarehouseOrderSrv {
         }
 //        Map<String,Integer> warehouseOutOrderMaterialMap=new HashMap();
         List<WarehouseOutOrderMaterialDetailBean> warehouseOutOrderMaterialDetailBeanList =new ArrayList<>();
+        List<WarehouseOutOrderMaterialDetailBean> newWarehouseOutOrderMaterialDetailBeanList =new ArrayList<>();
         List<Record> recordList=new ArrayList();
-        buildSaveData(id,array,recordList, warehouseOutOrderMaterialDetailBeanList);
+        List<Record> newRecordList=new ArrayList();
+        buildSaveData(warehouseOutOrderR,array,recordList,newRecordList, warehouseOutOrderMaterialDetailBeanList,newWarehouseOutOrderMaterialDetailBeanList);
         int numClear=clearWarehouseOutOrderMaterialDetail(id);
         int numSaveWarehouseOutOrderMaterialDetail=doSaveWarehouseOutOrderMaterialDetail(recordList);
         int num= doUpdateWarehouseOutOrderMaterial(warehouseOutOrderMaterialDetailBeanList,id);
+
+        /*
+        从树中添加的原材料，保存到warehouse_out_order_material表、warehouse_out_order_material_detail表、store_order_material表中
+        保存记录前，先清空
+         */
+        doSaveNewRecord(warehouseOutOrderR,newRecordList,null,false);
+
         String datetime= DateTool.GetDateTime();
         Db.update("update warehouse_out_order set status=?,finish_time=? where id=?",20,datetime,id);
         jhm.putCode(1).putMessage("保存成功！");
@@ -436,17 +452,30 @@ public class OutWarehouseOrderSrv {
     class WarehouseOutOrderMaterialDetailBean {
         int sendNum;
         String materialId;
+        /**
+         * 批号，出库时，从库存表warehouse_stock减去数量时会用到
+         */
+        String batchCode;
 
     }
     /**
      * 构建保存的数据
      * 将传入的数据，重新构建，并放入到recordList，warehouseOutOrderMaterialMap
-     * @param id
+     * @param warehouseOutOrderR
      * @param array
-     * @param recordList
-     * @param warehouseOutOrderMaterialDetailBeanList
+     * @param recordList 表格上本来就有的原材料，封装在该list中。该list的元素是要保持到warehouse_out_order_material_detail表的
+     * @param newRecordList 从树上选择添加的原材料，封装在该list中。该list的元素是要保持到warehouse_out_order_material_detail表的
+     * @param warehouseOutOrderMaterialDetailBeanList 表格上本来就有的原材料，封装在该list中，用于后续更新warehouse_Out_Order_Material表的数量
+     * @param newWarehouseOutOrderMaterialDetailBeanList 从树上选择添加的原材料，封装在该list中，该list的元素是要保持到warehouse_out_order_material表、store_order_material表
      */
-    private void buildSaveData(String id, JSONArray array, List<Record> recordList, List<WarehouseOutOrderMaterialDetailBean> warehouseOutOrderMaterialDetailBeanList){
+    private void buildSaveData(Record warehouseOutOrderR, JSONArray array, List<Record> recordList,List<Record> newRecordList, List<WarehouseOutOrderMaterialDetailBean> warehouseOutOrderMaterialDetailBeanList,List<WarehouseOutOrderMaterialDetailBean> newWarehouseOutOrderMaterialDetailBeanList){
+        String id=warehouseOutOrderR.getStr("id");
+        String storeId=warehouseOutOrderR.getStr("store_id");
+        String storeOrderId=warehouseOutOrderR.getStr("store_order_id");
+
+        List<Record> allList=new ArrayList<>();
+        List<WarehouseOutOrderMaterialDetailBean> allBeanList=new ArrayList<>();
+
         int sort=1;
         List<String> materialIdList=new ArrayList();
         for(Object obj:array){
@@ -460,7 +489,8 @@ public class OutWarehouseOrderSrv {
 
 //            String warehouseStockNumber=subJson.getString("warehouseStockNumber");
                 String send_number = subJson.getString("send_number");
-                String batch_code = subJson.getString("batch_code");
+                int sendNumberInt=NumberUtils.parseInt(send_number,0);
+                String batchCode = subJson.getString("batch_code");
                 String warehouseOutOrderMaterialId = subJson.getString("warehouseOutOrderMaterialId");
                 String code = subJson.getString("code");
                 String name = subJson.getString("name");
@@ -468,54 +498,70 @@ public class OutWarehouseOrderSrv {
 
                 materialIdList.add(materialId);
 
-                Record saveR = new Record();
-                saveR.set("id", UUIDTool.getUUID());
-                saveR.set("warehouse_out_order_id", id);
-                saveR.set("warehouse_id", warehouseId);
-                saveR.set("warehouse_out_order_material_id", warehouseOutOrderMaterialId);
-                saveR.set("warehouse_stock_id", warehouseStockId);
-                saveR.set("send_num", send_number);
-                saveR.set("status", "1");
-                saveR.set("sort", sort);
-                saveR.set("batch_code", batch_code);
-                saveR.set("material_id", materialId);
-                saveR.set("code", code);
-                saveR.set("name", name);
-//                saveR.set("want_num", wantNum);
-                recordList.add(saveR);
+                Record warehouseOutOrderMaterialDetailR = new Record();
+                warehouseOutOrderMaterialDetailR.set("id", UUIDTool.getUUID());
+                warehouseOutOrderMaterialDetailR.set("warehouse_out_order_id", id);
+                warehouseOutOrderMaterialDetailR.set("warehouse_out_order_material_id", warehouseOutOrderMaterialId);
+                warehouseOutOrderMaterialDetailR.set("warehouse_stock_id", warehouseStockId);
+                warehouseOutOrderMaterialDetailR.set("warehouse_id", warehouseId);
+                warehouseOutOrderMaterialDetailR.set("store_id", storeId);
+                warehouseOutOrderMaterialDetailR.set("material_id", materialId);
+                warehouseOutOrderMaterialDetailR.set("batch_code", batchCode);
+                warehouseOutOrderMaterialDetailR.set("code", code);
+                warehouseOutOrderMaterialDetailR.set("name", name);
+                warehouseOutOrderMaterialDetailR.set("send_num", sendNumberInt);
+                warehouseOutOrderMaterialDetailR.set("sort", sort);
+                warehouseOutOrderMaterialDetailR.set("status", "1");
+
                 sort++;
 
                 WarehouseOutOrderMaterialDetailBean bean=new WarehouseOutOrderMaterialDetailBean();
                 bean.materialId =materialId;
                 bean.sendNum=NumberUtils.parseInt(send_number,0);
-                warehouseOutOrderMaterialDetailBeanList.add(bean);
+                bean.batchCode=batchCode;
+
+                allList.add(warehouseOutOrderMaterialDetailR);
+                allBeanList.add(bean);
             }
         }
 
         /*
+        判断传入的原材料是否在原订单中
         填充warehouse_out_order_material_id数据
          */
-        SelectUtil selectUtil=new SelectUtil("select id,warehouse_out_order_id,material_id from warehouse_out_order_material");
+        SelectUtil selectUtil=new SelectUtil("select id,material_id from store_order_material");
         selectUtil.in("and material_id in ",materialIdList.toArray());
-        selectUtil.addWhere("and warehouse_out_order_id=?",id);
+        selectUtil.addWhere("and store_order_id=?",storeOrderId);
+        selectUtil.addWhere("and status<>?",20);
         String sql=selectUtil.toString();
         List<Record> warehouseOutOrderMaterialList=Db.find(sql,selectUtil.getParameters());
 
-        for(Record r:recordList){
-            String warehouseOutOrderIdOfR=r.getStr("warehouse_out_order_id");
+        for(int i=0,length=allList.size();i<length;i++){
+            Record r=allList.get(i);
             String materialIdOfR=r.getStr("material_id");
+            boolean ieEqual=false;
             for(Record warehouseOutOrderMaterialR:warehouseOutOrderMaterialList){
                 String idOfWarehouseOutOrderMaterialR=warehouseOutOrderMaterialR.getStr("id");
-                String wooiOfWarehouseOutOrderMaterialR=warehouseOutOrderMaterialR.getStr("warehouse_out_order_id");
+//                String wooiOfWarehouseOutOrderMaterialR=warehouseOutOrderMaterialR.getStr("warehouse_out_order_id");
                 String materialIdOrderMaterialR=warehouseOutOrderMaterialR.getStr("material_id");
-                if(warehouseOutOrderIdOfR.equals(wooiOfWarehouseOutOrderMaterialR) && materialIdOfR.equals(materialIdOrderMaterialR)){
+                if( materialIdOfR.equals(materialIdOrderMaterialR)){//如果相同，说明与原订单的原材料相同，那么存放到已存在的集合中
                     r.set("warehouse_out_order_material_id",idOfWarehouseOutOrderMaterialR);
+                    recordList.add(r);
+                    warehouseOutOrderMaterialDetailBeanList.add(allBeanList.get(i));
+                    ieEqual=true;
+                    break;
                 }
+            }
+            if(!ieEqual) {
+                //如果都没匹配上，说明与原订单的原材料不相同，那么存放到新纪录集合中
+                r.set("status", "20");
+                newRecordList.add(r);
+                newWarehouseOutOrderMaterialDetailBeanList.add(allBeanList.get(i));
             }
         }
 
     }
-    /*
+    /**
         更新warehouse_out_order_material表的send_num（发送数量字段）
         同一个原材料，不同批号的数量，累加，并执行保存
          */
@@ -593,15 +639,15 @@ public class OutWarehouseOrderSrv {
     @Before(Tx.class)
     public JsonHashMap out(String id, JSONArray array){
         JsonHashMap jhm=new JsonHashMap();
-        Record r=Db.findById("warehouse_out_order",id);
+        Record warehouseOutOrderR=Db.findById("warehouse_out_order",id);
         String storeOrderId=null;
-        if(r==null){
+        if(warehouseOutOrderR==null){
             jhm.putCode(0).putMessage("无此订单记录！");
             return jhm;
         }else{
             // 下面代码为校验代码，为了debug调试，所以注释掉，调试成功后，必须取消注释下面代码 author:mym
-            String status=r.getStr("status");
-            storeOrderId=r.getStr("store_order_id");
+            String status=warehouseOutOrderR.getStr("status");
+            storeOrderId=warehouseOutOrderR.getStr("store_order_id");
             if("30".equals(status)){
                 jhm.putCode(0).putMessage("此订单已经出库，不能再次出库！");
                 return jhm;
@@ -611,15 +657,35 @@ public class OutWarehouseOrderSrv {
                 return jhm;
             }
         }
-        String store_order_id=r.getStr("store_order_id");
+        String store_order_id=warehouseOutOrderR.getStr("store_order_id");
         List<WarehouseOutOrderMaterialDetailBean> warehouseOutOrderMaterialDetailBeanList =new ArrayList<>();
+        List<WarehouseOutOrderMaterialDetailBean> newWarehouseOutOrderMaterialDetailBeanList =new ArrayList<>();
         List<Record> recordList=new ArrayList();
-        buildSaveData(id,array,recordList, warehouseOutOrderMaterialDetailBeanList);
+        List<Record> newRecordList=new ArrayList();
+        buildSaveData(warehouseOutOrderR,array,recordList, newRecordList,warehouseOutOrderMaterialDetailBeanList,newWarehouseOutOrderMaterialDetailBeanList);
         //保存Warehouse_Out_Order_Material_Detail前先清空
         int numClear=clearWarehouseOutOrderMaterialDetail(id);
         int numSaveWarehouseOutOrderMaterialDetail=doSaveWarehouseOutOrderMaterialDetail(recordList);
         int numUpdateWarehouseOutOrderMaterial= doUpdateWarehouseOutOrderMaterial(warehouseOutOrderMaterialDetailBeanList,id);
+
+        /*
+        从树中添加的原材料，保存到warehouse_out_order_material表、warehouse_out_order_material_detail表中
+         */
+        doSaveNewRecord(warehouseOutOrderR,newRecordList,null,true);
+
+        /*
+        更新store_order_material表real_send_num字段（物流真实的发货数量）
+         */
         int numUpdateStoreOrderMaterial=doUpdateStoreOrderMaterial(warehouseOutOrderMaterialDetailBeanList,storeOrderId);
+
+        /*
+        从库存中减去数量
+         */
+        List<WarehouseOutOrderMaterialDetailBean> allWarehouseOutOrderMaterialDetailBeanList=new ArrayList<>();
+        allWarehouseOutOrderMaterialDetailBeanList.addAll(warehouseOutOrderMaterialDetailBeanList);
+        allWarehouseOutOrderMaterialDetailBeanList.addAll(newWarehouseOutOrderMaterialDetailBeanList);
+        sub(allWarehouseOutOrderMaterialDetailBeanList);
+
         String datetime= DateTool.GetDateTime();
         Db.update("update warehouse_out_order set status=?,finish_time=? where id=?",30,datetime,id);
         Db.update("update store_order set status=?,out_time=? where id=?",40,datetime,store_order_id);
@@ -627,6 +693,107 @@ public class OutWarehouseOrderSrv {
         return jhm;
     }
 
+    /**
+     * 从库存中减去出库的数量
+     * @param list
+     */
+    private void sub(List<WarehouseOutOrderMaterialDetailBean> list){
+        Object[][] array=new Object[list.size()][3];
+        int i=0;
+        for(WarehouseOutOrderMaterialDetailBean bean:list){
+            array[i][0]=bean.sendNum;
+            array[i][1]=bean.materialId;
+            array[i][2]=bean.batchCode;
+
+            i++;
+        }
+        Db.batch("update warehouse_stock set number=number-? where material_id=? and batch_code=?",array,30);
+    }
+    /**
+     * 从树上选择添加的原材料，添加到store_order_material表、store_order_material_detail、store_order_material表
+     * @param newRecordList 该list里的元素是封装warehouse_out_order_material_detail的数据
+     * @param newWarehouseOutOrderMaterialDetailBeanList
+     */
+    private void doSaveNewRecord(Record warehouseOutOrderR,List<Record> newRecordList,List<WarehouseOutOrderMaterialDetailBean> newWarehouseOutOrderMaterialDetailBeanList,boolean isSaveStoreOrderMaterial){
+        String warehouseOutOrderId=warehouseOutOrderR.getStr("id");
+        String storeId=warehouseOutOrderR.getStr("store_id");
+        String storeOrderId=warehouseOutOrderR.getStr("store_order_id");
+        /*
+           封装warehouse_out_order_material表的保存数据
+         */
+        List<Record> warehouseOutOrderMaterialList=new ArrayList<>();
+        List<Record> storeOrderMaterialList=new ArrayList<>();
+        String lastMaterialId="";
+        String lastId="";
+        for(Record r:newRecordList){
+            String warehouseId=r.getStr("warehouse_id");
+            String materialId=r.getStr("material_id");
+            String code=r.getStr("code");
+            String name=r.getStr("name");
+            int sendNum=r.getInt("send_num");
+            String unit=r.getStr("unit");
+
+            if(!materialId.equals(lastMaterialId)){//如果不相同，说明是不同的原材料，准备封装warehouse_out_order_material数据
+                Record warehouseOutOrderMaterial=new Record();
+                String uuid= UUIDTool.getUUID();
+                /*
+                构建出库订单明细表（原材料）
+                 */
+                Record warehouseOutOrderMaterialR=new Record();
+                warehouseOutOrderMaterialR.set("id",uuid);
+                warehouseOutOrderMaterialR.set("warehouse_out_order_id",warehouseOutOrderId);
+                warehouseOutOrderMaterialR.set("warehouse_id",warehouseId);
+                warehouseOutOrderMaterialR.set("store_id",storeId);
+                warehouseOutOrderMaterialR.set("material_id",materialId);
+                warehouseOutOrderMaterialR.set("code",code);
+                warehouseOutOrderMaterialR.set("name",name);
+                warehouseOutOrderMaterialR.set("send_num",sendNum);
+                warehouseOutOrderMaterialR.set("status","20");//1表示门店订货
+                warehouseOutOrderMaterialR.set("unit",unit);
+                warehouseOutOrderMaterialR.set("want_num",0);
+
+                warehouseOutOrderMaterialList.add(warehouseOutOrderMaterialR);
+
+                Record storeOrderMaterialR = new Record();
+                String idOfstoreOrderMaterial = UUIDTool.getUUID();
+                storeOrderMaterialR.set("id", idOfstoreOrderMaterial);
+                storeOrderMaterialR.set("store_order_id", storeOrderId);
+                storeOrderMaterialR.set("store_id", storeId);
+                storeOrderMaterialR.set("material_id", materialId);
+                storeOrderMaterialR.set("code", code);
+                storeOrderMaterialR.set("name", name);
+                storeOrderMaterialR.set("use_num", 0);
+                storeOrderMaterialR.set("send_num", sendNum);
+                storeOrderMaterialR.set("real_send_num", sendNum);
+                storeOrderMaterialR.set("status", "20");//物流主动给门店发的货物
+                storeOrderMaterialR.set("want_num", 0);
+
+                storeOrderMaterialList.add(storeOrderMaterialR);
+
+                /*
+                给warehouse_out_order_material_detail表数据回填warehouse_out_order_material表的id
+                 */
+                r.set("warehouse_out_order_material_id",uuid);
+                lastId=uuid;
+            }else{//如果相同，说明该原材料与上一个原材料是同一个，那么发送数量相加
+                Record warehouseOutOrderMaterialR=warehouseOutOrderMaterialList.get(warehouseOutOrderMaterialList.size()-1);
+                int sendNumInList=warehouseOutOrderMaterialR.getInt("send_num");
+                warehouseOutOrderMaterialR.set("send_num",sendNumInList+sendNum);
+                /*
+                给warehouse_out_order_material_detail表数据回填warehouse_out_order_material表的id
+                 */
+                r.set("warehouse_out_order_material_id",lastId);
+            }
+
+
+            lastMaterialId=materialId;
+        }
+        Db.batchSave("warehouse_out_order_material_detail",newRecordList,30);
+        Db.batchSave("warehouse_out_order_material",warehouseOutOrderMaterialList,30);
+        if(isSaveStoreOrderMaterial) {
+            Db.batchSave("store_order_material", storeOrderMaterialList, 30);
+        }
+    }
     /**
      * 根据出库单id删除warehouse_out_order_material_detail表记录
      * 用户保存、出库操作
@@ -642,6 +809,22 @@ public class OutWarehouseOrderSrv {
      * @return
      */
     private int doSaveWarehouseOutOrderMaterialDetail(List<Record> recordList){
+        int sum=0;
+        int[] numArray = Db.batchSave("warehouse_out_order_material_detail", recordList, 100);
+        if (numArray != null) {
+            for (int num : numArray) {
+                sum = sum + num;
+            }
+        }
+        return sum;
+    }
+
+    /**
+     * 点击树添加
+     * @param recordList
+     * @return
+     */
+    private int doSaveNewWarehouseOutOrderMaterialDetail(List<Record> recordList){
         int sum=0;
         int[] numArray = Db.batchSave("warehouse_out_order_material_detail", recordList, 100);
         if (numArray != null) {

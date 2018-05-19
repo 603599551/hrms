@@ -70,7 +70,7 @@ public class StoreOrderCtrl extends BaseCtrl {
             sqlUtil.addWhere("and store_id=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, storeId);
             sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
             sqlUtil.addWhere("and order_number=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderCode);
-            sqlUtil.order(" order by arrive_date ");
+            sqlUtil.order(" order by arrive_date, create_time");
             String sqlExceptSelect=sqlUtil.toString();
             Page<Record> page=Db.paginate(pageNum, pageSize,select,sqlExceptSelect,sqlUtil.getParameterList().toArray());
             jhm.putCode(1).put("data",page);
