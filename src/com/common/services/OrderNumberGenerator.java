@@ -30,6 +30,10 @@ public class OrderNumberGenerator extends BaseCtrl{
      */
     static final String TYPE_CH = "CH";
     /**
+     * 移库类型
+     */
+    static final String TYPE_YK = "YK";
+    /**
      * 生成出库单号
      * @return
      */
@@ -160,7 +164,38 @@ public class OrderNumberGenerator extends BaseCtrl{
         }
         return reStr.replace("-","");
     }
+    /**
+     * 生成仓库移库订单号
+     * @return
+     */
+    public synchronized String getWarehouseMovementOrderNumber(){
+        String reStr="";
+        String date= DateTool.GetDate();
+        Record r=Db.findFirst("select * from order_number where type=?",TYPE_YK);
+        if(r!=null){//如果有记录就继续判断
+            String dateInR=r.getStr("date");
+            if(date.equals(dateInR)){//如果日期相同
+                int number=r.getInt("number");
+                number++;
+                reStr=getNumber(TYPE_YK,date,LENGTH,number);
+                Db.update("update order_number set number=? where type=?",number,TYPE_YK);
+            }else{//如果数据库中的日期不是当前系统日期
+                Db.update("update order_number set date=?,number=? where type=?",date,1,TYPE_YK);
+                reStr=getNumber(TYPE_YK,date,LENGTH,1);
+            }
+        }else{//如果没有记录就添加记录
+            Record saveR=new Record();
+            saveR.set("date",date);
+            saveR.set("type",TYPE_YK);
+            saveR.set("number",1);
+            saveR.set("remark","仓库移库订单号");
 
+            Db.save("order_number",saveR);
+
+            reStr=getNumber(TYPE_YK,date,LENGTH,1);
+        }
+        return reStr.replace("-","");
+    }
     private static String getNumber(String type,String date,int length,int number){
         return type+date+String.format("%0"+LENGTH+"d", number);
     }
