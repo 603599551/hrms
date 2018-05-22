@@ -8,10 +8,13 @@ import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
+import com.ss.stock.services.DailySummaryService;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
+import utils.bean.JsonHashMap;
 
+import java.text.ParseException;
 import java.util.*;
 
 public class StoreScrapManagerSrv {
@@ -23,7 +26,7 @@ public class StoreScrapManagerSrv {
      * @param userBean 用户信息
      */
     @Before(Tx.class)
-    public void addStoreScrapAndStoreScrapGoods(Map map, String storeScrapUUID, UserBean userBean){
+    public void addStoreScrapAndStoreScrapGoods(Map map, String storeScrapUUID, UserBean userBean) throws ParseException {
         JSONObject jsonObject=(JSONObject)map.get("jsonObject");
         JSONArray goodsArray=jsonObject.getJSONArray("list");
 
@@ -35,7 +38,7 @@ public class StoreScrapManagerSrv {
         storeScrapR.set("order_number",orderNumberGenerator.getStoreScrapNumber());
         storeScrapR.set("create_time",dateTime);
         storeScrapR.set("status","1");
-        storeScrapR.set("type", "day");
+//        storeScrapR.set("type", "day");
         storeScrapR.set("city", userBean.get("city"));
         storeScrapR.set("store_id",userBean.get("store_id"));
         storeScrapR.set("creater_id",userBean.getId());
@@ -76,18 +79,132 @@ public class StoreScrapManagerSrv {
             ssg.set("create_time", scrap_time);
             ssg.set("modifier_id", userBean.getId());
             ssg.set("modify_time", scrap_time);
-            storeScrapR.set("scrap_time", scrap_time);
+            ssg.set("scrap_time", scrap_time);
             storeScrapGoodsList.add(ssg);
 
         }
         Db.batchSave("store_scrap_goods", storeScrapGoodsList, storeScrapGoodsList.size());
-
+        goodsToMaterial(storeScrapUUID, userBean);
     }
+
+    /**
+     * 将商品拆分成原材料，并计算数量
+     * 参数：
+     *      id：store_scrap表的主键。用来查询准备订货的商品相关信息
+     *
+     * 1、根据商品配方将商品数据拆分成原材料，将所有原材料放置到一个map（materialMAP）中，原材料id是key，具体数据是value。
+     *      这样做的目的是为了方便数据整理，因为很多商品有相同的原材料，要将所有原材料的数据统计到一起
+     * 3、这个方法还要保存原材料数据到store_order_material表
+     *
+     * @throws ParseException
+     */
+    public void goodsToMaterial(String orderId, UserBean usu) throws ParseException {
+        //1
+        List<Record> storeOrderGoodsList = Db.find("select ssg.goods_id goods_id, ssg.number number from store_scrap ss, store_scrap_goods ssg where ss.id=ssg.store_scrap_id and ss.id=?", orderId);
+
+        List<String> idArr = new ArrayList<>();
+        List<Integer> numberArr = new ArrayList<>();
+        if(storeOrderGoodsList != null && storeOrderGoodsList.size() > 0){
+            for(int i = 0; i < storeOrderGoodsList.size(); i++){
+                idArr.add(storeOrderGoodsList.get(i).getStr("goods_id"));
+                numberArr.add(storeOrderGoodsList.get(i).getInt("number"));
+            }
+        }
+
+        List<Record> stockList = Db.find("select * from store_stock where store_id=?", usu.get("store_id"));
+        Map<String, Record> stockMap = new HashMap<>();
+        if(stockList != null && stockList.size() > 0){
+            for(Record r : stockList){
+                stockMap.put(r.getStr("material_id"), r);
+            }
+        }
+        DailySummaryService dailySummaryService = DailySummaryService.getMe();
+        Map<String, Record> materialMap = new HashMap<>();
+        List<Record> result = new ArrayList<>();
+
+        for(int i = 0; i < idArr.size(); i++){
+            String goodsId = idArr.get(i);
+            int number = numberArr.get(i);
+
+            Map goodsIdMap=dailySummaryService.dataGoodsIdMap.get(goodsId);
+            if(goodsIdMap==null){
+                continue;
+            }
+            List<Record> goodsMaterialList = (List<Record>) goodsIdMap.get("materialList");
+            for(Record r : goodsMaterialList){
+                Record materialR = materialMap.get(r.getStr("mid"));
+                Record stockR = stockMap.get(r.getStr("mid"));
+                if(materialR != null){
+                    //TODO 暂时用r净料数量计算
+                    double actual_order = new Double(String.format("%.2f", getDouble(materialR.getDouble("actual_order") + r.getDouble("gmnet_num") * number)));
+                    materialR.set("actual_order", actual_order);
+                }else{
+                    materialR = new Record();
+                    materialMap.put(r.getStr("mid"), materialR);
+                    materialR.set("id", r.getStr("mid"));
+                    materialR.set("name", r.getStr("mname"));
+                    materialR.set("code", r.getStr("mcode"));
+                    materialR.set("unit_text", r.getStr("munit"));
+                    double actual_order = new Double(String.format("%.2f", getDouble(r.getDouble("gmnet_num") * number)));
+                    materialR.set("actual_order", actual_order);
+                    if(stockR != null){
+                        materialR.set("stock", stockR.getInt("number"));
+                    }else{
+                        materialR.set("stock", 0);
+                    }
+                    result.add(materialR);
+                }
+            }
+        }
+        //1
+        //查询商品相关信息，缓存到内存，方便后面读取数据
+        List<Record> materialList = Db.find("select m.*, gu.name unitname, gm.net_num net_num, gm.gross_num gross_num, gm.total_price total_price from material m, goods_unit gu, goods_material gm where m.id=gm.material_id and m.unit=gu.id");
+        Map<String, Record> materialAllMap = new HashMap<>();
+        if(materialList != null && materialList.size() > 0){
+            for(Record r : materialList){
+                materialAllMap.put(r.getStr("id"), r);
+            }
+        }
+        String time = DateTool.GetDateTime();
+        //3
+        List<Record> saveList = new ArrayList<>();
+        if(result != null && result.size() > 0){
+            for(Record r : result){
+                Record saveR = materialAllMap.get(r.getStr("id"));
+                String id = UUIDTool.getUUID();
+                saveR.set("id", id);
+                r.set("store_scrap_material_id", id);
+                saveR.set("store_scrap_id", orderId);
+                saveR.set("store_id", usu.get("store_id"));
+                saveR.set("material_id", r.getStr("id"));
+                saveR.set("number", r.getStr("actual_order"));
+                saveR.set("creater_id", usu.getId());
+                saveR.set("create_time", time);
+                saveR.set("modifier_id", usu.getId());
+                saveR.set("modify_time", time);
+                saveR.set("scrap_time", time);
+
+                saveR.remove("desc");
+                saveR.remove("unitname");
+                saveR.remove("storage_condition");
+                saveR.remove("type");
+                saveR.remove("city");
+                saveR.remove("shelf_life");
+                saveR.remove("status");
+                saveList.add(saveR);
+            }
+        }
+        Db.batchSave("store_scrap_material", saveList, saveList.size());
+        //3
+        //前台需要非0的数据，如果是0这个数字，前台不能显示，所以将数字列转化成字符串传到前台
+    }
+
+
     /**
      * 添加订单原材料门店修改过的数据
      *      订单原材料已经存放到数据库中，但是门店修改后还要修改数量，其实这个方法是一个修改方法
      * 参数：
-     *       stroe_order_material_id
+     *       store_scrap_material_id
      *       number：want_num和send_num字段数据。send_num数据还需要物流再次修改，但是要将门店数据提交，所以这里也添加
      *       nextOneNum：next1_order_num字段数据，方便以后查询
      *       nextTwoNum：next2_order_num字段数据，方便以后查询
@@ -104,7 +221,7 @@ public class StoreScrapManagerSrv {
             for(int i = 0; i < jsonArray.size(); i++){
                 JSONObject json = jsonArray.getJSONObject(i);
                 if(json.get("id") != null){
-                    sql += "'" + json.getString("stroe_order_material_id") + "',";
+                    sql += "'" + json.getString("store_scrap_material_id") + "',";
                 }
             }
             sql = sql.substring(0, sql.length() - 1);
@@ -117,10 +234,12 @@ public class StoreScrapManagerSrv {
                 currentMap.put(r.getStr("id"), r);
             }
         }
+        if(!(orderId != null && orderId.length() > 0)){
+            orderId = UUIDTool.getUUID();
+        }
 
         List<Record> saveList = new ArrayList<>();
-        List<Record> updateList = new ArrayList<>();
-        List<Record> materialList = Db.find("select * from material");
+        List<Record> materialList = Db.find("select m.* from material m ");
         Map<String, Record> materialMap = new HashMap<>();
         if(materialList != null && materialList.size() > 0){
             for(Record r : materialList){
@@ -134,11 +253,13 @@ public class StoreScrapManagerSrv {
                 if("0".equals(json.getString("number"))){
                     continue;
                 }
-                if(json.getString("stroe_order_material_id") != null && json.getString("stroe_order_material_id").length() > 0){
-                    Record saveR = currentMap.get(json.getString("stroe_order_material_id"));
+                if(json.getString("store_scrap_material_id") != null && json.getString("store_scrap_material_id").length() > 0){
+                    Record saveR = currentMap.get(json.getString("store_scrap_material_id"));
                     saveR.set("number", json.get("number"));
                     saveR.set("modifier_id", userBean.getId());
                     saveR.set("modify_time", DateTool.GetDateTime());
+                    String id = UUIDTool.getUUID();
+                    saveR.set("id", id);
                     saveList.add(saveR);
                 }else{
                     Record saveR = materialMap.get(json.getString("id"));
@@ -154,6 +275,9 @@ public class StoreScrapManagerSrv {
                     saveR.set("modifier_id", userBean.getId());
                     saveR.set("modify_time", time);
                     saveR.set("scrap_time", time);
+                    saveR.set("net_num", 0);
+                    saveR.set("gross_num", 0);
+                    saveR.set("total_price", 0);
 
                     saveR.remove("desc");
                     saveR.remove("unitname");
@@ -161,6 +285,7 @@ public class StoreScrapManagerSrv {
                     saveR.remove("type");
                     saveR.remove("city");
                     saveR.remove("shelf_life");
+                    saveR.remove("status");
                     saveList.add(saveR);
                 }
             }
@@ -177,5 +302,31 @@ public class StoreScrapManagerSrv {
         record.set("id", orderId);
         record.set("status", 4);
         Db.update("store_scrap", record);
+    }
+
+    public void finishOrder(String orderId) throws Exception{
+        Record record = new Record();
+        record.set("id", orderId);
+        record.set("status", 4);
+        Db.update("store_scrap", record);
+    }
+
+    /**
+     * 将obj转化成int类型
+     *      如果为空返回0
+     *      如果是double类型，将double转化成int
+     * @param obj
+     * @return
+     */
+    private double getDouble(Object obj){
+        if(obj != null && obj.toString().trim().length() > 0 && !"null".equalsIgnoreCase(obj.toString())){
+            if(obj instanceof Double){
+                double result = new Double(obj.toString());
+                return result;
+            }else if(obj instanceof Integer){
+                return new Double(obj.toString());
+            }
+        }
+        return 0;
     }
 }
