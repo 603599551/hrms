@@ -1,7 +1,5 @@
 package com.utils;
 
-import org.apache.commons.lang.StringUtils;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -103,7 +101,7 @@ public class SelectUtil {
     }
 
     /**
-     * 拼装like sql语句
+     * 拼装like sql语句，如果keyword为null或为空字符串，直接返回this
      * @param where
      * @param wildcard1 匹配类型。NONE表示无，WILDCARD_UNDERSCODE表示_，WILDCARD_ASTERISK表示*
      * @param keyword
@@ -161,6 +159,17 @@ public class SelectUtil {
             paraList.add(obj);
         }else{
             throw new RuntimeException("错误的拼装条件！");
+        }
+        return this;
+    }
+
+
+    public SelectUtil addWhere(String where,  Object[] array){
+        this.where.append(" "+where+" ");
+        if(array!=null && array.length>0){
+            for(Object obj:array ){
+                paraList.add(obj);
+            }
         }
         return this;
     }

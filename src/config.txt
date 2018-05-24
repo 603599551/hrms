@@ -1,6 +1,6 @@
-jdbcUrl = jdbc:mysql://localhost:3308/mdm?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
+jdbcUrl = jdbc:mysql://rm-2zef6b8a6ox0c8uu7jo.mysql.rds.aliyuncs.com:3306/security_stock?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
 username = root
-password = 
+password = Mianduimian1700
 devMode = true
 
 minIdle=5

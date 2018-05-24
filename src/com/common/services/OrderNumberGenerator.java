@@ -156,7 +156,7 @@ public class OrderNumberGenerator extends BaseCtrl{
             saveR.set("date",date);
             saveR.set("type",TYPE_CH);
             saveR.set("number",1);
-            saveR.set("remark","门店采购订单号");
+            saveR.set("remark","门店引单退货单号");
 
             Db.save("order_number",saveR);
 
