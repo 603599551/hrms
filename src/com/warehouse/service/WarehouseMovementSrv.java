@@ -345,7 +345,8 @@ public class WarehouseMovementSrv {
      */
     public JsonHashMap revokeSubmit(String id,UserSessionUtil usu){
         JsonHashMap jhm=new JsonHashMap();
-
+//        @todo 撤销提交，author：mym
+        System.out.println("待实现");
 
         return jhm;
     }

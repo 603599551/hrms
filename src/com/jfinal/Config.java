@@ -10,6 +10,7 @@ import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import com.logistics.order.controllers.OutWarehouseOrderCtrl;
+import com.logistics.order.controllers.ReconciliationCtrl;
 import com.logistics.order.controllers.StoreScrapCtrl;
 import com.logistics.order.controllers.WarehouseStockMaterialTreeCtrl;
 import com.ss.controllers.HomeCtrl;
@@ -79,6 +80,8 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/storeOrderManager", StoreOrderManagerCtrl.class);
 		routes.add("/mgr/dict", DictionaryCtrl.class);
 		routes.add("/mgr/logistics/storeOrder", com.logistics.order.controllers.StoreOrderCtrl.class);
+		//物流的门店对账
+		routes.add("/mgr/logistics/reconciliation", ReconciliationCtrl.class);
 		/*
 		物流出库订单
 		 */
@@ -94,6 +97,7 @@ public class Config extends JFinalConfig {
 		//门店废弃单
 		routes.add("/mgr/store/storeScrapManager", StoreScrapManagerCtrl.class);
 		//物流处理废弃单
+		routes.add("/mgr/store/storeScrap", StoreScrapCtrl.class);
 		routes.add("/mgr/store/storeScrap", StoreScrapCtrl.class);
 		//门店接收订单
 		routes.add("/mgr/store/storeOrderReceiver", StoreOrderReceiverCtrl.class);
