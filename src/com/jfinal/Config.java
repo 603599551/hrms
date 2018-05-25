@@ -98,7 +98,6 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/store/storeScrapManager", StoreScrapManagerCtrl.class);
 		//物流处理废弃单
 		routes.add("/mgr/store/storeScrap", StoreScrapCtrl.class);
-		routes.add("/mgr/store/storeScrap", StoreScrapCtrl.class);
 		//门店接收订单
 		routes.add("/mgr/store/storeOrderReceiver", StoreOrderReceiverCtrl.class);
 
