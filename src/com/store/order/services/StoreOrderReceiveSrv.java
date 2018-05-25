@@ -1,6 +1,5 @@
 package com.store.order.services;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.jfinal.aop.Before;
@@ -14,7 +13,6 @@ import easy.util.UUIDTool;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 门店接收入库
@@ -23,6 +21,9 @@ public class StoreOrderReceiveSrv {
 
     /**
      * 门店接收入库
+     *
+     * 查询该门店库存中是否有入库的原材料记录，如果有就更新数量，如果没有就新增记录
+     *
      * @param storeOrderId
      * @param jsonArray
      * @param usu
@@ -129,31 +130,35 @@ public class StoreOrderReceiveSrv {
             String attribute2OfStoreOrderMaterialR=storeOrderMaterialR.getStr("attribute_2");
             String unitOfStoreOrderMaterialR=storeOrderMaterialR.getStr("unit");
             int receiveNum=storeOrderMaterialR.getInt("receive_num");
+            boolean has=false;
             for(Record storeStockR:storeStockList){
                 String idOfStoreStockR=storeStockR.getStr("id");
                 String materialIdOfStoreStockR=storeStockR.getStr("material_id");
                 String numberOfStoreStockR=storeStockR.getStr("number");
                 if(materialIdOfStoreOrderMaterialR.equals(materialIdOfStoreStockR)){//如果相同，就放入到updateDataList里，用于后续的更新
+                    has=true;
                     updateDataList.add(new Object[]{receiveNum+numberOfStoreStockR,idOfStoreStockR});
-                    continue;
+                    break;
                 }
             }
 
-            Record r=new Record();
-            r.set("id", UUIDTool.getUUID());
-            r.set("store_id", store_id);
-            r.set("material_id", materialIdOfStoreOrderMaterialR);
-            r.set("code", codeOfStoreOrderMaterialR);
-            r.set("name", nameOfStoreOrderMaterialR);
-            r.set("pinyin", pinyinOfStoreOrderMaterialR);
-            r.set("attribute_1", attribute1OfStoreOrderMaterialR);
-            r.set("attribute_2", attribute2OfStoreOrderMaterialR);
-            r.set("unit", unitOfStoreOrderMaterialR);
-            r.set("number", receiveNum);
-            r.set("modify_time", datetime);
-            r.set("sort", maxSort);
-            maxSort++;
-            insertDataList.add(r);
+            if(!has) {
+                Record r = new Record();
+                r.set("id", UUIDTool.getUUID());
+                r.set("store_id", store_id);
+                r.set("material_id", materialIdOfStoreOrderMaterialR);
+                r.set("code", codeOfStoreOrderMaterialR);
+                r.set("name", nameOfStoreOrderMaterialR);
+                r.set("pinyin", pinyinOfStoreOrderMaterialR);
+                r.set("attribute_1", attribute1OfStoreOrderMaterialR);
+                r.set("attribute_2", attribute2OfStoreOrderMaterialR);
+                r.set("unit", unitOfStoreOrderMaterialR);
+                r.set("number", receiveNum);
+                r.set("modify_time", datetime);
+                r.set("sort", maxSort);
+                maxSort++;
+                insertDataList.add(r);
+            }
         }
     }
 

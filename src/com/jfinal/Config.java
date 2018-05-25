@@ -23,6 +23,7 @@ import com.ss.organization.controllers.JobCtrl;
 import com.ss.organization.controllers.StaffCtrl;
 import com.ss.organization.controllers.StoreCtrl;
 import com.ss.stock.controllers.DailySummaryCtrl;
+import com.store.controllers.StoreStockManagerCtrl;
 import com.store.order.controllers.*;
 import com.store.print.PrintCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
@@ -96,6 +97,9 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/store/returnGoods", ReturnGoodsCtrl.class);
 		//门店废弃单
 		routes.add("/mgr/store/storeScrapManager", StoreScrapManagerCtrl.class);
+		//门店库存管理
+		routes.add("/mgr/store/storeStockManager", StoreStockManagerCtrl.class);
+
 		//物流处理废弃单
 		routes.add("/mgr/store/storeScrap", StoreScrapCtrl.class);
 		//门店接收订单

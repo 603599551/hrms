@@ -76,7 +76,7 @@ public class OutWarehouseOrderSrv {
             materialIdList.add(materialId);
         }
         List reList=null;
-        if("10".equals(statusOfWarehouseOutOrderR)){//如果新建订单，出库数从库存中提取
+        if("10".equals(statusOfWarehouseOutOrderR)){
             reList=buildWarehouseStockData(materialIdList,warehouseOutOrderMaterialList);
         }else{//保存、出库、完成时，出库数从warehouse_out_order_material_detail表中提取
             reList=buildWarehouseOutOrderMaterialDetail(id,materialIdList,warehouseOutOrderMaterialList);
@@ -88,6 +88,9 @@ public class OutWarehouseOrderSrv {
 
     /**
      * 根据表warehouse_out_order_material_detail构建数据
+     *
+     * 保存、出库、完成时，出库数从warehouse_out_order_material_detail表中提取
+     *
      * @param id
      * @param materialIdList
      * @param warehouseOutOrderMaterialList
@@ -96,6 +99,7 @@ public class OutWarehouseOrderSrv {
         SelectUtil selectSQL=new SelectUtil("select a.*,(select name from goods_attribute where goods_attribute.id=a.attribute_2) as attribute_2_text,(select name from goods_unit where goods_unit.id=a.unit) as unit_text,b.pinyin,c.number as warehouse_stock_num from warehouse_out_order_material_detail a left join material b on a.material_id=b.id  left join warehouse_stock c on a.material_id=c.material_id and a.batch_code=c.batch_code  ");
         selectSQL.in(" and a.material_id in ",materialIdList.toArray());
         selectSQL.addWhere(" and a.warehouse_out_order_id=?",id);
+        selectSQL.addWhere("and c.number>0");
         selectSQL.order(" order by a.material_id,a.batch_code ");//按照批号排序
         List<Record> dataList=Db.find(selectSQL.toString(),selectSQL.getParameters());
 
@@ -141,13 +145,15 @@ public class OutWarehouseOrderSrv {
         return reList;
     }
 
-    /*
-        查询库存
-        注：入库时要录入批号，所以同一个原材料会有多条记录
+    /**
+     * 新建订单，构建数据
+     * 传入出库原材料集合，查询这些原材料的库存数量
+     * 注：入库时要录入批号，所以同一个原材料会有多条记录
      */
     private List buildWarehouseStockData(List<String> materialIdList,List<Record> warehouseOutOrderMaterialList){
 
         SelectUtil selectSQL=new SelectUtil("select a.*,(select name from goods_attribute where goods_attribute.id=a.attribute_2) as attribute_2_text,(select name from goods_unit where goods_unit.id=a.unit) as unit_text,b.pinyin from warehouse_stock a left join material b on a.material_id=b.id  ");
+        selectSQL.addWhere("and a.number>0");
         selectSQL.in(" and a.material_id in ",materialIdList.toArray());
         selectSQL.order(" order by a.material_id,a.batch_code ");//按照批号排序
         List warehouseStockList=Db.find(selectSQL.toString(),selectSQL.getParameters());
@@ -197,8 +203,8 @@ public class OutWarehouseOrderSrv {
     }
 
     /**
-     * 构建子数据
-     * 根据该订单原材料的id，获取对应库存原材料的库存数量、批号
+     * 构建数据
+     * 传入出库原材料数据、库存集合，根据该原材料的id，从库存集合中找到对应库存原材料的库存数量、批号
      * 注：入库时要录入批号，所以同一个原材料会有多条记录
      *
      *  返回list中的数据有：

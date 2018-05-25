@@ -1,6 +1,5 @@
 package com.ss.organization.controllers;
 
-import com.bean.UserBean;
 import com.jfinal.KEY;
 import com.jfinal.core.Controller;
 import com.jfinal.plugin.activerecord.Db;
@@ -8,9 +7,9 @@ import com.jfinal.plugin.activerecord.Record;
 import com.utils.RequestTool;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
-import utils.bean.JsonHashMap;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
+import utils.bean.JsonHashMap;
 
 import java.util.*;
 
@@ -156,6 +155,7 @@ public class DeptCtrl extends Controller{
     }
     //显示树形结构
     public void tree(){
+        JsonHashMap jhm=new JsonHashMap();
         List<Record> list=null;
         try{
             list= Db.find("select * from dept order by sort ");
@@ -173,7 +173,8 @@ public class DeptCtrl extends Controller{
         List reList=new ArrayList();
         toWeb(treeList,reList);
 
-        renderJson(reList);
+        jhm.putCode(1).put("list",reList);
+        renderJson(jhm);
     }
     //显示树形结构
 //    public void tree2(){
