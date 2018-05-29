@@ -1,6 +1,5 @@
 package com.ss.organization.controllers;
 
-import com.alibaba.fastjson.JSONObject;
 import com.bean.UserBean;
 import com.jfinal.Config;
 import com.jfinal.KEY;
@@ -218,6 +217,7 @@ public class StaffCtrl extends Controller{
         }
     }
     public void query(){
+        JsonHashMap jhm=new JsonHashMap();
         Map paraMap = RequestTool.getParameterMap(getRequest());
         int pageNum = NumberUtils.parseInt(paraMap.get("pageNum"), 1);
         int pageSize = NumberUtils.parseInt(paraMap.get("pageSize"), 15);
@@ -272,7 +272,8 @@ public class StaffCtrl extends Controller{
             }
             Page<Record> page = Db.paginate(pageNum, pageSize, select, whereEx.toString(),paraList.toArray());
             List<Record> list=page.getList();
-            renderJson(page);
+            jhm.putCode(1).put("data",page);
+            renderJson(jhm);
         }catch(Exception e){
             e.printStackTrace();
             Map map=new HashMap();
