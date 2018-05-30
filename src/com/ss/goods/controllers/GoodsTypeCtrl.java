@@ -6,6 +6,7 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import com.utils.RequestTool;
+import com.utils.SelectUtil;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
@@ -243,7 +244,11 @@ public class GoodsTypeCtrl extends BaseCtrl {
 
     @Override
     public void query() {
-        List<Record> goodsTypeList = Db.find("select * from goods_type order by sort");
+        String keyword=getPara("keyword");
+        SelectUtil selectUtil=new SelectUtil("select * from goods_type");
+        selectUtil.like(" and name like ?",SelectUtil.WILDCARD_PERCENT,keyword,SelectUtil.WILDCARD_PERCENT);
+        selectUtil.order("order by sort");
+        List<Record> goodsTypeList = Db.find(selectUtil.toString(),selectUtil.getParameters());
         List<Record> firstList = new ArrayList<>();
         Map<String, Record> firstMap = new HashMap<>();
         List<Record> secondList = new ArrayList<>();

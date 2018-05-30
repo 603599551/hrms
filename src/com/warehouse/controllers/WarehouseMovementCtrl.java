@@ -42,7 +42,7 @@ public class WarehouseMovementCtrl extends BaseCtrl {
         selectUtil.addWhere("and in_warehouse_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,inWarehouseId);
         selectUtil.addWhere("and substr(create_time,1,10)=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,date);
         selectUtil.addWhere("and status=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,status);
-        selectUtil.like("and order_number like ? ",SelectUtil.NONE,orderNumber,SelectUtil.WILDCARD_ASTERISK);
+        selectUtil.like("and order_number like ? ",SelectUtil.NONE,orderNumber,SelectUtil.WILDCARD_PERCENT);
         selectUtil.order("order by create_time desc ,out_warehouse_id,id ");
         String sqlExt=selectUtil.toString();
         Object[] parameterArray=selectUtil.getParameters();

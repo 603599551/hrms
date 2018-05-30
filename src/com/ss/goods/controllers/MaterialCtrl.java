@@ -398,7 +398,7 @@ public class MaterialCtrl extends BaseCtrl {
             List list=sqlUtil.getParameterList();
 
             if(org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
-                String key2 = key + "%";
+                String key2 = "%"+key + "%";
                 if (list != null && !list.isEmpty()) {
                     sql.append(" and (code like ? or name like ? or pinyin like ? )");
                 } else {

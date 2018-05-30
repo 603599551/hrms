@@ -241,7 +241,7 @@ public class StaffCtrl extends Controller{
         StringBuilder whereEx = new StringBuilder(" from staff s left join (select id,name from dept  union all select id,name from store ) as dept on s.dept=dept.id where 1=1 ");
         List paraList=new ArrayList();
         if(keyword!=null && !"".equals(keyword)){
-            keyword = keyword + "%";
+            keyword = "%"+keyword + "%";
             whereEx.append(" and (phone like ? or s.name like ? or pinyin like ? )");
             paraList.add(keyword);
             paraList.add(keyword);

@@ -10,7 +10,6 @@ import com.utils.SQLUtil;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
-import easy.util.StringUtils;
 import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 import utils.jfinal.DbUtil;
@@ -212,7 +211,7 @@ public class StoreCtrl extends BaseCtrl {
 
     }
     public void query(){
-        String key=getPara("name");
+        String key=getPara("keyword");
         String pageNumStr=getPara("pageNum");
         String pageSizeStr=getPara("pageSize");
         int pageNum= NumberUtils.parseInt(pageNumStr,1);
@@ -224,9 +223,10 @@ public class StoreCtrl extends BaseCtrl {
             StringBuilder sql=sqlUtil.getSelectSQL();
             List paraList=sqlUtil.getParameterList();
             if(org.apache.commons.lang.StringUtils.isNotEmpty(key)){
-                sql.append(" and (name=? or phone=?) ");
-                paraList.add(key);
-                paraList.add(key);
+                sql.append(" and (name like ? or phone like ?) ");
+                String key2="%"+key+"%";
+                paraList.add(key2);
+                paraList.add(key2);
             }
             sql.append(" order by status desc,sort,id");
             Page<Record> page = Db.paginate(pageNum, pageSize, "select id,name,ifnull(address,'') as address,ifnull(phone,'') as phone,status,case status when 1 then '启用' when 0 then '停用' end as status_text ", sql.toString(), paraList.toArray());

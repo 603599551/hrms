@@ -9,10 +9,8 @@ import com.store.order.services.StoreOrderReceiveSrv;
 import com.utils.RequestTool;
 import com.utils.SelectUtil;
 import com.utils.UserSessionUtil;
-import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -52,7 +50,7 @@ public class StoreOrderReceiverCtrl extends BaseCtrl {
         String sql="select a.id as warehouse_out_order_id,b.id as store_order_id,a.order_number as warehouse_out_order_number,substr(a.out_time,1,16) as out_time,b.order_number as store_order_number,substr(b.create_time,1,16) as create_time_short,b.arrive_date from warehouse_out_order a left join store_order b on a.store_order_id=b.id ";
         try{
             SelectUtil selectUtil=new SelectUtil(sql);
-//            selectUtil.like("and order_number like ?",SelectUtil.NONE,orderCode,SelectUtil.WILDCARD_ASTERISK);
+//            selectUtil.like("and order_number like ?",SelectUtil.NONE,orderCode,SelectUtil.WILDCARD_PERCENT);
 //            selectUtil.addWhere("and want_date=? ",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,wantDate);
 //            selectUtil.addWhere("and arrive_date=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,arriveDate);
             selectUtil.addWhere("and b.status=?",40);

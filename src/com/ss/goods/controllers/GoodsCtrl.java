@@ -1,27 +1,19 @@
 package com.ss.goods.controllers;
 
 import com.alibaba.fastjson.JSONObject;
-import com.jfinal.aop.Before;
-import com.jfinal.json.Json;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
-import com.jfinal.plugin.activerecord.tx.Tx;
 import com.ss.controllers.BaseCtrl;
 import com.ss.goods.services.GoodsMgrService;
-import com.ss.services.SettingService;
 import com.utils.HanyuPinyinHelper;
 import com.utils.RequestTool;
 import com.utils.SQLUtil;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
-import easy.util.StringUtils;
 import easy.util.UUIDTool;
-import org.apache.poi.util.StringUtil;
-import utils.NextInt;
 import utils.bean.JsonHashMap;
-import utils.jfinal.DbUtil;
 import utils.jfinal.RecordUtils;
 
 import java.util.ArrayList;
@@ -337,7 +329,7 @@ public class GoodsCtrl extends BaseCtrl {
             List paraList=sqlUtil.getParameterList();
 
             if(org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
-                String key2 = key + "%";
+                String key2 = "%"+key + "%";
                 if (paraList != null && !paraList.isEmpty()) {
                     sql.append(" and (code like ? or name like ? or pinyin like ?)");
                 } else {

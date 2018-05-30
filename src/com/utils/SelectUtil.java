@@ -26,7 +26,7 @@ public class SelectUtil {
     /**
      * 星号
      */
-    public static int WILDCARD_ASTERISK=201;
+    public static int WILDCARD_PERCENT =201;
     /**
      * 不为null，而且不为空字符串
      */
@@ -103,7 +103,7 @@ public class SelectUtil {
     /**
      * 拼装like sql语句，如果keyword为null或为空字符串，直接返回this
      * @param where
-     * @param wildcard1 匹配类型。NONE表示无，WILDCARD_UNDERSCODE表示_，WILDCARD_ASTERISK表示*
+     * @param wildcard1 匹配类型。NONE表示无，WILDCARD_UNDERSCODE表示_，WILDCARD_ASTERISK表示%
      * @param keyword
      * @param wildcard2
      * @return
@@ -116,14 +116,14 @@ public class SelectUtil {
             if(wildcard1==WILDCARD_UNDERSCODE){
                 keyword2="_"+keyword2;
             }
-            if(wildcard1==WILDCARD_ASTERISK){
-                keyword2="*"+keyword2;
+            if(wildcard1== WILDCARD_PERCENT){
+                keyword2="%"+keyword2;
             }
             if(wildcard2==WILDCARD_UNDERSCODE){
                 keyword2=keyword2+"_";
             }
-            if(wildcard2==WILDCARD_ASTERISK){
-                keyword2=keyword2+"*";
+            if(wildcard2== WILDCARD_PERCENT){
+                keyword2=keyword2+"%";
             }
             return addWhere(where, keyword2);
         }

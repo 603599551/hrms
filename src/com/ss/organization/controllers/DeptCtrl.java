@@ -5,6 +5,7 @@ import com.jfinal.core.Controller;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.utils.RequestTool;
+import com.utils.SelectUtil;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
@@ -130,13 +131,12 @@ public class DeptCtrl extends Controller{
 
     public void query(){
         String name=getPara("name");
-        if(name==null){
-            name="";
-        }
-        name="%"+name+"%";
+        SelectUtil selectUtil=new SelectUtil("select * from dept");
+        selectUtil.like("name like ? ",SelectUtil.WILDCARD_PERCENT,name,SelectUtil.WILDCARD_PERCENT);
+        selectUtil.order("order by sort");
         List<Record> list=null;
         try{
-            list= Db.find("select * from dept where name like ? order by sort ",name);
+            list= Db.find(selectUtil.toString(),selectUtil.getParameters());
 
         }catch(Exception e){
             e.printStackTrace();
