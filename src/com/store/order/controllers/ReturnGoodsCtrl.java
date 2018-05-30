@@ -112,14 +112,17 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
      */
     public void showDetailByOrderIdAndStore(){
         String orderId = getPara("orderId");
+        boolean isRecive = false;
+        boolean isFinish = false;
+        boolean isClose = false;
         UserSessionUtil usu = new UserSessionUtil(this.getRequest());
         List<Record> materialOrderList = Db.find("select rom.*, ro.status rostatus, (select name from goods_unit gu where gu.id=rom.unit) unit_text from return_order_material rom, return_order ro where rom.return_order_id=ro.id and return_order_id=? and ro.store_id=? order by sort", orderId, usu.getUserBean().get("store_id"));
         if(materialOrderList != null && materialOrderList.size() > 0){
             for(Record r : materialOrderList){
                 if("1".equals(r.getStr("rostatus"))){
-//                    r.set("isEdit", true);
-                }else{
-//                    r.set("isEdit", false);
+                    isClose = true;
+                }else if("2".equals(r.getStr("rostatus"))){
+                }else if("3".equals(r.getStr("rostatus"))){
                 }
                 r.set("id", r.getStr("material_id"));
                 r.set("number", r.getInt("return_num"));
@@ -127,7 +130,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
             }
         }
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("materialOrderList", materialOrderList);
+        jhm.put("materialOrderList", materialOrderList).put("isRecive", isRecive).put("isFinish", isFinish).put("isClose", isClose);
         renderJson(jhm);
     }
 
@@ -157,13 +160,15 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         List<Record> materialOrderList = Db.find("select rom.*, s.name store_name, ro.status rostatus, ro.order_number order_number, (select name from goods_attribute ga where ga.id=rom.attribute_2) attribute2_text, (select name from goods_unit gu where gu.id=rom.unit) unit_text from return_order_material rom, return_order ro, store s where s.id=ro.store_id and rom.return_order_id=ro.id and return_order_id=? order by sort", orderId);
         boolean isRecive = false;
         boolean isFinish = false;
+        boolean isClose = false;
         if(materialOrderList != null && materialOrderList.size() > 0){
             for(Record r : materialOrderList){
                 if("1".equals(r.getStr("rostatus"))){
-//                    isRecive = true;
-                }
-                if("2".equals(r.getStr("rostatus"))){
-//                    isFinish = true;
+                    isRecive = true;
+                }else if("2".equals(r.getStr("rostatus"))){
+                    isFinish = true;
+                    isClose = true;
+                }else if("3".equals(r.getStr("rostatus"))){
                 }
                 r.set("id", r.getStr("material_id"));
                 r.set("number", r.getInt("return_num"));
@@ -190,7 +195,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
             }
         }
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("materialOrderList", materialOrderList).put("isRecive", isRecive).put("isFinish", isFinish);
+        jhm.put("materialOrderList", materialOrderList).put("isRecive", isRecive).put("isFinish", isFinish).put("isClose", isClose);
         renderJson(jhm);
     }
 
@@ -271,8 +276,6 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         renderJson(jhm);
     }
 
-
-
     /**
      * 接收退货单
      */
@@ -292,7 +295,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
      * 完成退货单
      */
     public void finishOrder(){
-        returnGoodsService.finishOrder(RequestTool.getJson(getRequest()));
+        returnGoodsService.finishOrder(RequestTool.getJson(getRequest()), new UserSessionUtil(getRequest()));
         JsonHashMap jhm = new JsonHashMap();
         jhm.putMessage("完成退货单！");
         renderJson(jhm);
@@ -302,10 +305,17 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
      * 取消退货单
      */
     public void cancleOrder(){
-        String orderId = getPara("orderId");
-        Record order = Db.findById("select * from return_order where id=?", orderId);
-        order.set("status", 4);
-        Db.update("return_order", order);
+        String orderId = getPara("id");
+        String type = getPara("type");
+        Record order = Db.findById("return_order", orderId);
+        if(order != null){
+            if("s".equals(type)){
+                order.set("status", 4);
+            }else if("l".equals(type)){
+                order.set("status", 5);
+            }
+            Db.update("return_order", order);
+        }
         JsonHashMap jhm = new JsonHashMap();
         jhm.putMessage("取消成功！");
         renderJson(jhm);

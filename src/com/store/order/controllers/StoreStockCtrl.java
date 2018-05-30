@@ -23,7 +23,8 @@ public class StoreStockCtrl extends BaseCtrl implements Constants{
     public void getMaterialAll(){
         JsonHashMap jhm=new JsonHashMap();
         List<Record> materialTypeList = Db.find("select id,parent_id,code,name,sort,CONCAT(name,'(',code,')') as label from material_type order by sort");
-        List<Record> materialList = Db.find("select id,code,name,CONCAT(name,'(',code,')') as label,pinyin,wm_type,(select name from wm_type where wm_type.id=wm_type) as wm_type_text ,attribute_1,(select name from goods_attribute ga where ga.id=material.attribute_2) attribute_2,type_1,type_2,unit,(select name from goods_unit where goods_unit.id=material.unit) as unit_text,0 as stock_number from material where status=1 order by sort");
+        List<Record> materialList = Db.find("select id,code,name,CONCAT(name,'(',code,')') as label,pinyin,wm_type,(select name from wm_type where wm_type.id=wm_type) as wm_type_text ,attribute_1,(select name from goods_attribute ga where ga.id=material.attribute_2) attribute_2,type_1,type_2,unit,(select name from goods_unit where goods_unit.id=material.unit) as unit_text,0 as stock_number from material order by sort");
+//        List<Record> materialList = Db.find("select id,code,name,CONCAT(name,'(',code,')') as label,pinyin,wm_type,(select name from wm_type where wm_type.id=wm_type) as wm_type_text ,attribute_1,(select name from goods_attribute ga where ga.id=material.attribute_2) attribute_2,type_1,type_2,unit,(select name from goods_unit where goods_unit.id=material.unit) as unit_text,0 as stock_number from material where status=1 order by sort");
         Map<String, Record> materialMap = new HashMap<>();
         if(materialList != null && materialList.size() > 0){
             for(Record r : materialList){
@@ -44,6 +45,9 @@ public class StoreStockCtrl extends BaseCtrl implements Constants{
         if(storeStockList != null && storeStockList.size() > 0){
             for(Record r : storeStockList){
                 Record materialR = materialMap.get(r.getStr("material_id"));
+                if(materialR == null){
+                    System.out.println(r.getStr("material_id"));
+                }
                 materialR.set("stock", r.getStr("number"));
                 materialR.set("number", r.getStr("number"));
             }

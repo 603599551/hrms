@@ -22,6 +22,15 @@ import java.util.*;
  */
 public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
 
+    public void createOrder(){
+        String type = getPara("type");
+        if(type != null && type.length() > 0){
+            createOrderType(type);
+        }else{
+            createOrderType("day");
+        }
+    }
+
     /**
      * 商品转原材料
      * 参数：
@@ -35,7 +44,7 @@ public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
      *      wantDate
      *      id：是store_order表的主键
      */
-    public void createOrder(){
+    private void createOrderType(String type){
         JsonHashMap jhm=new JsonHashMap();
         UserSessionUtil usu=new UserSessionUtil(getRequest());
         try {
@@ -47,7 +56,7 @@ public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
 
             StoreOrderManagerSrv service = enhance(StoreOrderManagerSrv.class);
             String storeOrderUUID= UUIDTool.getUUID();
-            service.goodsToMaterial(paraMap, storeOrderUUID, usu.getUserBean());
+            service.goodsToMaterialTypes(paraMap, storeOrderUUID, usu.getUserBean(), type);
 
             JSONArray jsonArr = jsonObject.getJSONArray("list");
             String[] idArr = {};

@@ -31,10 +31,7 @@ public class PrintCtrl extends BaseCtrl {
 
     public void printSendGoodsOrder() throws UnsupportedEncodingException {
         JsonHashMap jhm = new JsonHashMap();
-        String orderId = getPara("orderId");
-        if(orderId == null || orderId.length() < 1){
-            orderId = "b983b3ee8fee4ef2b11e502bedc911d7";
-        }
+        String orderId = getPara("id");
         Record dataRecord = Db.findFirst("SELECT so.arrive_date send_date, s.address send_address, s.name store_name, so.order_number order_num, so.status sostatus FROM store_order so, store s WHERE so.store_id=s.id and so.id=?", orderId);
         if(dataRecord == null){
             jhm.putCode(-1).putMessage("订单号有错误，请确认订单！");
@@ -78,6 +75,11 @@ public class PrintCtrl extends BaseCtrl {
         String table = "";
         String tableStr = "";
         List<Record> dataList = Db.find("select som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, goods_unit gu where som.unit=gu.id and store_order_id=?", orderId);
+        String title = "<table class=\"order-list\"><thead style=\"display:table-header-group\"><tr><td colspan=\"5\"><table class=\"order-top\"><tr><th colspan=\"2\" align=\"center\">送货单</th></tr><tr><td width=\"60%\">送货单位：${send_company}</td><td>送货日期：${send_date}</td></tr><tr><td width=\"60%\">地址：${send_address}</td><td>餐厅名称：${store_name}</td></tr><tr><td width=\"60%\">客服电话：${phone}</td><td>单据号：${order_num}</td></tr></table></td></tr></thead></table>";
+        for(String s : send_goods_one_page_arr){
+            title = title.replace("${" + s + "}", onePageData.get(s));
+        }
+        System.out.println(title);
         if(dataList != null && dataList.size() > 0){
             int i = 1;
             for(; i < dataList.size(); i++){
@@ -96,31 +98,38 @@ public class PrintCtrl extends BaseCtrl {
             data.put("secondPage", "");
             data.put("thirdPage", "");
             if(i % 31 < 31 && i % 31 >= 27){
-                data.put("firstPage", "<div class='pageNext'></div>");
+                data.put("firstPage", "<div class='pageNext'></div>" + title);
             }else if(i % 31 < 27 && i % 31 >= 22){
-                data.put("secondPage", "<div class='pageNext'></div>");
+                data.put("secondPage", "<div class='pageNext'></div>" + title);
             }else if(i % 31 < 22 && i % 31 >= 18){
-                data.put("thirdPage", "<div class='pageNext'></div>");
+                data.put("thirdPage", "<div class='pageNext'></div>" + title);
             }
         }
         data.put("table", table);
         data.put("creater_name", "新曙光");
         String content = pdfUtil.loadDataByTemplate(data, "sendGoodsTemplate.html");
         try {
-            pdfUtil.createPdf(content, this.getRequest().getSession().getServletContext().getRealPath("") + "/pdf/a.pdf");
-            this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/a.pdf");
+            String name = UUIDTool.getUUID();
+            pdfUtil.createPdf(content, this.getRequest().getSession().getServletContext().getRealPath("") + "/pdf/" + name + ".pdf");
+//            this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/a.pdf");
             createPrintDetails(orderId, dataRecord);
 //            this.getRequest().getRequestDispatcher(getRequest().getContextPath()  + "/pdf/a.pdf");
+            Record result = new Record();
+            result.set("pageUrl", getRequest().getScheme()+"://"+getRequest().getServerName()+":"+getRequest() .getServerPort()  + "/pdf/" + name + ".pdf");
+            result.set("title", "送货单");
+            jhm.put("data", result);
         } catch (Exception e) {
             e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.getMessage());
         }
+        renderJson(jhm);
     }
 
     public void printOutgoingGoodsOrder() throws UnsupportedEncodingException {
         JsonHashMap jhm = new JsonHashMap();
         String orderId = getPara("orderId");
         if(orderId == null || orderId.length() < 1){
-            orderId = "b983b3ee8fee4ef2b11e502bedc911d7";
+            orderId = "01996bcb125a4987853d15103c781745";
         }
         Record dataRecord = Db.findFirst("SELECT so.arrive_date send_date, s.address send_address, s.name store_name, so.order_number order_num FROM store_order so, store s WHERE so.store_id=s.id and so.id=?", orderId);
         if(dataRecord == null){
@@ -164,6 +173,10 @@ public class PrintCtrl extends BaseCtrl {
         Map<String,Object> data = new HashMap();
         String table = "";
         String tableStr = "";
+//        String title = "<table class=\"order-list\"><thead style=\"display:table-header-group\"><tr><td colspan=\"5\"><table class=\"order-top\"><tr><th colspan=\"2\" align=\"center\">出库单</th></tr><tr><td width=\"60%\">出库单号：${order_num}</td><td>仓库：${warehouse_name}</td></tr><tr><td width=\"60%\">出库日期：${date}</td><td>门店：${store_name}</td></tr></table></td></tr></thead></table>";
+//        for(String s : outgoing_goods_one_page_arr){
+//            title = title.replace("${" + s + "}", onePageData.get(s));
+//        }
         List<Record> dataList = Db.find("select som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, goods_unit gu where som.unit=gu.id and store_order_id=?", orderId);
         if(dataList != null && dataList.size() > 0){
             int i = 1;
@@ -184,12 +197,31 @@ public class PrintCtrl extends BaseCtrl {
         data.put("creater_name", "新曙光");
         String content = pdfUtil.loadDataByTemplate(data, "outgoingGoodsTemplate.html");
         try {
-            pdfUtil.createPdf(content, this.getRequest().getSession().getServletContext().getRealPath("") + "/pdf/b.pdf");
-            this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/b.pdf");
+            String name = UUIDTool.getUUID();
+            pdfUtil.createPdf(content, this.getRequest().getSession().getServletContext().getRealPath("") + "/pdf/" + name + ".pdf");
+//            this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/" + name + ".pdf");
 //            this.getRequest().getRequestDispatcher(getRequest().getContextPath()  + "/pdf/a.pdf");
+            Record result = new Record();
+            result.set("pageUrl", getRequest().getScheme()+"://"+getRequest().getServerName()+":"+getRequest() .getServerPort()  + "/pdf/" + name + ".pdf");
+            result.set("title", "出库单");
+            jhm.put("data", result);
         } catch (Exception e) {
             e.printStackTrace();
+            jhm.putMessage(e.getMessage()).putCode(-1);
         }
+        renderJson(jhm);
+    }
+
+    public void getPrintDetail(){
+        String orderId = getPara("id");
+        List<Record> printDetailsList = Db.find("select * from print_details where order_id=? order by sort desc", orderId);
+        int printTime = 0;
+        if(printDetailsList != null && printDetailsList.size() > 0){
+            printTime = printDetailsList.get(0).getInt("sort");
+        }
+        JsonHashMap jhm = new JsonHashMap();
+        jhm.put("printDetail", printDetailsList).put("printTime", printTime);
+        renderJson(jhm);
     }
 
     private void createPrintDetails(String orderId, Record dataRecord){

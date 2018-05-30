@@ -24,6 +24,34 @@ public class StoreOrderManagerSrv {
         return me;
     }
 
+    public void goodsToMaterialTypes(Map map, String storeOrderUUID, UserBean userBean, String type){
+        if("day".equals(type)){
+            goodsToMaterialTypeDay(map, storeOrderUUID, userBean);
+        }else if("week".equals(type)){
+            goodsToMaterialTypeWeek(map, storeOrderUUID, userBean);
+        }else if("month".equals(type)){
+            goodsToMaterialTypeMonth(map, storeOrderUUID, userBean);
+        }else if("rush".equals(type)){
+            goodsToMaterialTypeRush(map, storeOrderUUID, userBean);
+        }
+    }
+
+    public void goodsToMaterialTypeDay(Map map, String storeOrderUUID, UserBean userBean){
+        goodsToMaterial(map, storeOrderUUID, userBean, "day");
+    }
+
+    public void goodsToMaterialTypeWeek(Map map, String storeOrderUUID, UserBean userBean){
+        goodsToMaterial(map, storeOrderUUID, userBean, "week");
+    }
+
+    public void goodsToMaterialTypeMonth(Map map, String storeOrderUUID, UserBean userBean){
+        goodsToMaterial(map, storeOrderUUID, userBean, "month");
+    }
+
+    public void goodsToMaterialTypeRush(Map map, String storeOrderUUID, UserBean userBean){
+        goodsToMaterial(map, storeOrderUUID, userBean, "rush");
+    }
+
     /**
      * 整理数据，向store_order和store_order_goods表出入数据
      * @param map 前台传入参数
@@ -31,8 +59,7 @@ public class StoreOrderManagerSrv {
      * @param userBean 用户信息
      */
     @Before(Tx.class)
-    public void goodsToMaterial(Map map, String storeOrderUUID, UserBean userBean){
-        Map resultMap=new HashMap();
+    private void goodsToMaterial(Map map, String storeOrderUUID, UserBean userBean, String type){
         JSONObject jsonObject=(JSONObject)map.get("jsonObject");
         String arriveDate=jsonObject.getString("arriveDate");
         String wantDate=jsonObject.getString("wantDate");
@@ -48,7 +75,7 @@ public class StoreOrderManagerSrv {
         storeOrderR.set("want_date",wantDate);
         storeOrderR.set("create_time",dateTime);
         storeOrderR.set("status","10");
-        storeOrderR.set("type", "day");
+        storeOrderR.set("type", type);
         storeOrderR.set("city", userBean.get("city"));
         storeOrderR.set("store_id",userBean.get("store_id"));
         storeOrderR.set("creater_id",userBean.getId());
@@ -87,9 +114,10 @@ public class StoreOrderManagerSrv {
             sog.set("type_2", goods.getStr("type_2"));
             sog.set("number", number);
             storeOrderGoodsList.add(sog);
-
         }
-        Db.batchSave("store_order_goods", storeOrderGoodsList, storeOrderGoodsList.size());
+        if(storeOrderGoodsList != null && storeOrderGoodsList.size() > 0){
+            Db.batchSave("store_order_goods", storeOrderGoodsList, storeOrderGoodsList.size());
+        }
 
     }
     /**

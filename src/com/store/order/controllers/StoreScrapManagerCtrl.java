@@ -76,7 +76,7 @@ public class StoreScrapManagerCtrl extends BaseCtrl implements Constants{
         JsonHashMap jhm = new JsonHashMap();
         String orderId = getPara("orderId");
         try{
-            service.cancelOrder(orderId);
+            service.finishOrder(orderId, new UserSessionUtil(getRequest()));
             jhm.putMessage("取消成功！");
         } catch (Exception e){
             jhm.putMessage("取消失败！").putCode(0);

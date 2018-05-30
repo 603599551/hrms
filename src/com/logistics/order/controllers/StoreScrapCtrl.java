@@ -31,6 +31,7 @@ public class StoreScrapCtrl extends BaseCtrl {
         String orderNumber = getPara("orderNumber");
         String scrapTime = getPara("scrapTime");
         String status = getPara("state");
+        String storeId = getPara("storeId");
         String sql = " from store_scrap where 1=1 ";
         List<Object> params = new ArrayList<>();
         if(orderNumber != null && orderNumber.length() > 0){
@@ -45,6 +46,10 @@ public class StoreScrapCtrl extends BaseCtrl {
             sql += " and status=? ";
             params.add(status);
         }
+        if(storeId != null && storeId.length() > 0){
+            sql += " and store_id=? ";
+            params.add(storeId);
+        }
         Page<Record> result = Db.paginate(pageNum, pageSize, "select * ", sql, params.toArray());
         if(result != null && result.getList().size() > 0){
             for(Record r : result.getList()){
@@ -56,7 +61,7 @@ public class StoreScrapCtrl extends BaseCtrl {
             }
         }
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("list", result);
+        jhm.put("date", result);
         renderJson(jhm);
     }
 
@@ -64,11 +69,11 @@ public class StoreScrapCtrl extends BaseCtrl {
      * 废弃订单详情
      */
     public void showDetailList(){
-        String orderId = getPara("orderId");
+        String orderId = getPara("id");
         String sql = "select ssm.*, (select name from goods_unit gu where gu.id=ssm.unit) unit_text, (select name from goods_attribute ga where ga.id=ssm.attribute_2) attribute2_text from store_scrap_material ssm where ssm.store_scrap_id=?";
         List<Record> detailList = Db.find(sql, orderId);
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("list", detailList);
+        jhm.put("date", detailList);
         renderJson(detailList);
     }
 
@@ -76,7 +81,7 @@ public class StoreScrapCtrl extends BaseCtrl {
      * 接收订单
      */
     public void accept(){
-        String orderId = getPara("orderId");
+        String orderId = getPara("id");
         UserSessionUtil usu = new UserSessionUtil(getRequest());
         JsonHashMap jhm=new JsonHashMap();
         String datetime=DateTool.GetDateTime();
@@ -119,7 +124,7 @@ public class StoreScrapCtrl extends BaseCtrl {
      * 关闭订单
      */
     public void closeOrder(){
-        String orderId = getPara("orderId");
+        String orderId = getPara("id");
         JsonHashMap jsonHashMap = new JsonHashMap();
         try{
             int n=Db.update("update store_scrap set status=?,close_time=? where id=?",5, DateTool.GetDateTime(), orderId);

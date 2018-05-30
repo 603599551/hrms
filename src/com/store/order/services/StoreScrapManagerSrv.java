@@ -301,14 +301,96 @@ public class StoreScrapManagerSrv {
         Record record = new Record();
         record.set("id", orderId);
         record.set("status", 4);
+        record.set("close_time", DateTool.GetDateTime());
         Db.update("store_scrap", record);
     }
 
-    public void finishOrder(String orderId) throws Exception{
+    @Before(Tx.class)
+    public void finishOrder(String orderId, UserSessionUtil usu) throws Exception{
+        String time = DateTool.GetDateTime();
         Record record = new Record();
         record.set("id", orderId);
-        record.set("status", 4);
+        record.set("status", 3);
+        record.set("logistics_modifier_id", usu.getUserId());
+        record.set("logistics_modifier_time", time);
         Db.update("store_scrap", record);
+        List<Record> storeScrapMaterialList = Db.find("select * from store_scrap_material where store_scrap_id=?", orderId);
+        String storeId = null;
+        if(storeScrapMaterialList != null && storeScrapMaterialList.size() > 0){
+            storeId = storeScrapMaterialList.get(0).getStr("store_id");
+        }
+        List<Record> storeStockList = Db.find("select * from store_stock where store_id=?", storeId);
+        Map<String, Record> storeStockMap = new HashMap<>();
+        if(storeStockList != null && storeStockList.size() > 0){
+            for(Record r : storeStockList){
+                storeStockMap.put(r.getStr("material_id"), r);
+            }
+        }
+        List<Record> warehouseStockList = Db.find("select * from warehouse_stock where warehouse_id=?", "1324081092138412934fpk");
+        Map<String, Record> warehouseStockMap = new HashMap<>();
+        if(warehouseStockList != null && warehouseStockList.size() > 0){
+            for(Record r : warehouseStockList){
+                warehouseStockMap.put(r.getStr("material_id"), r);
+            }
+        }
+        List<Record> updateList = new ArrayList<>();
+        List<Record> saveList = new ArrayList<>();
+        List<Record> warehouseStockUpdateList = new ArrayList<>();
+        List<Record> warehouseStockSaveList = new ArrayList<>();
+        if(storeScrapMaterialList != null && storeScrapMaterialList.size() > 0){
+            for(Record r : storeScrapMaterialList){
+                Record storeStockR = storeStockMap.get(r.getStr("material_id"));
+                Record storeStocktakingR = new Record();
+                storeStocktakingR.setColumns(storeStockR);
+                storeStocktakingR.set("id", UUIDTool.getUUID());
+                storeStocktakingR.set("old_number", storeStocktakingR.getInt("number"));
+                storeStocktakingR.set("create_time", time);
+                storeStocktakingR.set("modify_time", time);
+                storeStocktakingR.set("creater_id", usu.getUserId());
+                storeStocktakingR.set("modifier_id", usu.getUserId());
+                saveList.add(storeStocktakingR);
+
+                Record updateR = new Record();
+                updateR.set("id", storeStockR.getStr("id"));
+                int number = storeStockR.getInt("number") - r.getInt("number");
+                updateR.set("number", number);
+                updateR.set("modify_time", time);
+                updateList.add(updateR);
+
+                Record warehouseStock = warehouseStockMap.get(r.getStr("material_id"));
+                if(warehouseStock == null){
+                    warehouseStock = new Record();
+                    warehouseStock.setColumns(r);
+                    String[] removeColumns = {"store_scrap_id", "store_id", "net_num", "gross_num", "total_price", "creater_id", "modifier_id", "create_time", "modify_time", "scrap_time", "number"};
+                    warehouseStock.remove(removeColumns);
+                    warehouseStock.set("creater_id", usu.getUserId());
+                    warehouseStock.set("create_time", time);
+                    //TODO 1324081092138412934fpk废品库id，暂时写死，以后可以修改成动态获取
+                    warehouseStock.set("warehouse_id", "1324081092138412934fpk");
+                    warehouseStock.set("number", number);
+                    warehouseStockSaveList.add(warehouseStock);
+                }else{
+                    warehouseStock.set("number", number);
+                    warehouseStockUpdateList.add(warehouseStock);
+                }
+            }
+        }
+        if(updateList != null && updateList.size() > 0){
+            for(Record r : updateList){
+                Db.update("store_stock", r);
+            }
+        }
+        if(saveList != null && saveList.size() > 0){
+            Db.batchSave("store_stocktaking", saveList, saveList.size());
+        }
+        if(warehouseStockUpdateList != null && warehouseStockUpdateList.size() > 0){
+            for(Record r : warehouseStockUpdateList){
+                Db.update("warehouse_stock", r);
+            }
+        }
+        if(warehouseStockSaveList != null && warehouseStockSaveList.size() > 0){
+            Db.batchSave("warehouse_stock", warehouseStockSaveList, warehouseStockSaveList.size());
+        }
     }
 
     /**

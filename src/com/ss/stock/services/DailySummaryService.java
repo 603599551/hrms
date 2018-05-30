@@ -82,6 +82,8 @@ public class DailySummaryService {
         sql.append("m.wm_type           mstock_type,");
         sql.append("m.attribute_1       mattr_1,");
         sql.append("m.attribute_2       mattr_2,");
+        sql.append("(select number from goods_attribute where goods_attribute.id=m.attribute_1)            mattr_1_number,");
+        sql.append("(select number from goods_attribute where goods_attribute.id=m.attribute_2)            mattr_2_number,");
         sql.append("(select name from goods_unit where goods_unit.id=m.unit)            munit,");
         sql.append("m.sort              msort,");
         sql.append("m.type_1            mtype_1,");

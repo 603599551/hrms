@@ -139,7 +139,7 @@ public class ReturnGoodsService {
     }
 
     @Before(Tx.class)
-    public void finishOrder(JSONObject jsonObject){
+    public void finishOrder(JSONObject jsonObject, UserSessionUtil usu){
         String returnOrderId = jsonObject.getString("id");
         JSONArray jsonArray = jsonObject.getJSONArray("list");
         List<Record> returnOrderMaterialList = Db.find("select * from return_order_material where return_order_id=?", returnOrderId);
@@ -174,12 +174,16 @@ public class ReturnGoodsService {
         }
         List<Record> wsUpdateList = new ArrayList<>();
         List<Record> SSMUpdateList = new ArrayList<>();
+        List<Record> storeStocktakingList = new ArrayList<>();
         if(jsonArray != null && jsonArray.size() > 0){
+            String time = DateTool.GetDateTime();
             for(int i = 0; i < jsonArray.size(); i++){
                 JSONObject obj = jsonArray.getJSONObject(i);
                 String materialId = obj.getString("material_id");
                 String batchCode = obj.getString("batch_code_text");
                 Record rom = returnOrderMaterialMap.get(materialId);
+                Record storeStocktaking = new Record();
+                storeStocktaking.setColumns(rom);
                 //Record ws = Db.findFirst("select * from warehouse_stock where batch_code=? and material_id=?", batchCode, materialId);
                 Record ws = wsMaterialBatchCodeMap.get(materialId).get(batchCode);
                 double number = ws.getDouble("number") + rom.getDouble("return_num");
@@ -193,6 +197,17 @@ public class ReturnGoodsService {
                 updateSSM.set("id", storeStockMaterial.getStr("id"));
                 updateSSM.set("number", number);
                 SSMUpdateList.add(updateSSM);
+                //old_number  number  creater_id  create_time  modifier_id  modify_time
+                storeStocktaking.set("old_number", storeStocktaking.get("receive_num"));
+                storeStocktaking.set("number", number);
+                storeStocktaking.set("creater_id", usu.getUserId());
+                storeStocktaking.set("create_time", time);
+                storeStocktaking.set("modifier_id", usu.getUserId());
+                storeStocktaking.set("modify_time", time);
+                storeStocktaking.set("id", UUIDTool.getUUID());
+
+                storeStocktaking.remove("return_order_id", "yield_rate", "purchase_price", "balance_price", "wm_type", "type_1", "type_2");
+                storeStocktakingList.add(storeStocktaking);
             }
         }
         if(wsUpdateList != null && wsUpdateList.size() > 0){
@@ -204,6 +219,9 @@ public class ReturnGoodsService {
             for(Record r : SSMUpdateList){
                 Db.update("store_stock", r);
             }
+        }
+        if(storeStocktakingList != null && storeStocktakingList.size() > 0){
+            Db.batchSave("store_stocktaking", storeStocktakingList, storeStocktakingList.size());
         }
 
         Record r = new Record();

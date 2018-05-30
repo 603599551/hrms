@@ -27,6 +27,13 @@ public class SecurityStockService implements Constants {
         String oneDayBeforeTime = sdf.format(new Date(currentDate.getTime() - ONE_DAY_TIME));
         String towDayBeforeTime = sdf.format(new Date(currentDate.getTime() - 2 * ONE_DAY_TIME));
         String threeDayBeforeTime = sdf.format(new Date(currentDate.getTime() - 3 * ONE_DAY_TIME));
+        List<Record> materialList = Db.find("select * from material");
+        Map<String, Record> materialMap = new HashMap<>();
+        if(materialList != null && materialList.size() > 0){
+            for(Record r : materialList){
+                materialMap.put(r.getStr("id"), r);
+            }
+        }
         String sqlStoreOrder = "select * from store_order so where want_date in (?,?,?) order by want_date";
         List<Record> storeOrderList = Db.find(sqlStoreOrder, oneDayBeforeTime, towDayBeforeTime, threeDayBeforeTime);
         if(storeOrderList != null && storeOrderList.size() > 0){
@@ -49,7 +56,11 @@ public class SecurityStockService implements Constants {
                     oneDayNum = r.getDouble("sum_want_num") / size;
                 }
                 r.set("oneDayNum", oneDayNum);
-                r.set("security_stock", oneDayNum * 7);
+                //TODO 安存算法乘以7天，根据需求要求动态获取，因为每种原材料的安存量不同（已经完成）
+                Record m = materialMap.get(r.getStr("material_id"));
+                Object o = m.get("security_time");
+                int securityTime = materialMap.get(r.getStr("material_id")).getInt("security_time");
+                r.set("security_stock", oneDayNum * securityTime);
             }
         }
         return result;
