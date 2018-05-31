@@ -108,9 +108,18 @@ public class PrintCtrl extends BaseCtrl {
         data.put("table", table);
         data.put("creater_name", "新曙光");
         String content = pdfUtil.loadDataByTemplate(data, "sendGoodsTemplate.html");
+        String path=this.getRequest().getSession().getServletContext().getRealPath("pdf");
+        File pathFile=new File(path);
+        if(!pathFile.exists()){
+            boolean b=pathFile.mkdirs();
+            if(!b){
+                System.out.println("创建目录【"+pathFile.getAbsolutePath()+"】失败！");
+            }
+        }
         try {
             String name = UUIDTool.getUUID();
-            pdfUtil.createPdf(content, this.getRequest().getSession().getServletContext().getRealPath("") + "/pdf/" + name + ".pdf");
+            File file=new File(pathFile,name + ".pdf");
+            pdfUtil.createPdf(content,  file.getAbsolutePath() );
 //            this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/a.pdf");
             createPrintDetails(orderId, dataRecord);
 //            this.getRequest().getRequestDispatcher(getRequest().getContextPath()  + "/pdf/a.pdf");
