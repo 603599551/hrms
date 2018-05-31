@@ -468,7 +468,7 @@ public class OutWarehouseOrderSrv {
      * 构建保存的数据
      * 将传入的数据，重新构建，并放入到recordList，warehouseOutOrderMaterialMap
      * @param warehouseOutOrderR
-     * @param array
+     * @param array 前台页面传递的数据
      * @param recordList 表格上本来就有的原材料，封装在该list中。该list的元素是要保持到warehouse_out_order_material_detail表的
      * @param newRecordList 从树上选择添加的原材料，封装在该list中。该list的元素是要保持到warehouse_out_order_material_detail表的
      * @param warehouseOutOrderMaterialDetailBeanList 表格上本来就有的原材料，封装在该list中，用于后续更新warehouse_Out_Order_Material表的数量
@@ -664,9 +664,21 @@ public class OutWarehouseOrderSrv {
             }
         }
         String store_order_id=warehouseOutOrderR.getStr("store_order_id");
+        /*
+        表格上本来就有的原材料，封装在该list中，用于后续更新warehouse_Out_Order_Material表的数量
+         */
         List<WarehouseOutOrderMaterialDetailBean> warehouseOutOrderMaterialDetailBeanList =new ArrayList<>();
+        /*
+        从树上选择添加的原材料，封装在该list中，该list的元素是要保持到warehouse_out_order_material表、store_order_material表
+         */
         List<WarehouseOutOrderMaterialDetailBean> newWarehouseOutOrderMaterialDetailBeanList =new ArrayList<>();
+        /*
+        表格上本来就有的原材料，封装在该list中。该list的元素是要保持到warehouse_out_order_material_detail表的
+         */
         List<Record> recordList=new ArrayList();
+        /*
+        从树上选择添加的原材料，封装在该list中。该list的元素是要保持到warehouse_out_order_material_detail表的
+         */
         List<Record> newRecordList=new ArrayList();
         buildSaveData(warehouseOutOrderR,array,recordList, newRecordList,warehouseOutOrderMaterialDetailBeanList,newWarehouseOutOrderMaterialDetailBeanList);
         //保存Warehouse_Out_Order_Material_Detail前先清空
