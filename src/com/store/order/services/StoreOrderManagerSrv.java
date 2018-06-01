@@ -74,7 +74,7 @@ public class StoreOrderManagerSrv {
         storeOrderR.set("arrive_date",arriveDate);
         storeOrderR.set("want_date",wantDate);
         storeOrderR.set("create_time",dateTime);
-        storeOrderR.set("status","10");
+        storeOrderR.set("status","5");
         storeOrderR.set("type", type);
         storeOrderR.set("city", userBean.get("city"));
         storeOrderR.set("store_id",userBean.get("store_id"));
@@ -157,7 +157,6 @@ public class StoreOrderManagerSrv {
         }
 
         List<Record> saveList = new ArrayList<>();
-        List<Record> updateList = new ArrayList<>();
         List<Record> materialList = Db.find("select * from material");
         Map<String, Record> materialMap = new HashMap<>();
         if(materialList != null && materialList.size() > 0){
@@ -169,12 +168,15 @@ public class StoreOrderManagerSrv {
             for(int i = 0; i < jsonArray.size(); i++){
                 JSONObject json = jsonArray.getJSONObject(i);
                 if(json.getString("stroe_order_material_id") != null && json.getString("stroe_order_material_id").length() > 0){
-                    Record saveR = currentMap.get(json.getString("stroe_order_material_id"));
-                    saveR.set("want_num", json.get("number"));
-                    saveR.set("send_num", json.get("number"));
-                    saveR.set("next1_order_num", json.get("nextOneNum"));
-                    saveR.set("next2_order_num", json.get("nextTwoNum"));
-                    updateList.add(saveR);
+                    Record updateR = currentMap.get(json.getString("stroe_order_material_id"));
+                    updateR.set("want_num", json.get("number"));
+                    updateR.set("send_num", json.get("number"));
+                    updateR.set("next1_order_num", json.get("nextOneNum"));
+                    updateR.set("next2_order_num", json.get("nextTwoNum"));
+                    Record saveR = new Record();
+                    saveR.setColumns(updateR);
+                    saveR.set("id", UUIDTool.getUUID());
+                    saveList.add(saveR);
                 }else{
                     Record saveR = materialMap.get(json.getString("id"));
                     String id = UUIDTool.getUUID();
@@ -203,14 +205,16 @@ public class StoreOrderManagerSrv {
                 }
             }
         }
+        Db.delete("delete from store_order_material where store_order_id=?",orderId);
         if(saveList != null && saveList.size() > 0){
             Db.batchSave("store_order_material", saveList, saveList.size());
         }
-        if(updateList != null && updateList.size() > 0){
-            for(Record r : updateList){
-                Db.update("store_order_material", r);
-            }
-        }
+        Db.update("update store_order set status=10 where id=?", orderId);
+//        if(updateList != null && updateList.size() > 0){
+//            for(Record r : updateList){
+//                Db.update("store_order_material", r);
+//            }
+//        }
 
         /*
         try{

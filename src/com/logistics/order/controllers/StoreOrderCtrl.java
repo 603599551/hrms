@@ -14,7 +14,10 @@ import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物流接收门店订单
@@ -185,4 +188,37 @@ public class StoreOrderCtrl extends BaseCtrl {
         }
         renderJson(jsonHashMap);
     }
+
+    /**
+     * 获得批号、第一级规格和第二级规格
+     */
+    public void getBatchAndAttribute(){
+        List<Record> warehouseStockList = Db.find("select ws.*, (select number from goods_attribute where goods_attribute.id=ws.attribute_1) attribute_1_number, (select number from goods_attribute where goods_attribute.id=ws.attribute_2) attribute_2_number from warehouse_stock ws where number > 0");
+        Map<String, Map<String, List<Integer>>> materialBatchMap = new HashMap<>();
+        if(warehouseStockList != null && warehouseStockList.size() > 0){
+            for(Record r : warehouseStockList){
+                Map<String, List<Integer>> batchMap = materialBatchMap.get(r.getStr("material_id"));
+                if(batchMap == null){
+                    batchMap = new HashMap<>();
+                    materialBatchMap.put(r.getStr("material_id"), batchMap);
+                }
+                List<Integer> numberList = new ArrayList<>();
+                int number1 = 1;
+                if(r.get("attribute_1_number") != null && r.getStr("attribute_1_number").length() > 0){
+                    number1 = r.getInt("attribute_1_number");
+                }
+                int number2 = 1;
+                if(r.get("attribute_2_number") != null && r.getStr("attribute_2_number").length() > 0){
+                    number2 = r.getInt("attribute_2_number");
+                }
+                numberList.add(number1);
+                numberList.add(number2);
+                batchMap.put(r.getStr("batch_code"), numberList);
+            }
+        }
+        JsonHashMap jhm = new JsonHashMap();
+        jhm.put("data", materialBatchMap);
+        renderJson(jhm);
+    }
+
 }

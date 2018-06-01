@@ -166,7 +166,7 @@ public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
         }
         //1
         //查询商品相关信息，缓存到内存，方便后面读取数据
-        List<Record> materialList = Db.find("select m.*, gu.name unitname from material m, goods_unit gu where m.unit=gu.id");
+        List<Record> materialList = Db.find("select m.*, (select name from goods_unit where goods_unit.id=m.unit) unitname from material m");
         Map<String, Record> materialAllMap = new HashMap<>();
         if(materialList != null && materialList.size() > 0){
             for(Record r : materialList){

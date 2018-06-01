@@ -31,7 +31,7 @@ public class StoreStockCtrl extends BaseCtrl implements Constants{
                 materialMap.put(r.getStr("id"), r);
                 //search_text: '原材料名称-编号-拼音头'
                 r.set("search_text",r.getStr("name") + "-" + r.get("code") + "-" + r.get("pinyin"));
-                r.set("stock", "0");
+                r.set("stock", 0);
                 r.set("number", 0);
             }
         }

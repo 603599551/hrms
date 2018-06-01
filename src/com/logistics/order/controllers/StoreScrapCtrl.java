@@ -61,7 +61,7 @@ public class StoreScrapCtrl extends BaseCtrl {
             }
         }
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("date", result);
+        jhm.put("data", result);
         renderJson(jhm);
     }
 
@@ -73,7 +73,7 @@ public class StoreScrapCtrl extends BaseCtrl {
         String sql = "select ssm.*, (select name from goods_unit gu where gu.id=ssm.unit) unit_text, (select name from goods_attribute ga where ga.id=ssm.attribute_2) attribute2_text from store_scrap_material ssm where ssm.store_scrap_id=?";
         List<Record> detailList = Db.find(sql, orderId);
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("date", detailList);
+        jhm.put("data", detailList);
         renderJson(detailList);
     }
 

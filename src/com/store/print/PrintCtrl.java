@@ -1,15 +1,18 @@
 package com.store.print;
 
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import com.utils.PDFUtil;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
+import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,11 @@ public class PrintCtrl extends BaseCtrl {
         Record dataRecord = Db.findFirst("SELECT so.arrive_date send_date, s.address send_address, s.name store_name, so.order_number order_num, so.status sostatus FROM store_order so, store s WHERE so.store_id=s.id and so.id=?", orderId);
         if(dataRecord == null){
             jhm.putCode(-1).putMessage("订单号有错误，请确认订单！");
+            renderJson(jhm);
+            return;
+        }
+        if(!"40".equals(dataRecord.getStr("sostatus"))){
+            jhm.putCode(-1).putMessage("只有已出库的订单可以打印送货单！");
             renderJson(jhm);
             return;
         }
@@ -74,13 +82,13 @@ public class PrintCtrl extends BaseCtrl {
         Map<String,Object> data = new HashMap();
         String table = "";
         String tableStr = "";
-        List<Record> dataList = Db.find("select som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, goods_unit gu where som.unit=gu.id and store_order_id=?", orderId);
+        List<Record> dataList = Db.find("select so.order_number order_number, som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, store_order so, goods_unit gu where so.id=som.store_order_id and som.unit=gu.id and store_order_id=?", orderId);
         String title = "<table class=\"order-list\"><thead style=\"display:table-header-group\"><tr><td colspan=\"5\"><table class=\"order-top\"><tr><th colspan=\"2\" align=\"center\">送货单</th></tr><tr><td width=\"60%\">送货单位：${send_company}</td><td>送货日期：${send_date}</td></tr><tr><td width=\"60%\">地址：${send_address}</td><td>餐厅名称：${store_name}</td></tr><tr><td width=\"60%\">客服电话：${phone}</td><td>单据号：${order_num}</td></tr></table></td></tr></thead></table>";
         for(String s : send_goods_one_page_arr){
             title = title.replace("${" + s + "}", onePageData.get(s));
         }
-        System.out.println(title);
         if(dataList != null && dataList.size() > 0){
+            dataRecord.set("order_number", dataList.get(0).get("order_number"));
             int i = 1;
             for(; i < dataList.size(); i++){
                 Record r = dataList.get(i);
@@ -106,7 +114,7 @@ public class PrintCtrl extends BaseCtrl {
             }
         }
         data.put("table", table);
-        data.put("creater_name", "新曙光");
+        data.put("creater_name", new UserSessionUtil(getRequest()).getRealName());
         String content = pdfUtil.loadDataByTemplate(data, "sendGoodsTemplate.html");
         String path=this.getRequest().getSession().getServletContext().getRealPath("pdf");
         File pathFile=new File(path);
@@ -121,7 +129,7 @@ public class PrintCtrl extends BaseCtrl {
             File file=new File(pathFile,name + ".pdf");
             pdfUtil.createPdf(content,  file.getAbsolutePath() );
 //            this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/a.pdf");
-            createPrintDetails(orderId, dataRecord);
+            createPrintDetails(orderId, dataRecord, "send_goods");
 //            this.getRequest().getRequestDispatcher(getRequest().getContextPath()  + "/pdf/a.pdf");
             Record result = new Record();
             result.set("pageUrl", getRequest().getScheme()+"://"+getRequest().getServerName()+":"+getRequest() .getServerPort()  + "/pdf/" + name + ".pdf");
@@ -136,11 +144,8 @@ public class PrintCtrl extends BaseCtrl {
 
     public void printOutgoingGoodsOrder() throws UnsupportedEncodingException {
         JsonHashMap jhm = new JsonHashMap();
-        String orderId = getPara("orderId");
-        if(orderId == null || orderId.length() < 1){
-            orderId = "01996bcb125a4987853d15103c781745";
-        }
-        Record dataRecord = Db.findFirst("SELECT so.arrive_date send_date, s.address send_address, s.name store_name, so.order_number order_num FROM store_order so, store s WHERE so.store_id=s.id and so.id=?", orderId);
+        String orderId = getPara("id");
+        Record dataRecord = Db.findFirst("SELECT so.out_time date, w.name warehouse_name, s.name store_name, so.order_number order_num FROM warehouse_out_order so, store s, warehouse w WHERE so.store_id = s.id and so.warehouse_id=w.id and so.id=?", orderId);
         if(dataRecord == null){
             jhm.putCode(-1).putMessage("订单号有错误，请确认订单！");
             renderJson(jhm);
@@ -186,8 +191,9 @@ public class PrintCtrl extends BaseCtrl {
 //        for(String s : outgoing_goods_one_page_arr){
 //            title = title.replace("${" + s + "}", onePageData.get(s));
 //        }
-        List<Record> dataList = Db.find("select som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, goods_unit gu where som.unit=gu.id and store_order_id=?", orderId);
+        List<Record> dataList = Db.find("select so.order_number order_number, som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order so, store_order_material som, goods_unit gu where so.id=som.store_order_id som.unit=gu.id and store_order_id=?", orderId);
         if(dataList != null && dataList.size() > 0){
+            dataRecord.set("order_number", dataList.get(0).get("order_number"));
             int i = 1;
             for(; i < dataList.size(); i++){
                 Record r = dataList.get(i);
@@ -208,6 +214,7 @@ public class PrintCtrl extends BaseCtrl {
         try {
             String name = UUIDTool.getUUID();
             pdfUtil.createPdf(content, this.getRequest().getSession().getServletContext().getRealPath("") + "/pdf/" + name + ".pdf");
+            createPrintDetails(orderId, dataRecord, "outgoing_goods");
 //            this.getResponse().sendRedirect(getRequest().getContextPath()  + "/pdf/" + name + ".pdf");
 //            this.getRequest().getRequestDispatcher(getRequest().getContextPath()  + "/pdf/a.pdf");
             Record result = new Record();
@@ -222,18 +229,40 @@ public class PrintCtrl extends BaseCtrl {
     }
 
     public void getPrintDetail(){
-        String orderId = getPara("id");
-        List<Record> printDetailsList = Db.find("select * from print_details where order_id=? order by sort desc", orderId);
+        String pageNumStr=getPara("pageNum");
+        String pageSizeStr=getPara("pageSize");
+
+        int pageNum= NumberUtils.parseInt(pageNumStr,1);
+        int pageSize=NumberUtils.parseInt(pageSizeStr,10);
+        String orderId = getPara("orderNumber");
+        String type = getPara("type");
+//        String date = getPara("date");
+        String sql = " from print_details where 1=1 ";
+        List<Object> params = new ArrayList<>();
+        if(orderId != null && orderId.length() > 0){
+            sql += " and order_number=? ";
+            params.add(orderId);
+        }
+        if(type != null && type.length() > 0){
+            sql += " and type=? ";
+            params.add(type);
+        }
+//        if(date != null && date.length() > 0){
+//            sql += " and print_date=? ";
+//            params.add(date);
+//        }
+        sql += " order by sort desc";
+        Page<Record> orderList = Db.paginate(pageNum, pageSize, "select * ", sql, params.toArray());
         int printTime = 0;
-        if(printDetailsList != null && printDetailsList.size() > 0){
-            printTime = printDetailsList.get(0).getInt("sort");
+        if(orderList != null && orderList.getList().size() > 0){
+            printTime = orderList.getList().get(0).getInt("sort");
         }
         JsonHashMap jhm = new JsonHashMap();
-        jhm.put("printDetail", printDetailsList).put("printTime", printTime);
+        jhm.put("data", orderList).put("printTime", printTime);
         renderJson(jhm);
     }
 
-    private void createPrintDetails(String orderId, Record dataRecord){
+    private void createPrintDetails(String orderId, Record dataRecord, String type){
         List<Record> printDetailsList = Db.find("select * from print_details where order_id=? order by sort", orderId);
         int sort = 1;
         if(printDetailsList != null && printDetailsList.size() > 0){
@@ -246,7 +275,10 @@ public class PrintCtrl extends BaseCtrl {
         printDetails.set("print_date", DateTool.GetDateTime());
         printDetails.set("sort", sort);
         printDetails.set("creater_id", usu.getUserId());
+        printDetails.set("creater_name", usu.getRealName());
+        printDetails.set("type", type);
         printDetails.set("status", dataRecord.getStr("sostatus"));
+        printDetails.set("order_number", dataRecord.getStr("order_number"));
         Db.save("print_details", printDetails);
     }
 
