@@ -6,6 +6,7 @@ import com.ss.controllers.BaseCtrl;
 import com.store.order.services.MaterialAndMaterialTypeTreeService;
 import com.store.order.services.StoreOrderManagerSrv;
 import com.utils.Constants;
+import com.utils.UserSessionUtil;
 import utils.bean.JsonHashMap;
 
 import java.text.ParseException;
@@ -25,10 +26,9 @@ public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Consta
 //        //TODO 测试数据
 //        orderId = (String) getSession().getAttribute("store_order_id");
 
-            List<Record> storeOrderGoodsList = Db.find("select sog.*, so.want_date sowant_date, so.arrive_date sarrive_date from store_order_goods sog, store_order so where so.id=sog.store_order_id and store_order_id=?", orderId);
-            String wantDateStr = storeOrderGoodsList.get(0).getStr("sowant_date");
+            Record storeOrder = Db.findById("store_order", orderId);
+            String wantDateStr = storeOrder.getStr("want_date");
             Date wantDate = sdf.parse(wantDateStr);
-            StoreOrderManagerSrv storeOrderManagerSrv = StoreOrderManagerSrv.getMe();
             String paramDateOne = sdf.format(new Date(wantDate.getTime() + ONE_DAY_TIME));
             String paramDateTwo = sdf.format(new Date(wantDate.getTime() + ONE_DAY_TIME * 2));
 
@@ -48,6 +48,15 @@ public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Consta
                 }
             }
 
+            UserSessionUtil usu = new UserSessionUtil(getRequest());
+            List<Record> storeStockList = Db.find("select * from store_stock where store_id=?", usu.getUserBean().get("store_id"));
+            Map<String, Record> storeStockMap = new HashMap<>();
+            if(storeStockList != null && storeStockList.size() > 0){
+                for(Record r : storeStockList){
+                    storeStockMap.put(r.getStr("material_id"), r);
+                }
+            }
+
             if (materialList != null && materialList.size() > 0) {
                 for (Record r : materialList) {
                     //整理昨天和前天的数据
@@ -56,19 +65,35 @@ public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Consta
                     r.set("isEdit", true);
                     r.set("actual_order", "0");
                     r.set("stock", "0");
+                    Record storeStock = storeStockMap.get(r.getStr("id"));
+                    if (storeStock != null) {
+                        if (storeStock.get("number") != null && storeStock.getInt("number") > 0) {
+                            r.set("stock", storeStock.getStr("number"));
+                        }
+                    }
+                    r.set("nextOneNum", "0");
+                    r.set("nextOneGetNum", "0");
+                    r.set("nextTwoNum", "0");
+                    r.set("nextTwoGetNum", "0");
                     if (one != null) {
-                        r.set("nextOneNum", one.getStr("use_num"));
-                        r.set("nextOneGetNum", one.getStr("send_num"));
-                    } else {
-                        r.set("nextOneNum", "0");
-                        r.set("nextOneGetNum", "0");
+                        String user_num = one.getStr("use_num");
+                        String send_num = one.getStr("send_num");
+                        if(user_num != null && user_num.length() > 0){
+                            r.set("nextOneNum", one.getStr("use_num"));
+                        }
+                        if(send_num != null && send_num.length() > 0){
+                            r.set("nextOneGetNum", one.getStr("send_num"));
+                        }
                     }
                     if (two != null) {
-                        r.set("nextTwoNum", two.getStr("use_num"));
-                        r.set("nextTwoGetNum", two.getStr("send_num"));
-                    } else {
-                        r.set("nextTwoNum", "0");
-                        r.set("nextTwoGetNum", "0");
+                        String user_num = two.getStr("use_num");
+                        String send_num = two.getStr("send_num");
+                        if(user_num != null && user_num.length() > 0){
+                            r.set("nextTwoNum", two.getStr("use_num"));
+                        }
+                        if(send_num != null && send_num.length() > 0){
+                            r.set("nextTwoGetNum", two.getStr("send_num"));
+                        }
                     }
                 }
             }

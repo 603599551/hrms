@@ -37,7 +37,7 @@ public class StoreScrapManagerSrv {
         storeScrapR.set("id",storeScrapUUID);
         storeScrapR.set("order_number",orderNumberGenerator.getStoreScrapNumber());
         storeScrapR.set("create_time",dateTime);
-        storeScrapR.set("status","1");
+        storeScrapR.set("status","0");
 //        storeScrapR.set("type", "day");
         storeScrapR.set("city", userBean.get("city"));
         storeScrapR.set("store_id",userBean.get("store_id"));
@@ -295,6 +295,7 @@ public class StoreScrapManagerSrv {
         if(saveList != null && saveList.size() > 0){
             Db.batchSave("store_scrap_material", saveList, saveList.size());
         }
+        Db.update("update store_scrap set status=1 where id=?", orderId);
     }
 
     public void cancelOrder(String orderId) throws Exception{

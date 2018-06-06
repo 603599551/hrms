@@ -99,9 +99,16 @@ public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
         String orderId = getPara("id");
         //1
         List<Record> storeOrderGoodsList = Db.find("select sog.*, so.want_date sowant_date, so.arrive_date sarrive_date from store_order_goods sog, store_order so where so.id=sog.store_order_id and store_order_id=?", orderId);
-        String wantDateStr = storeOrderGoodsList.get(0).getStr("sowant_date");
-        String arriveDateStr = storeOrderGoodsList.get(0).getStr("sarrive_date");
-
+        String wantDateStr = null;
+        String arriveDateStr = null;
+        if(storeOrderGoodsList != null && storeOrderGoodsList.size() > 0){
+            wantDateStr = storeOrderGoodsList.get(0).getStr("sowant_date");
+            arriveDateStr = storeOrderGoodsList.get(0).getStr("sarrive_date");
+        }else{
+            Record stroeOrder = Db.findById("store_order", orderId);
+            wantDateStr = stroeOrder.getStr("want_date");
+            arriveDateStr = stroeOrder.getStr("arrive_date");
+        }
         List<String> idArr = new ArrayList<>();
         List<Integer> numberArr = new ArrayList<>();
         if(storeOrderGoodsList != null && storeOrderGoodsList.size() > 0){
@@ -206,14 +213,16 @@ public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
                 saveList.add(saveR);
             }
         }
-        Db.batchSave("store_order_material", saveList, saveList.size());
+        if(saveList != null && saveList.size() > 0){
+            Db.batchSave("store_order_material", saveList, saveList.size());
+        }
         //3
         //2
         Date wantDate = sdf.parse(wantDateStr);
         String paramDate = sdf.format(new Date(wantDate.getTime() + ONE_DAY_TIME));
-        List<Record> nextOneOrderList = Db.find("select som.* from store_order so, store_order_material som where so.id=som.store_order_id and arrive_date=?", paramDate);
+        List<Record> nextOneOrderList = Db.find("select som.* from store_order so, store_order_material som where so.id=som.store_order_id and so.arrive_date=? and so.store_id=?", paramDate, usu.getUserId());
         paramDate = sdf.format(new Date(wantDate.getTime() + ONE_DAY_TIME * 2));
-        List<Record> nextTwoOrderList = Db.find("select som.* from store_order so, store_order_material som where so.id=som.store_order_id and arrive_date=?", paramDate);
+        List<Record> nextTwoOrderList = Db.find("select som.* from store_order so, store_order_material som where so.id=som.store_order_id and so.arrive_date=? and so.store_id=?", paramDate, usu.getUserId());
 
         //整理昨天和前天的数据
         addNextNum(1, nextOneOrderList, materialMap, materialAllMap, result);

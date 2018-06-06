@@ -170,7 +170,10 @@ public class StoreOrderManagerSrv {
                 if(json.getString("stroe_order_material_id") != null && json.getString("stroe_order_material_id").length() > 0){
                     Record updateR = currentMap.get(json.getString("stroe_order_material_id"));
                     updateR.set("want_num", json.get("number"));
-                    updateR.set("send_num", json.get("number"));
+                    /*
+                    因为发货单位发生变化，所以发货数量要按照发货单位计算，此时不能修改
+                     */
+                    //updateR.set("send_num", json.get("number"));
                     updateR.set("next1_order_num", json.get("nextOneNum"));
                     updateR.set("next2_order_num", json.get("nextTwoNum"));
                     Record saveR = new Record();
@@ -185,7 +188,10 @@ public class StoreOrderManagerSrv {
                     saveR.set("store_id", usu.getUserBean().get("store_id"));
                     saveR.set("material_id", json.getString("id"));
                     saveR.set("use_num", json.getString("number"));
-                    saveR.set("send_num", json.getString("number"));
+                    /*
+                    因为发货单位发生变化，所以发货数量要按照发货单位计算，此时不能修改
+                     */
+                    //saveR.set("send_num", json.getString("number"));
                     saveR.set("status", 10);
                     //saveR.set("type", "day");
                     //saveR.set("city", usu.getUserBean().get("city"));
@@ -229,6 +235,7 @@ public class StoreOrderManagerSrv {
                     r.set("next1_order_num", json.get("nextOneNum"));
                     r.set("next2_order_num", json.get("nextTwoNum"));
                     Db.update("store_order_material", r);
+
                 }
             }
         }catch (Exception e){

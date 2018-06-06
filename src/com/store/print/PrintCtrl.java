@@ -92,7 +92,7 @@ public class PrintCtrl extends BaseCtrl {
             int i = 1;
             for(; i < dataList.size(); i++){
                 Record r = dataList.get(i);
-                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + r.get("ganame") + "</td><td>" + r.get("uname") + "</td><td>" + r.get("name") + "</td><td>" + r.get("send_num") + "</td></tr>";
+                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + r.get("box_attr") + "</td><td>" + r.get("out_unit") + "</td><td>" + r.get("name") + "</td><td>" + r.get("box_attr_num") + "</td></tr>";
                 if(i % 31 == 0){
                     table += onePageTempStr.replace("${table}", tableStr);
                     table += "<div class='pageNext'></div>";
@@ -191,13 +191,13 @@ public class PrintCtrl extends BaseCtrl {
 //        for(String s : outgoing_goods_one_page_arr){
 //            title = title.replace("${" + s + "}", onePageData.get(s));
 //        }
-        List<Record> dataList = Db.find("select so.order_number order_number, som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order so, store_order_material som, goods_unit gu where so.id=som.store_order_id som.unit=gu.id and store_order_id=?", orderId);
+        List<Record> dataList = Db.find("select so.order_number order_number, som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, store_order so, goods_unit gu where so.id=som.store_order_id and som.unit=gu.id and store_order_id=?", orderId);
         if(dataList != null && dataList.size() > 0){
             dataRecord.set("order_number", dataList.get(0).get("order_number"));
             int i = 1;
             for(; i < dataList.size(); i++){
                 Record r = dataList.get(i);
-                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + r.get("ganame") + "</td><td>" + r.get("uname") + "</td><td>" + r.get("name") + "</td><td>" + r.get("send_num") + "</td></tr>";
+                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + r.get("name") + "</td><td>" + r.get("box_attr") + "</td><td>" + r.get("out_unit") + "</td><td>" + r.get("box_attr_num") + "</td></tr>";
                 if(i % 31 == 0){
                     table += onePageTempStr.replace("${table}", tableStr);
                     table += "<div class='pageNext'></div>";

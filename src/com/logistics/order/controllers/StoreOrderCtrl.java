@@ -60,9 +60,9 @@ public class StoreOrderCtrl extends BaseCtrl {
             int pageNum= NumberUtils.parseInt(pageNumStr,1);
             int pageSize=NumberUtils.parseInt(pageSizeStr,10);
 
-            if(StringUtils.isEmpty(status)){
-                status="1";
-            }
+//            if(StringUtils.isEmpty(status)){
+//                status="1";
+//            }
 
             SelectUtil sqlUtil = new SelectUtil(" from store_order ");
             if(arrivalDate!=null) {
@@ -75,7 +75,13 @@ public class StoreOrderCtrl extends BaseCtrl {
             }
             sqlUtil.addWhere("and type=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderType);
             sqlUtil.addWhere("and store_id=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, storeId);
-            sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
+            if(status != null && status.length() > 0){
+                if("-1".equals(status)){
+                    sqlUtil.addWhere("and status<>?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, "5");
+                }else{
+                    sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
+                }
+            }
             sqlUtil.addWhere("and order_number=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderCode);
             sqlUtil.order(" order by arrive_date desc , create_time desc");
             String sqlExceptSelect=sqlUtil.toString();
