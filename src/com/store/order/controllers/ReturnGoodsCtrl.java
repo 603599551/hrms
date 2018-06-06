@@ -81,6 +81,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         Page<Record> orderList = null;
         String status = getPara("state");
         String orderId = getPara("orderCode");
+        String store = getPara("store");
 
         String sql = " from return_order ro, dictionary d, store s where s.id=ro.store_id and d.value=ro.status and d.parent_id=500 ";
         List<Object> params = new ArrayList<>();
@@ -91,6 +92,10 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         if(orderId != null && orderId.length() > 0 && !"null".equalsIgnoreCase(orderId)){
             sql += " and ro.order_number like ? ";
             params.add("%" + orderId + "%");
+        }
+        if(store != null && store.length() > 0 && !"null".equalsIgnoreCase(store) && !"-1".equals(store)){
+            sql += " and s.id=? ";
+            params.add(store);
         }
         sql += " order by ro.return_time desc";
         orderList = Db.paginate(pageNum, pageSize, "select ro.*, d.name dname, s.name store_name ", sql, params.toArray());
