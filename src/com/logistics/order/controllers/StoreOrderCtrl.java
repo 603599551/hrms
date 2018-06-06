@@ -35,7 +35,8 @@ public class StoreOrderCtrl extends BaseCtrl {
         String datetime= DateTool.GetDateTime();
         String select="select *,substr(create_time,1,16) as create_time_short,(select name from store where store.id=store_order.store_id) as store_text," +
                 "(select name from dictionary where dictionary.value=store_order.type and dictionary.parent_id='7') as type_text," +
-                "(select name from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_text";
+                "(select name from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_text,"+
+                "IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 1,1),0) as print_time";
 
 //        StringBuilder sqlExceptSelect=new StringBuilder("  where ?<=arrive_date and arrive_date<=? and type=? and store_id=? and status=? ");
         try {
@@ -163,7 +164,7 @@ public class StoreOrderCtrl extends BaseCtrl {
     public void showOrderDetailsById(){
         String id=getPara("id");
         JsonHashMap jsonHashMap=new JsonHashMap();
-        String sql="select *,(select name from store where store.id=store_order.store_id) as store_text,substr(create_time,1,16) as create_time_short from store_order where id=?";
+        String sql="select *,(select name from store where store.id=store_order.store_id) as store_text,substr(create_time,1,16) as create_time_short,IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 1,1),0) as print_time from store_order where id=?";
         try{
             Record r=Db.findFirst(sql,id);
             List<Record> list=Db.find("select *,(select name from goods_unit where goods_unit.id=store_order_material.unit) as unit_text,(select name from goods_attribute where store_order_material.attribute_2=goods_attribute.id) as attribute_2_text from store_order_material where store_order_id=? order by sort ",id);
