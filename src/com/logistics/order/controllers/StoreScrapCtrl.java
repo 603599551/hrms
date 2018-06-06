@@ -46,7 +46,7 @@ public class StoreScrapCtrl extends BaseCtrl {
             sql += " and status=? ";
             params.add(status);
         }
-        if(storeId != null && storeId.length() > 0){
+        if(storeId != null && storeId.length() > 0 && !"-1".equals(storeId)){
             sql += " and store_id=? ";
             params.add(storeId);
         }
