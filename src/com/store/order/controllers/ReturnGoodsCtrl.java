@@ -52,7 +52,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
             params.add("%" + orderId + "%");
         }
         sql += " order by ro.return_time desc";
-        orderList = Db.paginate(pageNum, pageSize, "select ro.*, d.name dname, s.name store_name ", sql, params.toArray());
+        orderList = Db.paginate(pageNum, pageSize, "select ro.*, d.name dname, d.status_color status_color, s.name store_name ", sql, params.toArray());
         if(orderList != null && orderList.getList().size() > 0){
             for(Record r : orderList.getList()){
                 if("1".equals(r.getStr("status"))){
@@ -98,7 +98,7 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
             params.add(store);
         }
         sql += " order by ro.return_time desc";
-        orderList = Db.paginate(pageNum, pageSize, "select ro.*, d.name dname, s.name store_name ", sql, params.toArray());
+        orderList = Db.paginate(pageNum, pageSize, "select ro.*, d.name dname, d.status_color status_color, s.name store_name ", sql, params.toArray());
         if(orderList != null && orderList.getList().size() > 0){
             for(Record r : orderList.getList()){
                 if("1".equals(r.getStr("status"))){

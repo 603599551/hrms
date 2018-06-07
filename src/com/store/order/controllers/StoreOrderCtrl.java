@@ -106,7 +106,8 @@ public class StoreOrderCtrl extends BaseCtrl {
         String datetime= DateTool.GetDateTime();
         String select="select *,substr(create_time,1,16) as create_time_short,(select name from store where store.id=store_order.store_id) as store_text," +
                 "(select name from dictionary where dictionary.value=store_order.type and dictionary.parent_id='7') as type_text," +
-                "(select name from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_text";
+                "(select name from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_text," +
+                "(select status_color from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_color";
 
 //        StringBuilder sqlExceptSelect=new StringBuilder("  where ?<=arrive_date and arrive_date<=? and type=? and store_id=? and status=? ");
         try {
@@ -146,7 +147,11 @@ public class StoreOrderCtrl extends BaseCtrl {
             }
             sqlUtil.addWhere("and type=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderType);
             sqlUtil.addWhere("and store_id=?", usu.getUserBean().getDeptId());
-            sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
+            if(status != null && status.length() > 0 && !"-1".equals(status)){
+                sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
+            }else{
+                sqlUtil.addWhere("and status<>?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, "5");
+            }
             sqlUtil.addWhere("and order_number=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderCode);
             sqlUtil.order(" order by arrive_date desc , create_time desc");
             String sqlExceptSelect=sqlUtil.toString();

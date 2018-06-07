@@ -31,7 +31,7 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
         if("-1".equals(warehouseId))warehouseId="";
 
         JsonHashMap jhm=new JsonHashMap();
-        String sql="select a.id,a.order_number,(select name from store where store.id=a.store_id) as store_text ,(select name from warehouse where warehouse.id=a.warehouse_id) as warehourse_text ,a.out_time,a.status,case a.status when '10' then '新建' when '20' then '保存' when '30' then '出库' when '40' then '完成'  end as status_text ,b.want_date,b.arrive_date from warehouse_out_order a inner join store_order b on a.store_order_id=b.id";
+        String sql="select a.id, a.order_number, (select name from store where store.id = a.store_id) as store_text, (select name from warehouse where warehouse.id = a.warehouse_id) as warehourse_text, a.out_time, a.status, case a.status when '10' then '新建' when '20' then '保存' when '30' then '出库' when '40' then '完成' end as status_text, (select d.status_color status_color from dictionary d where d.parent_id='1' and d.value=a.status) status_color, b.want_date, b.arrive_date from warehouse_out_order a inner join store_order b on a.store_order_id = b.id";
         try{
             SelectUtil selectSQL=new SelectUtil(sql);
             if(StringUtils.isNotEmpty(orderNum)) {

@@ -32,25 +32,28 @@ public class StoreScrapCtrl extends BaseCtrl {
         String scrapTime = getPara("scrapTime");
         String status = getPara("state");
         String storeId = getPara("storeId");
-        String sql = " from store_scrap where 1=1 ";
+        String sql = " from store_scrap ss, dictionary d where ss.status=d.value and d.parent_id=600 ";
         List<Object> params = new ArrayList<>();
         if(orderNumber != null && orderNumber.length() > 0){
-            sql += " and order_number=? ";
+            sql += " and ss.order_number=? ";
             params.add(orderNumber);
         }
         if(scrapTime != null && scrapTime.length() > 0){
-            sql += " and scrap_time=? ";
+            sql += " and ss.scrap_time=? ";
             params.add(scrapTime);
         }
-        if(status != null && status.length() > 0){
-            sql += " and status=? ";
+        if(status != null && status.length() > 0 && !"-1".equals(status)){
+            sql += " and ss.status=? ";
             params.add(status);
+        }else{
+            sql += " and ss.status<>? ";
+            params.add("5");
         }
         if(storeId != null && storeId.length() > 0 && !"-1".equals(storeId)){
-            sql += " and store_id=? ";
+            sql += " and ss.store_id=? ";
             params.add(storeId);
         }
-        Page<Record> result = Db.paginate(pageNum, pageSize, "select * ", sql, params.toArray());
+        Page<Record> result = Db.paginate(pageNum, pageSize, "select ss.*, d.status_color status_color ", sql, params.toArray());
         if(result != null && result.getList().size() > 0){
             for(Record r : result.getList()){
                 if("2".equals(r.getStr("status"))){

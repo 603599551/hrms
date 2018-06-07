@@ -36,7 +36,8 @@ public class StoreOrderCtrl extends BaseCtrl {
         String select="select *,substr(create_time,1,16) as create_time_short,(select name from store where store.id=store_order.store_id) as store_text," +
                 "(select name from dictionary where dictionary.value=store_order.type and dictionary.parent_id='7') as type_text," +
                 "(select name from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_text,"+
-                "IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 1,1),0) as print_time";
+                "IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 1,1),0) as print_time," +
+                "(select status_color from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_color";
 
 //        StringBuilder sqlExceptSelect=new StringBuilder("  where ?<=arrive_date and arrive_date<=? and type=? and store_id=? and status=? ");
         try {

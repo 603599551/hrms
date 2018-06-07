@@ -23,7 +23,8 @@ import java.util.*;
 public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
 
     public void createOrder(){
-        String type = getPara("type");
+        JSONObject jsonObject = RequestTool.getJson(getRequest());
+        String type = jsonObject.getString("orderType");
         if(type != null && type.length() > 0){
             createOrderType(type);
         }else{

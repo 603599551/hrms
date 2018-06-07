@@ -107,8 +107,11 @@ public class StoreScrapManagerCtrl extends BaseCtrl implements Constants{
         if(status != null && status.length() > 0 && !"-1".equals(status)){
             sql += " and status=? ";
             params.add(status);
+        }else{
+            sql += " and status<>? ";
+            params.add("5");
         }
-        Page<Record> result = Db.paginate(pageNum, pageSize, "select ss.*, d.name status_text ", sql, params.toArray());
+        Page<Record> result = Db.paginate(pageNum, pageSize, "select ss.*, d.name status_text, d.status_color status_color ", sql, params.toArray());
         if(result != null && result.getList().size() > 0){
             for(Record r : result.getList()){
                 if("1".equals(r.getStr("status"))){
