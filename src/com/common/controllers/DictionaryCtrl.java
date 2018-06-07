@@ -22,7 +22,8 @@ public class DictionaryCtrl extends BaseCtrl {
         try {
             List<Record> list = Db.find("select * from dictionary where parent_id=(select id from dictionary where value=?) order by sort", dict);
             Record all = new Record();
-            all.set("id", "-1");
+//            all.set("id", "-1");
+            all.set("value", "-1");
             all.set("name", "全部");
             list.add(0, all);
             jhm.putCode(1).put("list", list);
