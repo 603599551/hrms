@@ -29,8 +29,11 @@ import com.store.print.PrintCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
 import com.warehouse.controllers.WarehouseMovementCtrl;
 import com.warehouse.controllers.WarehouseStockCtrl;
+import easy.util.FileUploadPath;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Config extends JFinalConfig {
 
@@ -153,6 +156,16 @@ public class Config extends JFinalConfig {
 
 	@Override
 	public void configHandler(Handlers handlers) {
+
+	}
+	@Override
+	public void afterJFinalStart() {
+		// TODO Auto-generated method stub
+		super.afterJFinalStart();
+		FileUploadPath.me().init();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String sDate = sdf.format(new Date());
+		System.out.println("当前时间："+sDate);
 
 	}
 }

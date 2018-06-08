@@ -13,7 +13,6 @@ import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
-import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
 import java.util.ArrayList;
@@ -132,9 +131,9 @@ public class StoreOrderCtrl extends BaseCtrl {
             int pageNum= NumberUtils.parseInt(pageNumStr,1);
             int pageSize=NumberUtils.parseInt(pageSizeStr,10);
 
-            if(StringUtils.isEmpty(status)){
-                status="1";
-            }
+//            if(StringUtils.isEmpty(status)){
+//                status="1";
+//            }
 
             SelectUtil sqlUtil = new SelectUtil(" from store_order ");
             if(arrivalDate!=null) {

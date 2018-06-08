@@ -149,11 +149,20 @@ public class SelectUtil {
                 paraList.add(str);
             }
         }else if(not== NOT_NULL_AND_NOT_EMPTY_STRING){
-            String str=(String)obj;
-            if(str!=null && !"".equals(str)){
-                this.where.append(" "+where+" ");
-                paraList.add(str);
+            if(obj instanceof String){
+                String str=(String)obj;
+                if(str!=null && !"".equals(str)){
+                    this.where.append(" "+where+" ");
+                    paraList.add(str);
+                }
+            }else{
+                if(obj!=null){
+                    this.where.append(" "+where+" ");
+                    paraList.add(obj);
+                }
             }
+
+
         }else if(not==NONE){
             this.where.append(" "+where+" ");
             paraList.add(obj);
