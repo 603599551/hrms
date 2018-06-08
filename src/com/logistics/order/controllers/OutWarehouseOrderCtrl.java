@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.logistics.order.services.OutWarehouseOrderSrv;
+import com.logistics.order.services.ShowOutWarehouseOrderDetailsByIdSrv;
 import com.ss.controllers.BaseCtrl;
 import com.utils.RequestTool;
 import com.utils.SelectUtil;
@@ -37,7 +38,7 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
             if(StringUtils.isNotEmpty(orderNum)) {
                 selectSQL.addWhere(" and a.order_number like ?", SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING, "%"+orderNum.toUpperCase() + "%");
             }
-            selectSQL.addWhere(" and substr(a.out_time,1,10)=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,outDate);
+            selectSQL.addWhere(" and substr(a.create_time,1,10)=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,outDate);
             selectSQL.addWhere(" and a.store_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,storeId);
             selectSQL.addWhere(" and a.warehouse_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,warehouseId);
             selectSQL.in("and a.status in ",new Object[]{"10","20"});
@@ -61,8 +62,10 @@ public class OutWarehouseOrderCtrl extends BaseCtrl{
         String id=getPara("id");
         JsonHashMap jhm=new JsonHashMap();
         try {
-            OutWarehouseOrderSrv service = enhance(OutWarehouseOrderSrv.class);
-            List list = service.showDetailsById(id);
+//            OutWarehouseOrderSrv service = enhance(OutWarehouseOrderSrv.class);
+//            List list = service.showDetailsById(id);
+            ShowOutWarehouseOrderDetailsByIdSrv srv=new ShowOutWarehouseOrderDetailsByIdSrv();
+            List list=srv.showDetailsById(id);
             jhm.putCode(1).put("list", list);
         }catch (Exception e){
             e.printStackTrace();

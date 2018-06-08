@@ -3,7 +3,7 @@ package com.logistics.order.controllers;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
-import com.logistics.order.services.StoreOrderSrv;
+import com.logistics.order.services.StoreOrderSrv2;
 import com.ss.controllers.BaseCtrl;
 import com.utils.SQLUtil;
 import com.utils.SelectUtil;
@@ -11,7 +11,6 @@ import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
-import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
 import java.util.ArrayList;
@@ -148,7 +147,7 @@ public class StoreOrderCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
 
         try {
-            StoreOrderSrv storeOrderSrv = enhance(StoreOrderSrv.class);
+            StoreOrderSrv2 storeOrderSrv = enhance(StoreOrderSrv2.class);
             jhm=storeOrderSrv.buildOutWarehouse(storeOrderId,usu);
 
             renderJson(jhm);
