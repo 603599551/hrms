@@ -229,7 +229,7 @@ public class StoreCtrl extends BaseCtrl {
                 paraList.add(key2);
             }
             sql.append(" order by status desc,sort,id");
-            Page<Record> page = Db.paginate(pageNum, pageSize, "select id,name,ifnull(address,'') as address,ifnull(phone,'') as phone,status,case status when 1 then '启用' when 0 then '停用' end as status_text ", sql.toString(), paraList.toArray());
+            Page<Record> page = Db.paginate(pageNum, pageSize, "select id,name,ifnull(address,'') as address,ifnull(phone,'') as phone,status,case status when 1 then '启用' when 0 then '停用' end as status_text, store_color ", sql.toString(), paraList.toArray());
             jhm.putCode(1).put("data",page);
         }catch (Exception e){
             e.printStackTrace();

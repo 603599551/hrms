@@ -27,6 +27,7 @@ public class ReturnGoodsService {
         String time = DateTool.GetDateTime();
         returnOrder.set("id", orderId);
         returnOrder.set("store_id", usu.getUserBean().get("store_id"));
+        returnOrder.set("store_color", usu.getUserBean().get("store_color"));
         returnOrder.set("order_number", createOrderNumber());
         returnOrder.set("status", 1);
         returnOrder.set("city", usu.getUserBean().get("city"));

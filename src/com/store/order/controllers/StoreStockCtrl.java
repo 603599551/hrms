@@ -92,6 +92,7 @@ public class StoreStockCtrl extends BaseCtrl implements Constants{
                     r.remove("id","yield_rate","purchase_price","balance_price","wm_type","type_1","type_2","creater_id","modifier_id","create_time","modify_time","status","desc","shelf_life","storage_condition");
                     r.set("material_id", json.getString("id"));
                     r.set("store_id", usu.getUserBean().get("store_id"));
+                    r.set("store_color", usu.getUserBean().get("store_color"));
                     r.set("modify_time", DateTool.GetDate());
                     r.set("id", UUIDTool.getUUID());
                     Record storeStocktaking = new Record();
@@ -105,6 +106,7 @@ public class StoreStockCtrl extends BaseCtrl implements Constants{
                 }else{
                     r.set("material_id", json.getString("id"));
                     r.set("store_id", usu.getUserBean().get("store_id"));
+//                    r.set("store_color", usu.getUserBean().get("store_color"));
                     r.set("modify_time", DateTool.GetDate());
                     Record storeStocktaking = new Record();
                     storeStocktaking.setColumns(r);

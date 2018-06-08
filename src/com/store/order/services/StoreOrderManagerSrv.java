@@ -78,6 +78,7 @@ public class StoreOrderManagerSrv {
         storeOrderR.set("type", type);
         storeOrderR.set("city", userBean.get("city"));
         storeOrderR.set("store_id",userBean.get("store_id"));
+        storeOrderR.set("store_color",userBean.get("store_color"));
         storeOrderR.set("creater_id",userBean.getId());
         Db.save("store_order",storeOrderR);
 

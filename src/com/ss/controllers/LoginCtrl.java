@@ -34,7 +34,7 @@ public class LoginCtrl extends BaseCtrl{
                 renderJson(jhm);
                 return;
             }
-            Record r = Db.findFirst("select * from staff where username=? and password=?", username, password);
+            Record r = Db.findFirst("select *, (select store_color from store s where s.id=staff.dept) store_color from staff where username=? and password=?", username, password);
             if (r != null) {
                 String status=r.get("status");
                 if("6".equals(status)){
@@ -49,6 +49,7 @@ public class LoginCtrl extends BaseCtrl{
                 ub.setDeptId(r.getStr("dept"));
                 ub.setDeptName(r.getStr("dept_name"));
                 ub.put("store_id", r.getStr("dept"));
+                ub.put("store_color", r.getStr("store_color"));
                 Object job=r.get("job");
                 if(job==null)
                     job="";

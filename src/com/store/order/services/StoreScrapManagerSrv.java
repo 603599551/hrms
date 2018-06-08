@@ -41,6 +41,7 @@ public class StoreScrapManagerSrv {
 //        storeScrapR.set("type", "day");
         storeScrapR.set("city", userBean.get("city"));
         storeScrapR.set("store_id",userBean.get("store_id"));
+        storeScrapR.set("store_color",userBean.get("store_color"));
         storeScrapR.set("creater_id",userBean.getId());
         storeScrapR.set("scrap_time", scrap_time);
         Db.save("store_scrap",storeScrapR);
