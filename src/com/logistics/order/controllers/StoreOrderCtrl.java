@@ -82,6 +82,8 @@ public class StoreOrderCtrl extends BaseCtrl {
                 }else{
                     sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
                 }
+            }else{
+                sqlUtil.addWhere("and status<>?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, "5");
             }
             sqlUtil.addWhere("and order_number=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderCode);
             sqlUtil.order(" order by arrive_date desc , create_time desc");

@@ -7,11 +7,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.oreilly.servlet.MultipartRequest;
+import easy.util.UUIDTool;
+import utils.FileUploadPath;
 
 public class FileUtil {
 
@@ -93,5 +97,63 @@ public class FileUtil {
 		}
 		return result;
 	}
-	
+
+	/**
+	 * 上传文件
+	 * @param path 要上传的路径
+	 * @param request 请求
+	 * @throws IOException
+	 */
+	public static File uploadReturnFile(String path, HttpServletRequest request)
+			throws IOException {
+		File result = null;
+		// 获得根目录的物理路径
+		String saveDirectory = path;
+		File saveDirectoryFile = new File(saveDirectory);
+		if(!saveDirectoryFile.exists()){
+			saveDirectoryFile.mkdirs();
+		}
+		// 每个文件最大5m,最多3个文件,所以...
+		int maxPostSize = 3 * 5 * 1024 * 1024;
+		// response的编码为"utf-8",同时采用缺省的文件名冲突解决策略,实现上传
+		MultipartRequest multi = new MultipartRequest(request, saveDirectory,
+				maxPostSize, "utf-8");
+		// 用于接收文本字段
+		String text = multi.getParameter("text");
+		// 把获得的文件名放在容器中
+		@SuppressWarnings("rawtypes")
+		Enumeration files = multi.getFileNames();
+		while (files.hasMoreElements()) {
+			String name = (String) files.nextElement();
+			result = multi.getFile(name);
+		}
+		return result;
+	}
+
+	/**
+	 * 上传门店废弃单附件图片
+	 * @param path 上传路径根目录
+	 * @param request
+	 * @return
+	 * @throws IOException
+	 */
+	public static String uploadStoreScrapImage(String path, HttpServletRequest request) throws IOException{
+		String shareLogoURL = "";
+		FileUploadPath fup = FileUploadPath.me();
+		fup.setBasePath(path);
+		fup.init();
+		FileUploadPath.Result fupResult = fup.get();
+		String saveDir = fupResult.getFile().getAbsolutePath();
+		File uf = FileUtil.uploadReturnFile(saveDir, request);
+		String oldName = uf.getName();
+		if (uf != null) {
+			String newName = UUIDTool.getUUID() + oldName.substring(oldName.lastIndexOf("."));
+			File shareLogFile = new File(uf.getParentFile(), newName);
+			uf.renameTo(shareLogFile);
+			System.out.println("上传文件路径：" + shareLogFile.getAbsolutePath());
+			shareLogoURL = fupResult.getUrl() + newName;
+		}
+		return shareLogoURL;
+	}
+
 }

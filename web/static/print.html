@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>订单打印</title>
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <iframe id="iframepage" src="" marginheight="0px" marginwidth="0px" frameborder="0"></iframe>
+    <script>
+        var urlParams = getSearchParams();
+        var pageUrl   = urlParams.pageUrl || '';
+        document.title  = urlParams.title || '';
+        
+        function print(url){
+            var oIframe = document.querySelector('iframe#iframepage'),
+                winHeight = window.innerHeight,
+                winWidth  = window.innerWidth;
+
+            oIframe.setAttribute('src', url);
+            oIframe.setAttribute('width', winWidth + 'px');
+            oIframe.setAttribute('height', winHeight - 20 + 'px');
+
+            oIframe.onload = function(){
+                callPrint();
+            };
+        }
+
+        //initiates print once content has been loaded into iframe
+        function callPrint(){
+            var PDF = document.getElementById('iframepage');
+            PDF.focus();
+            PDF.contentWindow.print();
+        }
+
+        function getSearchParams(){
+            var search  = window.location.search,
+                dataObj = {};
+            if (search.indexOf('?') != -1){
+                var str  = decodeURIComponent(search.substr(1)),
+                    strs = str.split('&');
+                for (var i = 0; i < strs.length; i++){
+                    dataObj[strs[i].split('=')[0]] = decodeURIComponent(strs[i].split('=')[1]);
+                }
+            }
+            return dataObj;
+        }
+
+        // 调用打印
+        print(pageUrl);
+    </script>
+</body>
+</html>
