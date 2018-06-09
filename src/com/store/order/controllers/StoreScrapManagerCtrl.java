@@ -7,10 +7,12 @@ import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import com.ss.stock.services.DailySummaryService;
+import com.store.order.services.AttachmentSrv;
 import com.store.order.services.MaterialAndMaterialTypeTreeService;
 import com.store.order.services.StoreOrderManagerSrv;
 import com.store.order.services.StoreScrapManagerSrv;
 import com.utils.Constants;
+import com.utils.FileUtil;
 import com.utils.RequestTool;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
@@ -18,6 +20,7 @@ import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 
@@ -27,6 +30,13 @@ import java.util.*;
 public class StoreScrapManagerCtrl extends BaseCtrl implements Constants{
 
     private StoreScrapManagerSrv service = enhance(StoreScrapManagerSrv.class);
+    private AttachmentSrv attachmentSrv = enhance(AttachmentSrv.class);
+
+    private static String upload_path = "";
+    {
+        Record r = Db.findFirst("select v from config where k='upload_path'");
+        upload_path = r.getStr("v");
+    }
 
     /**
      * 商品转原材料
@@ -215,6 +225,51 @@ public class StoreScrapManagerCtrl extends BaseCtrl implements Constants{
         List resultList = service.addMaterial2MaterialType(materialTypeList2, materialList);
         jhm.putCode(1).put("tree", resultList);
         renderJson(jhm);
+    }
+
+    public void uploadImage(){
+        JsonHashMap jhm = new JsonHashMap();
+        String orderId = getPara("orderId");
+        try {
+            String file_path = FileUtil.uploadStoreScrapImage(upload_path, getRequest());
+            attachmentSrv.save(file_path, orderId, new UserSessionUtil(getRequest()).getUserId());
+            jhm.putMessage("上传成功！");
+        } catch (IOException e) {
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.getMessage());
+        }
+        renderJson(jhm);
+    }
+
+    private static final boolean isDev = true;
+
+    public void getImagePath(){
+        JsonHashMap jhm = new JsonHashMap();
+        String head = "/";
+        if(isDev){
+            head = "http://192.168.1.111:8080/";
+        }
+        head += "mgr/store/storeScrapManager/getImage?id=";
+        String orderId = getPara("orderId");
+        List<Record> list = Db.find("select id from attachment where res_id=?", orderId);
+        if(list != null && list.size() > 0){
+            for(Record r : list){
+                r.set("imgURL", head + r.getStr("id"));
+            }
+        }
+        jhm.put("data", list);
+        renderJson(jhm);
+    }
+
+    public void getImage(){
+        String id = getPara("id");
+        Record r = Db.findById("attachment", id);
+        String path = r.getStr("file_path");
+        try {
+            FileUtil.downLoad(path, getResponse(), true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

@@ -22,7 +22,7 @@ public class FileUploadPath {
 	 */
 	public static final String PATH_ROOT="upload";
 	public static final int MAX_NUMBER=10240;
-	
+	public static String basePath = "";
 	
 	/**
 	 * 一级文件夹
@@ -55,6 +55,11 @@ public class FileUploadPath {
 		}
 		return me;
 	}
+
+	public void setBasePath(String basePath){
+		this.basePath = basePath;
+	}
+
 	/**
 	 * 初始化，在serlet容器启动时调用。
 	 * 获取webroot/qrcode/下的文件夹，判断出文件夹名字最大的，当该文件夹内的文件夹小于1024时，就继续使用，否则创建下一个文件夹
@@ -132,7 +137,8 @@ public class FileUploadPath {
 	 * @return
 	 */
 	public static File getRootPath(){
-		File file= PathTools.getWebRootPath(PATH_ROOT);
+//		File file= PathTools.getWebRootPath(PATH_ROOT);
+		File file = new File(basePath);
 		if(!file.exists()){
 			file.mkdirs();
 		}

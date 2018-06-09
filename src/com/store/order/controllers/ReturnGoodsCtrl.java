@@ -46,6 +46,9 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         if(status != null && status.length() > 0 && !"-1".equalsIgnoreCase(status)){
             sql += " and ro.status=? ";
             params.add(status);
+        }else{
+            sql += " and ro.status<>? ";
+            params.add("5");
         }
         if(orderId != null && orderId.length() > 0 && !"null".equalsIgnoreCase(orderId)){
             sql += " and ro.order_number like ? ";
@@ -88,6 +91,9 @@ public class ReturnGoodsCtrl extends BaseCtrl implements Constants{
         if(status != null && status.length() > 0 && !"-1".equalsIgnoreCase(status)){
             sql += " and ro.status=? ";
             params.add(status);
+        }else{
+            sql += " and ro.status<>? ";
+            params.add("5");
         }
         if(orderId != null && orderId.length() > 0 && !"null".equalsIgnoreCase(orderId)){
             sql += " and ro.order_number like ? ";

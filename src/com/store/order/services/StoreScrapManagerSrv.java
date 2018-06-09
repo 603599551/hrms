@@ -159,7 +159,7 @@ public class StoreScrapManagerSrv {
         }
         //1
         //查询商品相关信息，缓存到内存，方便后面读取数据
-        List<Record> materialList = Db.find("select m.*, gu.name unitname, gm.net_num net_num, gm.gross_num gross_num, gm.total_price total_price from material m, goods_unit gu, goods_material gm where m.id=gm.material_id and m.unit=gu.id");
+        List<Record> materialList = Db.find("select m.*, (select name from goods_unit gu where gu.id=m.unit) unitname, gm.net_num net_num, gm.gross_num gross_num, gm.total_price total_price from material m, goods_material gm where m.id=gm.material_id ");
         Map<String, Record> materialAllMap = new HashMap<>();
         if(materialList != null && materialList.size() > 0){
             for(Record r : materialList){
