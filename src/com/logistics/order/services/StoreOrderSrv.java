@@ -63,7 +63,7 @@ public class StoreOrderSrv {
             /*
              * 库存表warehouse_stock，同一原材料有不同的批号，所以此sql语句要根据material_id过滤重复的记录
              */
-            String sql="select a.store_id,a.material_id,a.code,a.name,a.want_num,b.id as warehouse_stock_id,b.warehouse_id from store_order_material a left join (select * from warehouse_stock group by material_id )  b on a.material_id=b.material_id where store_order_id=? order by sort";
+            String sql="select a.store_id,a.material_id,a.code,a.name,a.want_num,b.id as warehouse_stock_id,b.warehouse_id,b.pinyin,b.wm_type,b.attribute_1,b.attribute_2,b.type_1,b.type_2 from store_order_material a left join (select * from warehouse_stock group by material_id )  b on a.material_id=b.material_id where store_order_id=? order by sort";
             List<Record> list=Db.find(sql,storeOrderId);
             Map resultMap= process(storeOrderRecord,list);
 
@@ -120,7 +120,7 @@ public class StoreOrderSrv {
     }
 
     /**
-     * 构建出库订单明细表（原材料）
+     * 构建出库订单明细表数据（原材料）
      * @param r
      * @return
      */
@@ -134,6 +134,12 @@ public class StoreOrderSrv {
         String name=r.getStr("name");
         String want_num=r.getStr("want_num");
         String unit=r.getStr("unit");
+        String pinyin=r.getStr("pinyin");
+        String wmType=r.getStr("wm_type");
+        String attribute1=r.getStr("attribute_1");
+        String attribute2=r.getStr("attribute_2");
+        String type1=r.getStr("type_1");
+        String type2=r.getStr("type_2");
 
         /*
         构建出库订单明细表（原材料）
@@ -149,6 +155,12 @@ public class StoreOrderSrv {
         warehouseOutOrderMaterialR.set("status","1");//1表示门店订货
         warehouseOutOrderMaterialR.set("unit",unit);
         warehouseOutOrderMaterialR.set("want_num",want_num);
+        warehouseOutOrderMaterialR.set("pinyin",pinyin);
+        warehouseOutOrderMaterialR.set("wm_type",wmType);
+        warehouseOutOrderMaterialR.set("attribute_1",attribute1);
+        warehouseOutOrderMaterialR.set("attribute_2",attribute2);
+        warehouseOutOrderMaterialR.set("type_1",type1);
+        warehouseOutOrderMaterialR.set("type_2",type2);
 
         return warehouseOutOrderMaterialR;
     }
