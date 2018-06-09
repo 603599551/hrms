@@ -1,5 +1,7 @@
 package com.utils;
 
+import com.jfinal.plugin.activerecord.Record;
+import easy.util.NumberUtils;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -52,5 +54,43 @@ public class UnitConversion {
             reNum=num*unitNum;
         }
         return reNum;
+    }
+
+
+    /**
+     * 根据出库单位返回规格（该规格的最大单位是出库单位）<br/>
+     * 从record中取出如下数据：out_unit，box_attr，box_attr_num，unit_big，unit，unit_num
+     * 如：提货单位是箱，返回规格是：100袋/箱
+     * @return
+     */
+    public static String getAttrByOutUnit(Record r){
+        String outUnit=r.getStr("out_unit");//出库单位
+        String boxAttr=r.getStr("box_attr");//装箱单位
+        Object boxAttrNumObj=r.get("box_attr_num");//大单位换算成箱的数值
+        String unitBig=r.getStr("unit_big");//大单位
+        String unit=r.getStr("unit");//最小单位
+        Object unitNumObj=r.getStr("unit_num");//小单位换算成大单位的数值
+
+        int boxAttrNum= NumberUtils.parseInt(boxAttrNumObj,0);
+        int unitNum= NumberUtils.parseInt(unitNumObj,0);
+
+        return getAttrByOutUnit(unit,unitNum,unitBig,boxAttrNum,boxAttr,outUnit);
+    }
+    /**
+     * 根据提货单位返回规格（该规格的最大单位是出库单位）<br/>
+     * 如：提货单位是箱，返回规格是：100袋/箱
+     *
+     * @return
+     */
+    public static String getAttrByOutUnit(String unit,int unitNum,String unitBig,int boxAttrNum,String boxAttr,String outUnit){
+        String attribute2="";
+        if(outUnit.equals(boxAttr)){
+            attribute2=boxAttrNum+unitBig+"/"+boxAttr;
+        }else if(outUnit.equals(unitBig)){
+            attribute2=unitNum+unit+"/"+unitBig;
+        }else if(outUnit.equals(unit)){
+            attribute2=unit;
+        }
+        return attribute2;
     }
 }

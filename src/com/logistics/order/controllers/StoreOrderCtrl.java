@@ -177,21 +177,40 @@ public class StoreOrderCtrl extends BaseCtrl {
     }
 
     /**
-     * 关闭订单
+     * 物流退回订单
      */
     public void closeOrder(){
-        String id=getPara("id");
         JsonHashMap jsonHashMap=new JsonHashMap();
+        String id=getPara("id");
+        String content=getPara("content");
+
+        int maxLength=300;
+        if(content.length()>maxLength){
+            jsonHashMap.putCode(0).putMessage("退回原因长度不能超过 "+maxLength+" 字！");
+            renderJson(jsonHashMap);
+            return;
+        }
         try{
-            int n=Db.update("update store_order set status=? where id=?",5,id);
-            if(n>0){
-                jsonHashMap.putCode(1).putMessage("关闭订单成功！");
-            }else{
-                jsonHashMap.putCode(1).putMessage("查无此订单！");
+            Record storeOrderR=Db.findById("store_order",id);
+            if(storeOrderR==null){
+                jsonHashMap.putCode(0).putMessage("查无此订单！");
+                renderJson(jsonHashMap);
+                return;
+            }
+            String status=storeOrderR.getStr("status");
+            if("10".equals(status) || "20".equals(status) || "30".equals(status)) {
+                int n = Db.update("update store_order set status=?,return_reason=? where id=?", "120",content, id);
+                if (n > 0) {
+                    jsonHashMap.putCode(1).putMessage("退回订单成功！");
+                } else {
+                    jsonHashMap.putCode(0).putMessage("退回订单失败！");
+                }
+            }else {
+                jsonHashMap.putCode(0).putMessage("该订单已经出库或者已经完成，您不能退回！");
             }
         }catch (Exception e){
             e.printStackTrace();
-            jsonHashMap.putMessage("发生错误："+e.toString());
+            jsonHashMap.putCode(-1).putMessage("发生错误："+e.toString());
         }
         renderJson(jsonHashMap);
     }

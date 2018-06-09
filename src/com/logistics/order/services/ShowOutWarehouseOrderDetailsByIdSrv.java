@@ -3,6 +3,7 @@ package com.logistics.order.services;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.stock.services.SecurityStockService;
+import com.utils.UnitConversion;
 import easy.util.NumberUtils;
 
 import java.util.ArrayList;
@@ -104,14 +105,7 @@ public class ShowOutWarehouseOrderDetailsByIdSrv {
             map.put("isEdit",true);
             map.put("warehouse_stock_id",warehouseStockId);
 
-            String attribute2="";
-            if(outUnit.equals(boxAttr)){
-                attribute2=boxAttrNum+unitBig+"/"+boxAttr;
-            }else if(outUnit.equals(unitBig)){
-                attribute2=unitNum+unit+"/"+unitBig;
-            }else if(outUnit.equals(unit)){
-                attribute2=unit;
-            }
+            String attribute2= UnitConversion.getAttrByOutUnit(unit,unitNum,unitBig,boxAttrNum,boxAttr,outUnit);
             map.put("attribute_2_text",attribute2);
 
             if(materialId.equals(lastMaterialId)){//如果与上一个相同

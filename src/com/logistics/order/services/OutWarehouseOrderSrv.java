@@ -147,12 +147,13 @@ public class OutWarehouseOrderSrv {
 
     /**
      * 新建订单，构建数据
-     * 传入出库原材料集合，查询这些原材料的库存数量
+     * 传入出库原材料集合，查询这些原材料的库存数量（数量大于0）
      * 注：入库时要录入批号，所以同一个原材料会有多条记录
      */
     private List buildWarehouseStockData(List<String> materialIdList,List<Record> warehouseOutOrderMaterialList){
-
-        SelectUtil selectSQL=new SelectUtil("select a.*,(select name from goods_attribute where goods_attribute.id=a.attribute_2) as attribute_2_text,(select name from goods_unit where goods_unit.id=a.unit) as unit_text,b.pinyin from warehouse_stock a left join material b on a.material_id=b.id  ");
+//        String sql="select a.*,(select name from goods_attribute where goods_attribute.id=a.attribute_2) as attribute_2_text,(select name from goods_unit where goods_unit.id=a.unit) as unit_text,b.pinyin from warehouse_stock a left join material b on a.material_id=b.id  ";
+        String sql="select a.*,attr1.name as attribute_1_text,attr1.number as attribute_1_number,attr2.name as attribute_2_text,attr2.number as attribute_2_number,(select name from goods_unit where goods_unit.id=a.unit) as unit_text from warehouse_stock a  left join goods_attribute attr1 on a.attribute_1=attr1.id left join goods_attribute attr2 on a.attribute_2=attr2.id ";
+        SelectUtil selectSQL=new SelectUtil(sql);
         selectSQL.addWhere("and a.number>0");
         selectSQL.in(" and a.material_id in ",materialIdList.toArray());
         selectSQL.order(" order by a.material_id,a.batch_code ");//按照批号排序
@@ -235,7 +236,6 @@ public class OutWarehouseOrderSrv {
         String materialId=record.getStr("material_id");
         int wantNum=record.getInt("want_num");
         String tid=record.getStr("tid");//warehouse_out_order_material表的id
-        String attribute2TextOfRecord=record.getStr("attribute_2_text");//规格
 
         List<Map> reList=new ArrayList<>();
         int sum=0;
@@ -249,6 +249,10 @@ public class OutWarehouseOrderSrv {
             String code=r.getStr("code");
 //            String attribute2Text=r.getStr("attribute_2_text");
             String warehouseId=r.getStr("warehouse_id");
+            String attribute1TextOfRecord=r.getStr("attribute_1_text");//规格
+            String attribute2TextOfRecord=r.getStr("attribute_2_text");//规格
+            Object attribute1NumberOfRecord=r.getStr("attribute_1_number");//规格
+            Object attribute2NumberOfRecord=r.getStr("attribute_2_number");//规格
 
             if(!materialId.equals(materialIdDb)){
                 continue;
@@ -276,7 +280,10 @@ public class OutWarehouseOrderSrv {
             map.put("security_stock",0);
 //            map.put("want_num",wantNum);
             map.put("unit_text",unitText);
+            map.put("attribute_1_text",attribute1TextOfRecord);
             map.put("attribute_2_text",attribute2TextOfRecord);
+            map.put("attribute_1_number",attribute1NumberOfRecord);
+            map.put("attribute_2_number",attribute2NumberOfRecord);
             map.put("code",code);
             map.put("warehouse_id",warehouseId);
             map.put("want_num",wantNum);

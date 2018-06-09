@@ -15,17 +15,11 @@ import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import utils.NextInt;
 import utils.bean.JsonHashMap;
 import utils.jfinal.DbUtil;
 import utils.jfinal.RecordUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -549,179 +543,8 @@ public class MaterialCtrl extends BaseCtrl {
         return codeInt;
     }
 
-    /**
-     * 导入原材料
-     */
-    public void imp(){
-        easy.util.JsonHashMap jhm=new easy.util.JsonHashMap();
-        UserSessionUtil usu=new UserSessionUtil(getRequest());
-        /*
-        先查询所有的分类
-         */
-        List<Record> materialTypeList=Db.find("select * from material_type");
-        List<Record> goodsAttributeList=Db.find("select * from goods_attribute ");
-        goodsAttributeSort=goodsAttributeList.size();
-        /*
-        读取excel
-         */
-        File file=new File("F:\\idea-workspace\\security_stock\\文档\\面对面BOM\\面对面货品资料表--用于导入.xls");
-        HSSFWorkbook workbook=null;
-        try {
-            FileInputStream fis = new FileInputStream(file);
-            workbook = new HSSFWorkbook(fis);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        //获取第一个工作簿
-        HSSFSheet sheet = workbook.getSheetAt(0);
-        int rowNum=sheet.getLastRowNum();
-        List<Record> recordList=new ArrayList();
-        /*
-        从第三行开始读取
-         */
-        int sort=0;
-        System.out.println("过滤excel的行号:"+0+"，记录为："+sheet.getRow(0).getCell(0).toString());
-        for(int i=1;i<rowNum;i++){
-            HSSFRow row=sheet.getRow(i);
-            HSSFCell cell0=row.getCell(0);
-            HSSFCell code=row.getCell(1);
-            code.setCellType(HSSFCell.CELL_TYPE_STRING);
-            HSSFCell name=row.getCell(2);
-            HSSFCell attribute_2=row.getCell(3);
-            HSSFCell attribute_1=row.getCell(4);
-            HSSFCell shelf_life=row.getCell(5);
-            shelf_life.setCellType(HSSFCell.CELL_TYPE_STRING);
-            HSSFCell storage_condition=row.getCell(6);
-            if(storage_condition==null){
-                System.out.println("过滤excel的行号:"+i+"，记录为："+row.getCell(0).getStringCellValue());
-                continue;
-            }
-            storage_condition.setCellType(HSSFCell.CELL_TYPE_STRING);
 
-            String pinyin=HanyuPinyinHelper.getFirstLettersLo(name.getStringCellValue());
 
-            if(code==null ){
-                System.out.println("过滤excel的行号:"+i+"，记录为："+row.getCell(0).getStringCellValue());
-                continue;
-            }
 
-            /*
-            获取二级分类
-             */
-            String codeStr=code.getStringCellValue();
-            if(codeStr==null || "".equals(codeStr) || codeStr.length()<=3){
-                System.out.println("过滤excel的行号:"+i+"，记录为："+row.getCell(0).getStringCellValue());
-                continue;
-            }
-            String typeCode=codeStr.substring(0,3);
-            Record mt2=getMaterialType(materialTypeList,typeCode);
-            String type2=mt2.getStr("id");
-            String parentId=mt2.getStr("parent_id");
 
-            /*
-            获取一级分类
-             */
-            Record mt1=getMaterialType2(materialTypeList,parentId);
-            String type1=mt1.getStr("id");
-
-            String attribute1Id="";
-            if(!"".equals(attribute_1.getStringCellValue())){
-                attribute1Id=getAttributeId(goodsAttributeList,attribute_1.getStringCellValue(),usu);
-            }
-            String attribute2Id="";
-            if(!"".equals(attribute_2.getStringCellValue())) {
-                attribute2Id = getAttributeId(goodsAttributeList, attribute_2.getStringCellValue(), usu);
-            }
-            Record r=new Record();
-            r.set("id", UUIDTool.getUUID());
-            r.set("code",code.getStringCellValue());
-            r.set("name",name.getStringCellValue());
-            r.set("pinyin",pinyin);
-            r.set("yield_rate",100);
-            r.set("wm_type","5");
-            r.set("unit","1");
-            r.set("sort",sort);
-            r.set("type_1",type1);
-            r.set("type_2",type2);
-            r.set("code",code.getStringCellValue());
-            r.set("attribute_2",attribute2Id);
-            r.set("attribute_1",attribute1Id);
-            r.set("creater_id",usu.getUserId());
-            r.set("modifier_id",usu.getUserId());
-            r.set("create_time", DateTool.GetDateTime());
-            r.set("modify_time", DateTool.GetDateTime());
-            r.set("status", 1);
-            r.set("shelf_life",shelf_life.getStringCellValue());
-            r.set("storage_condition",storage_condition.getStringCellValue());
-
-            recordList.add(r);
-            sort++;
-        }
-        int sum=0;
-        try {
-            int[] numArray = Db.batchSave("material", recordList, 100);
-            for (int i : numArray) {
-                sum = sum + i;
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        System.out.println("excel记录数："+rowNum+"；保存到数据库的记录数："+sum);
-    }
-    int goodsAttributeSort=1;
-    private String getAttributeId(List<Record> goodsAttributeList,String attributeName,UserSessionUtil usu){
-        int max=1;
-        /*
-            如果有就返回id
-             */
-        for(Record r:goodsAttributeList){
-            String id=r.getStr("id");
-            String name=r.getStr("name");
-
-            if(name.equals(attributeName)) {
-                return id;
-            }
-        }
-        /*
-        没有就保存，并返回id
-         */
-        String datetime=DateTool.GetDateTime();
-        String uuid=UUIDTool.getUUID();
-        Record goods_attributeR=new Record();
-        goods_attributeR.set("id",uuid);
-        goods_attributeR.set("parent_id","0");
-        goods_attributeR.set("name",attributeName);
-        goods_attributeR.set("sort",goodsAttributeSort);
-        goods_attributeR.set("creater_id",usu.getUserId());
-        goods_attributeR.set("modifier_id",usu.getUserId());
-        goods_attributeR.set("create_time",datetime);
-        goods_attributeR.set("modify_time",datetime);
-        Db.save("goods_attribute",goods_attributeR);
-        goodsAttributeSort++;
-        return uuid;
-    }
-    private Record getMaterialType(List<Record> materialTypeList,String code){
-        if(code==null || "".equals(code)){
-            throw new NullPointerException("必须输入code！");
-        }
-        for(Record r:materialTypeList){
-            String codeDb=r.getStr("code");
-            if(code.equals(codeDb)){
-                return r;
-            }
-        }
-        return null;
-    }
-    private Record getMaterialType2(List<Record> materialTypeList,String parentId){
-        if(parentId==null || "".equals(parentId)){
-            throw new NullPointerException("必须输入parentId！");
-        }
-        for(Record r:materialTypeList){
-            String id=r.getStr("id");
-            if(parentId.equals(id)){
-                return r;
-            }
-        }
-        return null;
-    }
 }
