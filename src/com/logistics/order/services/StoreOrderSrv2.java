@@ -85,7 +85,7 @@ public class StoreOrderSrv2 {
                 allWarehouseMaterialDetailList.addAll(warehouseMaterialDetailList);
             }
 
-            List<Record> warehouseOutOrderList=buildWarehouseOutOrderList(allWarehouseMaterialDetailList);
+            List<Record> warehouseOutOrderList=buildWarehouseOutOrderList(allWarehouseMaterialDetailList, usu);
 
             int[] aArray=Db.batchSave("warehouse_out_order",warehouseOutOrderList,10);
             int[] iArray=Db.batchSave("warehouse_out_order_material_detail",allWarehouseMaterialDetailList,30);
@@ -101,7 +101,7 @@ public class StoreOrderSrv2 {
     将allWarehouseMaterialDetailList集合的数据，根据所在仓库，生成不同的仓库订单
     并回填将allWarehouseMaterialDetailList集合的数据集合的warehouse_out_order_id字段，该字段是出库订单id，只有生成订单时才会有
      */
-    private List<Record> buildWarehouseOutOrderList(List<Record> allWarehouseMaterialDetailList){
+    private List<Record> buildWarehouseOutOrderList(List<Record> allWarehouseMaterialDetailList, UserSessionUtil usu){
         Map<String,Record> warehouseOutOrderMap=new HashMap<>();//key是warehouse_id，value是ware_house_out_order的record
         for(Record r:allWarehouseMaterialDetailList){
             String warehouseId=r.getStr("warehouse_id");
@@ -122,6 +122,7 @@ public class StoreOrderSrv2 {
         Iterator<Map.Entry<String,Record>> it=warehouseOutOrderMap.entrySet().iterator();
         while(it.hasNext()){
             Map.Entry<String,Record> en=it.next();
+            en.getValue().set("store_color", usu.getUserBean().get("store_color"));
             reList.add(en.getValue());
         }
         return reList;

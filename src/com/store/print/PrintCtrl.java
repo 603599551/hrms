@@ -145,7 +145,7 @@ public class PrintCtrl extends BaseCtrl {
     public void printOutgoingGoodsOrder() throws UnsupportedEncodingException {
         JsonHashMap jhm = new JsonHashMap();
         String orderId = getPara("id");
-        Record dataRecord = Db.findFirst("SELECT so.out_time date, w.name warehouse_name, s.name store_name, so.order_number order_num FROM warehouse_out_order so, store s, warehouse w WHERE so.store_id = s.id and so.warehouse_id=w.id and so.id=?", orderId);
+        Record dataRecord = Db.findFirst("SELECT so.out_time date, w.name warehouse_name, s.name store_name, so.order_number order_num, so.status sostatus FROM warehouse_out_order so, store s, warehouse w WHERE so.store_id = s.id and so.warehouse_id=w.id and so.id=?", orderId);
         if(dataRecord == null){
             jhm.putCode(-1).putMessage("订单号有错误，请确认订单！");
             renderJson(jhm);

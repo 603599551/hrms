@@ -168,6 +168,9 @@ public class StoreOrderManagerSrv {
         if(jsonArray != null && jsonArray.size() > 0){
             for(int i = 0; i < jsonArray.size(); i++){
                 JSONObject json = jsonArray.getJSONObject(i);
+                if(new Double(json.getString("number")) <= 0){
+                    continue;
+                }
                 if(json.getString("stroe_order_material_id") != null && json.getString("stroe_order_material_id").length() > 0){
                     Record updateR = currentMap.get(json.getString("stroe_order_material_id"));
                     updateR.set("want_num", json.get("number"));
