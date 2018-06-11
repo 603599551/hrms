@@ -258,9 +258,38 @@ public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
         UserSessionUtil usu = new UserSessionUtil(getRequest());
         JSONObject jsonObject = RequestTool.getJson(getRequest());
         StoreOrderManagerSrv service = enhance(StoreOrderManagerSrv.class);
+        JSONArray jsonArray = jsonObject.getJSONArray("list");
+        String materialIs0Message = "";
+        if(jsonArray != null && jsonArray.size() > 0){
+            List<String> materialIdList = new ArrayList<>();
+            for(int i = 0; i < jsonArray.size(); i++){
+                JSONObject obj = jsonArray.getJSONObject(i);
+                if(new Double(obj.getString("number")) <= 0){
+                    materialIdList.add(obj.getString("id"));
+                }
+            }
+            if(materialIdList.size() == jsonArray.size()){
+                jhm.putCode(0).putMessage("所有原材料订货数量为0，此订单无存在意义，不能保存！");
+                renderJson(jhm);
+                return;
+            }
+            List<Record> materialList = Db.find("select * from material");
+            Map<String, Record> materialMap = new HashMap<>();
+            if(materialList != null && materialList.size() > 0){
+                for(Record r : materialList){
+                    materialMap.put(r.getStr("id"), r);
+                }
+            }
+            if(materialIdList.size() != 0){
+                for(String id : materialIdList){
+                    materialIs0Message += materialMap.get(id).getStr("name") + "、";
+                }
+                materialIs0Message = materialIs0Message.substring(0, materialIs0Message.length() - 1) + "订货数量为0，不会添加到订单中。";
+            }
+        }
         try {
             service.addStoreOrderMaterial(jsonObject, usu);
-            jhm.putCode(1).putMessage("保存成功！");
+            jhm.putCode(1).putMessage("保存成功！" + materialIs0Message);
         } catch (Exception e) {
             e.printStackTrace();
             jhm.putCode(0).putMessage("保存失败！");

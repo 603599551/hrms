@@ -44,6 +44,9 @@ public class StoreCtrl extends BaseCtrl {
         }catch (Exception e){
             sort=nextSort(DbUtil.queryMax("Store","sort"));
         }
+        Record storeColor = Db.findFirst("select * from store_color where status<> 0 order by sort");
+        storeColor.set("status", 0);
+        Db.update("store_color", storeColor);
         String uuid= UUIDTool.getUUID();
         String dateTime= DateTool.GetDateTime();
         Record record=new Record();
@@ -52,6 +55,8 @@ public class StoreCtrl extends BaseCtrl {
         record.set("address",json.getString("address"));
         record.set("phone",json.getString("phone"));
         record.set("desc",json.getString("desc"));
+        record.set("city",json.getString("city"));
+        record.set("store_color", storeColor.getStr("color"));
         record.set("sort",sort);
         record.set("creater_id",usu.getUserId());
         record.set("modifier_id",usu.getUserId());
@@ -179,6 +184,7 @@ public class StoreCtrl extends BaseCtrl {
         record.set("address",json.getString("address"));
         record.set("phone",json.getString("phone"));
         record.set("desc",json.getString("desc"));
+        record.set("city",json.getString("city"));
         if(org.apache.commons.lang.StringUtils.isEmpty(sortStr)){
 
         }else {
