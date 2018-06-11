@@ -66,7 +66,7 @@ public class ShowOutWarehouseOrderDetailsByIdSrv {
             String code=warehouseOutOrderMaterialR.getStr("code");
 //            String attribute2=warehouseOutOrderMaterialR.getStr("attribute_2");
             String wantNum=warehouseOutOrderMaterialR.getStr("want_num");
-            String sendNumber=warehouseOutOrderMaterialR.getStr("send_num");
+            int sendNumber=warehouseOutOrderMaterialR.get("send_num");
             int warehouseStockNumber=warehouseOutOrderMaterialR.get("number");
             String warehouseStockId=warehouseOutOrderMaterialR.getStr("warehouse_stock_id");
             String outUnit=warehouseOutOrderMaterialR.getStr("out_unit");//出库单位

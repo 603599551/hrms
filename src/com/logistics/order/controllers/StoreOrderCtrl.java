@@ -7,6 +7,7 @@ import com.logistics.order.services.StoreOrderSrv2;
 import com.ss.controllers.BaseCtrl;
 import com.utils.SQLUtil;
 import com.utils.SelectUtil;
+import com.utils.UnitConversion;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
@@ -169,8 +170,21 @@ public class StoreOrderCtrl extends BaseCtrl {
         String sql="select *,(select name from store where store.id=store_order.store_id) as store_text,substr(create_time,1,16) as create_time_short,IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 1,1),0) as print_time from store_order where id=?";
         try{
             Record r=Db.findFirst(sql,id);
-            List<Record> list=Db.find("select *,(select name from goods_unit where goods_unit.id=store_order_material.unit) as unit_text,(select name from goods_attribute where store_order_material.attribute_2=goods_attribute.id) as attribute_2_text from store_order_material where store_order_id=? order by sort ",id);
-            jsonHashMap.putCode(1).put("order",r).put("orderDetailsList",list);
+            String returnReason=r.getStr("return_reason");
+            if(returnReason==null){
+                r.set("return_reason","");
+            }
+            String status=r.getStr("status");
+            boolean showCancelButton=false;
+            if( "10".equals(status) || "20".equals(status)) {
+                showCancelButton=true;
+            }
+            List<Record> list=Db.find("select * from store_order_material where store_order_id=? order by sort ",id);
+            for(Record tempR:list){
+                String attr= UnitConversion.getAttrByOutUnit(tempR);
+                tempR.set("attribute_2_text",attr);
+            }
+            jsonHashMap.putCode(1).put("order",r).put("orderDetailsList",list).put("showCancelButton",showCancelButton);
         }catch (Exception e){
             e.printStackTrace();
             jsonHashMap.putCode(-1).putMessage(e.toString());
