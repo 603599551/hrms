@@ -46,6 +46,18 @@ public class MaterialCtrl extends BaseCtrl {
             String type_2=jsonObject.getString("type");
             String desc=jsonObject.getString("desc");
 
+            String unit_num = jsonObject.getString("unit_num");
+            String unit_big = jsonObject.getString("unit_big");
+            String box_attr_num = jsonObject.getString("box_attr_num");
+            String box_attr = jsonObject.getString("box_attr");
+            String out_unit = jsonObject.getString("out_unit");
+            String storage_condition = jsonObject.getString("storage_condition");
+            String security_time = jsonObject.getString("security_time");
+            String order_type = jsonObject.getString("order_type");
+            String model = jsonObject.getString("model");
+            String size = jsonObject.getString("size");
+            String brand = jsonObject.getString("brand");
+
 
             if(org.apache.commons.lang.StringUtils.isEmpty(code)){
                 code=buildCode(null)+"";
@@ -149,6 +161,19 @@ public class MaterialCtrl extends BaseCtrl {
             r.set("modify_time",datetime);
             r.set("status",1);
             r.set("desc",desc);
+
+            r.set("unit_num",unit_num);
+            r.set("unit_big",unit_big);
+            r.set("box_attr_num",box_attr_num);
+            r.set("box_attr",box_attr);
+            r.set("out_unit",out_unit);
+            r.set("storage_condition",storage_condition);
+            r.set("security_time",security_time);
+            r.set("order_type",order_type);
+            r.set("model",model);
+            r.set("size",size);
+            r.set("brand",brand);
+
 
             boolean b=Db.save("material",r);
             if(b){
@@ -425,6 +450,11 @@ public class MaterialCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         try {
             List<Record> list = Db.find("select id,parent_id,code,name,CONCAT(name,'(',code,')') as label from material_type order by sort,id");
+            if(list != null && list.size() > 0){
+                for(Record r : list){
+                    r.set("search_text",r.getStr("name") + "-" + r.get("code") + "-" + HanyuPinyinHelper.getFirstLettersLo(r.get("name")));
+                }
+            }
             List resultList=MaterialTypeService.getMe().sort(list);
             jhm.putCode(1).put("list",resultList);
         }catch (Exception e){

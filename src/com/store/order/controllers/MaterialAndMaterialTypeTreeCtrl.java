@@ -6,6 +6,7 @@ import com.ss.controllers.BaseCtrl;
 import com.store.order.services.MaterialAndMaterialTypeTreeService;
 import com.store.order.services.StoreOrderManagerSrv;
 import com.utils.Constants;
+import com.utils.HanyuPinyinHelper;
 import com.utils.UserSessionUtil;
 import utils.bean.JsonHashMap;
 
@@ -18,13 +19,18 @@ public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Consta
         JsonHashMap jhm=new JsonHashMap();
         try {
             //查询原材料分类
-            List materialTypeList = Db.find("select id,parent_id,code,name,sort,CONCAT(name,'(',code,')') as label from material_type order by sort");
+            List<Record> materialTypeList = Db.find("select id,parent_id,code,name,sort,CONCAT(name,'(',code,')') as label from material_type order by sort");
             //查询原材料
             List<Record> materialList = Db.find("select id,code,name,CONCAT(name,'(',code,')') as label,pinyin,wm_type,(select name from wm_type where wm_type.id=wm_type) as wm_type_text ,attribute_1,attribute_2,type_1,type_2,unit,(select name from goods_unit where goods_unit.id=material.unit) as unit_text,0 as stock_number from material order by sort");
 
             String orderId = getPara("id");
 //        //TODO 测试数据
 //        orderId = (String) getSession().getAttribute("store_order_id");
+            if(materialTypeList != null && materialTypeList.size() > 0){
+                for(Record r : materialTypeList){
+                    r.set("search_text",r.getStr("name") + "-" + HanyuPinyinHelper.getFirstLettersLo(r.getStr("name")));
+                }
+            }
 
             Record storeOrder = Db.findById("store_order", orderId);
             String wantDateStr = storeOrder.getStr("want_date");
@@ -65,6 +71,7 @@ public class MaterialAndMaterialTypeTreeCtrl extends BaseCtrl  implements Consta
                     r.set("isEdit", true);
                     r.set("actual_order", "0");
                     r.set("stock", "0");
+                    r.set("search_text",r.getStr("name") + "-" + r.get("code") + "-" + r.get("pinyin"));
                     Record storeStock = storeStockMap.get(r.getStr("id"));
                     if (storeStock != null) {
                         if (storeStock.get("number") != null && storeStock.getInt("number") > 0) {

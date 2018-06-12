@@ -5,6 +5,7 @@ import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import com.utils.PDFUtil;
+import com.utils.UnitConversion;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
@@ -82,7 +83,7 @@ public class PrintCtrl extends BaseCtrl {
         Map<String,Object> data = new HashMap();
         String table = "";
         String tableStr = "";
-        List<Record> dataList = Db.find("select so.order_number order_number, som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, store_order so, goods_unit gu where so.id=som.store_order_id and som.unit=gu.id and store_order_id=?", orderId);
+        List<Record> dataList = Db.find("select so.order_number order_number, som.*, (select name from goods_unit gu where gu.id=som.unit) uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, store_order so where so.id=som.store_order_id and store_order_id=?", orderId);
         String title = "<table class=\"order-list\"><thead style=\"display:table-header-group\"><tr><td colspan=\"5\"><table class=\"order-top\"><tr><th colspan=\"2\" align=\"center\">送货单</th></tr><tr><td width=\"60%\">送货单位：${send_company}</td><td>送货日期：${send_date}</td></tr><tr><td width=\"60%\">地址：${send_address}</td><td>餐厅名称：${store_name}</td></tr><tr><td width=\"60%\">客服电话：${phone}</td><td>单据号：${order_num}</td></tr></table></td></tr></thead></table>";
         for(String s : send_goods_one_page_arr){
             title = title.replace("${" + s + "}", onePageData.get(s));
@@ -90,9 +91,9 @@ public class PrintCtrl extends BaseCtrl {
         if(dataList != null && dataList.size() > 0){
             dataRecord.set("order_number", dataList.get(0).get("order_number"));
             int i = 1;
-            for(; i < dataList.size(); i++){
-                Record r = dataList.get(i);
-                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + r.get("box_attr") + "</td><td>" + r.get("out_unit") + "</td><td>" + r.get("name") + "</td><td>" + r.get("box_attr_num") + "</td></tr>";
+            for(int j = 0; j < dataList.size(); j++,i++){
+                Record r = dataList.get(j);
+                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + UnitConversion.getAttrByOutUnit(r) + "</td><td>" + r.get("out_unit") + "</td><td>" + r.get("name") + "</td><td>" + r.get("real_send_num") + "</td></tr>";
                 if(i % 31 == 0){
                     table += onePageTempStr.replace("${table}", tableStr);
                     table += "<div class='pageNext'></div>";
@@ -151,11 +152,9 @@ public class PrintCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        dataRecord.set("send_company", configMap.get("send_company"));
-        dataRecord.set("phone", configMap.get("phone") + " 传真：" + configMap.get("fax"));
         Map<String, String> onePageData = new HashMap<>();
         for(String s : outgoing_goods_one_page_arr){
-            onePageData.put(s, s);
+            onePageData.put(s, dataRecord.getStr(s));
         }
         File onePageTemp = new File(this.getRequest().getSession().getServletContext().getRealPath("") + "/template/outgoingGoodsOnePage.template");
         BufferedReader br = null;
@@ -191,7 +190,24 @@ public class PrintCtrl extends BaseCtrl {
 //        for(String s : outgoing_goods_one_page_arr){
 //            title = title.replace("${" + s + "}", onePageData.get(s));
 //        }
-        List<Record> dataList = Db.find("select so.order_number order_number, som.*, gu.name uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, store_order so, goods_unit gu where so.id=som.store_order_id and som.unit=gu.id and store_order_id=?", orderId);
+        String warehouse_out_order_sql = "SELECT " +
+                " so.order_number order_number, " +
+                " som.*, " +
+                " ( " +
+                "  SELECT " +
+                "   NAME " +
+                "  FROM " +
+                "   goods_attribute " +
+                "  WHERE " +
+                "   id = som.attribute_1 " +
+                " ) ganame " +
+                "FROM " +
+                " warehouse_out_order_material_detail som, " +
+                " warehouse_out_order so " +
+                "WHERE " +
+                " so.id = som.warehouse_out_order_id " +
+                "AND warehouse_out_order_id =?";
+        List<Record> dataList = Db.find(warehouse_out_order_sql, orderId);
         if(dataList != null && dataList.size() > 0){
             dataRecord.set("order_number", dataList.get(0).get("order_number"));
             int i = 1;
@@ -209,7 +225,7 @@ public class PrintCtrl extends BaseCtrl {
             }
         }
         data.put("table", table);
-        data.put("creater_name", "新曙光");
+        data.put("creater_name", new UserSessionUtil(getRequest()).getRealName());
         String content = pdfUtil.loadDataByTemplate(data, "outgoingGoodsTemplate.html");
         try {
             String name = UUIDTool.getUUID();

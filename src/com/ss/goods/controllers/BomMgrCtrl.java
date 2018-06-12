@@ -14,6 +14,7 @@ import com.ss.controllers.BaseCtrl;
 import com.ss.goods.services.BomMgrService;
 import com.ss.services.GoodsService;
 import com.ss.services.MaterialTypeService;
+import com.utils.HanyuPinyinHelper;
 import com.utils.RequestTool;
 import com.utils.SQLUtil;
 import com.utils.SelectUtil;
@@ -38,6 +39,11 @@ public class BomMgrCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         try {
             List<Record> list = Db.find("select id,parent_id,code,name,CONCAT(name,'(',code,')') as label from goods_type order by sort,id");
+            if(list != null && list.size() > 0){
+                for(Record r : list){
+                    r.set("search_text",r.getStr("name") + "-" + r.get("code") + "-" + HanyuPinyinHelper.getFirstLettersLo(r.get("name")));
+                }
+            }
             List resultList= GoodsService.getMe().sort(list);
             jhm.putCode(1).put("list",resultList);
         }catch (Exception e){
@@ -90,11 +96,12 @@ public class BomMgrCtrl extends BaseCtrl {
             if(org.apache.commons.lang.StringUtils.isNotEmpty(key)) {
                 String key2 = key + "%";
                 if (paraList != null && !paraList.isEmpty()) {
-                    sql.append(" and (code like ? or name like ? )");
+                    sql.append(" and (code like ? or name like ? or pinyin like ? )");
                 } else {
-                    sql.append(" where (code like ? or name like ? )");
+                    sql.append(" where (code like ? or name like ? or pinyin like ? )");
 
                 }
+                paraList.add(key2);
                 paraList.add(key2);
                 paraList.add(key2);
             }

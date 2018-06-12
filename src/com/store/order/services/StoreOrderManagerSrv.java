@@ -195,7 +195,7 @@ public class StoreOrderManagerSrv {
                     /*
                     因为发货单位发生变化，所以发货数量要按照发货单位计算，此时不能修改
                      */
-                    //saveR.set("send_num", json.getString("number"));
+//                    saveR.set("send_num", json.getString("number"));
                     saveR.set("status", 10);
                     //saveR.set("type", "day");
                     //saveR.set("city", usu.getUserBean().get("city"));
