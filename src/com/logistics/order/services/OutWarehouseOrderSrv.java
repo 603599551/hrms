@@ -485,9 +485,13 @@ public class OutWarehouseOrderSrv {
         String id=warehouseOutOrderR.getStr("id");
         String storeId=warehouseOutOrderR.getStr("store_id");
         String storeOrderId=warehouseOutOrderR.getStr("store_order_id");
+        String orderNumber=warehouseOutOrderR.getStr("order_number");
+        String storeOrderNumber=warehouseOutOrderR.getStr("store_order_number");
 
         List<Record> allList=new ArrayList<>();
         List<WarehouseOutOrderMaterialDetailBean> allBeanList=new ArrayList<>();
+
+        List<Record> warehouseStockList=queryWarehouseStock(array);
 
         int sort=1;
         List<String> materialIdList=new ArrayList();
@@ -511,9 +515,14 @@ public class OutWarehouseOrderSrv {
 
                 materialIdList.add(materialId);
 
+                Record warehouseStockRecord=getWareHouseStockById(warehouseStockId,warehouseStockList);
+
                 Record warehouseOutOrderMaterialDetailR = new Record();
                 warehouseOutOrderMaterialDetailR.set("id", UUIDTool.getUUID());
                 warehouseOutOrderMaterialDetailR.set("warehouse_out_order_id", id);
+                warehouseOutOrderMaterialDetailR.set("warehouse_out_order_number", orderNumber);
+                warehouseOutOrderMaterialDetailR.set("store_order_number", storeOrderNumber);
+                warehouseOutOrderMaterialDetailR.set("store_order_id", storeOrderId);
                 warehouseOutOrderMaterialDetailR.set("warehouse_out_order_material_id", warehouseOutOrderMaterialId);
                 warehouseOutOrderMaterialDetailR.set("warehouse_stock_id", warehouseStockId);
                 warehouseOutOrderMaterialDetailR.set("warehouse_id", warehouseId);
@@ -522,7 +531,33 @@ public class OutWarehouseOrderSrv {
                 warehouseOutOrderMaterialDetailR.set("batch_code", batchCode);
                 warehouseOutOrderMaterialDetailR.set("code", code);
                 warehouseOutOrderMaterialDetailR.set("name", name);
+                warehouseOutOrderMaterialDetailR.set("pinyin", warehouseStockRecord.get("pinyin"));
+                warehouseOutOrderMaterialDetailR.set("yield_rate", warehouseStockRecord.get("yield_rate"));
+                warehouseOutOrderMaterialDetailR.set("purchase_price", warehouseStockRecord.get("purchase_price"));
+                warehouseOutOrderMaterialDetailR.set("balance_price", warehouseStockRecord.get("balance_price"));
+                warehouseOutOrderMaterialDetailR.set("wm_type", warehouseStockRecord.get("wm_type"));
+                warehouseOutOrderMaterialDetailR.set("attribute_1", warehouseStockRecord.get("attribute_1"));
+                warehouseOutOrderMaterialDetailR.set("attribute_2", warehouseStockRecord.get("attribute_2"));
+                warehouseOutOrderMaterialDetailR.set("unit", warehouseStockRecord.get("unit"));
+                warehouseOutOrderMaterialDetailR.set("type_1", warehouseStockRecord.get("type_1"));
+                warehouseOutOrderMaterialDetailR.set("type_2", warehouseStockRecord.get("type_2"));
                 warehouseOutOrderMaterialDetailR.set("send_num", sendNumberInt);
+                warehouseOutOrderMaterialDetailR.set("status", warehouseStockRecord.get("status"));
+                warehouseOutOrderMaterialDetailR.set("unit_num", warehouseStockRecord.get("unit_num"));
+                warehouseOutOrderMaterialDetailR.set("unit_big", warehouseStockRecord.get("unit_big"));
+                warehouseOutOrderMaterialDetailR.set("box_attr_num", warehouseStockRecord.get("box_attr_num"));
+                warehouseOutOrderMaterialDetailR.set("box_attr", warehouseStockRecord.get("box_attr"));
+                warehouseOutOrderMaterialDetailR.set("out_unit", warehouseStockRecord.get("out_unit"));
+                warehouseOutOrderMaterialDetailR.set("out_price", warehouseStockRecord.get("out_price"));
+                warehouseOutOrderMaterialDetailR.set("shelf_life_num", warehouseStockRecord.get("shelf_life_num"));
+                warehouseOutOrderMaterialDetailR.set("shelf_life_unit", warehouseStockRecord.get("shelf_life_unit"));
+                warehouseOutOrderMaterialDetailR.set("storage_condition", warehouseStockRecord.get("storage_condition"));
+                warehouseOutOrderMaterialDetailR.set("security_time", warehouseStockRecord.get("security_time"));
+                warehouseOutOrderMaterialDetailR.set("order_type", warehouseStockRecord.get("order_type"));
+                warehouseOutOrderMaterialDetailR.set("is_out_unit", warehouseStockRecord.get("is_out_unit"));
+                warehouseOutOrderMaterialDetailR.set("model", warehouseStockRecord.get("model"));
+                warehouseOutOrderMaterialDetailR.set("size", warehouseStockRecord.get("size"));
+                warehouseOutOrderMaterialDetailR.set("brand", warehouseStockRecord.get("brand"));
                 warehouseOutOrderMaterialDetailR.set("sort", sort);
                 warehouseOutOrderMaterialDetailR.set("status", "1");
 
@@ -573,6 +608,47 @@ public class OutWarehouseOrderSrv {
             }
         }
 
+    }
+
+    /**
+     * 根据前台传入数据的warehouse_stock_id，查询库存信息
+     * @param array
+     * @return
+     */
+    private List<Record> queryWarehouseStock(JSONArray array){
+
+        List<String> materialIdList=new ArrayList();
+        for(Object obj:array){
+            JSONObject json=(JSONObject)obj;
+            JSONArray subArray=json.getJSONArray("warehouseStockInfo");
+            for(Object subObj:subArray) {
+                JSONObject subJson=(JSONObject)subObj;
+                String warehouseStockId = subJson.getString("warehouse_stock_id");
+
+                materialIdList.add(warehouseStockId);
+
+            }
+        }
+        SelectUtil selectUtil=new SelectUtil("select * from warehouse_stock ");
+        selectUtil.in("and id in",materialIdList.toArray());
+        List<Record> list=Db.find(selectUtil.toString(),selectUtil.getParameters());
+        return list;
+    }
+
+    /**
+     * 传入warehouse表的主键，和warehouse表的list，找到相应的record记录，并返回
+     * @param id
+     * @param list
+     * @return
+     */
+    private Record getWareHouseStockById(String id,List<Record> list){
+        for(Record r:list){
+            String idDb=r.getStr("id");
+            if(idDb.equals(id)){
+                return r;
+            }
+        }
+        return null;
     }
     /**
         更新warehouse_out_order_material表的send_num（发送数量字段）
@@ -712,7 +788,7 @@ public class OutWarehouseOrderSrv {
         sub(allWarehouseOutOrderMaterialDetailBeanList);
 
         String datetime= DateTool.GetDateTime();
-        Db.update("update warehouse_out_order set status=?,finish_time=? where id=?",30,datetime,id);
+        Db.update("update warehouse_out_order set status=?,out_time=? where id=?",30,datetime,id);
         Db.update("update store_order set status=?,out_time=? where id=?",40,datetime,store_order_id);
         jhm.putCode(1).putMessage("出库成功！");
         return jhm;

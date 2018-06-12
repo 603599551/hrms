@@ -6,6 +6,7 @@ import com.ss.controllers.BaseCtrl;
 import com.ss.services.MaterialTypeService;
 import com.ss.stock.services.SecurityStockService;
 import com.utils.HanyuPinyinHelper;
+import com.utils.UnitConversion;
 import utils.bean.JsonHashMap;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class WarehouseStockMaterialTreeCtrl extends BaseCtrl{
         查询仓库库存原材料信息
         material表的status字段为1
          */
-        String warehouseStockSql="select a.warehouse_id,a.id as warehouse_stock_id,CONCAT(a.material_id,'-',batch_code) as id,'' as tid,a.material_id,a.code,a.name,CONCAT(a.name,'(',batch_code,')') as label,a.batch_code,a.number as warehouseStockNumber,(select name from goods_attribute where id=b.attribute_2) as attribute_2_text,(SELECT goods_unit.name FROM goods_unit WHERE id=b.unit) unit_text,0 as want_num,0 as send_number,CONCAT(a.name,'-',batch_code,'-',b.pinyin) as search_text,b.type_2 from warehouse_stock a left join material b on a.material_id=b.id where b.`status` =1 and a.number>0 order by a.material_id,a.batch_code,a.id";
+        String warehouseStockSql="select a.out_unit,a.out_unit as unit_text,a.box_attr,a.box_attr_num,a.unit_big,a.unit,a.unit_num,a.warehouse_id,a.id as warehouse_stock_id,CONCAT(a.material_id,'-',batch_code) as id,'' as tid,a.material_id,a.code,a.name,CONCAT(a.name,'(',batch_code,')') as label,a.batch_code,a.number as warehouseStockNumber,0 as want_num,0 as send_number,CONCAT(a.name,'-',batch_code,'-',b.pinyin) as search_text,b.type_2 from warehouse_stock a left join material b on a.material_id=b.id where a.number>0 order by a.material_id,a.batch_code,a.id";
         try {
             /*
             查询分类并给分类加拼音
@@ -67,6 +68,9 @@ public class WarehouseStockMaterialTreeCtrl extends BaseCtrl{
             while(it.hasNext()) {
                 Record r=it.next();
                 r.set("isEdit",true);
+
+                String attribute2text=UnitConversion.getAttrByOutUnit(r);
+                r.set("attribute_2_text",attribute2text);
                 String materialId=r.getStr("material_id");
                 String type2InRecord=r.getStr("type_2");
                 r.remove("type_2");

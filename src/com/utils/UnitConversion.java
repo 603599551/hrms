@@ -23,13 +23,15 @@ public class UnitConversion {
      * @param outUnit           提货单位
      * @return
      */
-    public static int smallUnit2outUnit(int num,String unitBig,int unitNum,String boxAttr,int boxAttrNum,String outUnit){
+    public static int smallUnit2outUnit(int num,String unit,String unitBig,int unitNum,String boxAttr,int boxAttrNum,String outUnit){
 
         int reNum=0;
         if(StringUtils.isNotBlank(boxAttr) && outUnit.equals(boxAttr)){//如果“提货单位”与“装箱规格单位”相同
             reNum=(int)Math.ceil((double)num/(double)(unitNum*boxAttrNum));
-        }else if(outUnit.equals(unitBig)){
+        }else if(StringUtils.isNotBlank(unitBig) && outUnit.equals(unitBig)){
             reNum=(int)Math.ceil((double)num/(double)unitNum);
+        }else if(StringUtils.isNotBlank(unit) && outUnit.equals(unit)){
+            reNum=num;
         }
         return reNum;
     }
@@ -38,6 +40,7 @@ public class UnitConversion {
      如果提货单位是装箱单位，那么提货单位换算成最小单位的公式是：num*unitNum*boxAttrNum
      如果提货单位是大单位，那么提货单位换算成最小单位的公式是：num*unitNum
      * @param num                要换算的数量（提货单位）
+     * @param unit               小单位
      * @param unitBig           大单位
      * @param unitNum           小单位换算成大单位的数值
      * @param boxAttr           装箱单位（有可能为空）
@@ -45,13 +48,15 @@ public class UnitConversion {
      * @param outUnit           提货单位
      * @return
      */
-    public static int outUnit2SmallUnit(int num,String unitBig,int unitNum,String boxAttr,int boxAttrNum,String outUnit){
+    public static int outUnit2SmallUnit(int num,String unit,String unitBig,int unitNum,String boxAttr,int boxAttrNum,String outUnit){
 
         int reNum=0;
         if(StringUtils.isNotBlank(boxAttr) && outUnit.equals(boxAttr)){//如果“提货单位”与“装箱规格单位”相同
             reNum=num*unitNum*boxAttrNum;
         }else if(outUnit.equals(unitBig)){
             reNum=num*unitNum;
+        }else if(outUnit.equals(unit)){
+            reNum=num;
         }
         return reNum;
     }

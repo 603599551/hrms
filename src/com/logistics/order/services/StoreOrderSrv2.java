@@ -53,15 +53,19 @@ public class StoreOrderSrv2 {
                 return jhm;
             }
             if("40".equals(status)){
-                jhm.putCode(0).putMessage("已经出库，不能生成！");
+                jhm.putCode(0).putMessage("已经出库，不能生成出库单！");
                 return jhm;
             }
             if("50".equals(status)){
-                jhm.putCode(0).putMessage("已经完成此订单，不能生成！");
+                jhm.putCode(0).putMessage("已经完成此订单，不能生成出库单！");
                 return jhm;
             }
-            if("100".equals(status)){
-                jhm.putCode(0).putMessage("已经关闭此订单，不能生成！");
+            if("110".equals(status)){
+                jhm.putCode(0).putMessage("门店已经撤销，不能生成出库单！");
+                return jhm;
+            }
+            if("120".equals(status)){
+                jhm.putCode(0).putMessage("物流已经退回此订单，不能生成出库单！");
                 return jhm;
             }
             /*
@@ -184,6 +188,7 @@ public class StoreOrderSrv2 {
         int wantNum=storeOrderMaterialR.getInt("want_num");//门店想要的量，单位是最小单位
         Object boxAttrNumObj=storeOrderMaterialR.get("box_attr_num");
         Object unitNumObj=storeOrderMaterialR.get("unit_num");
+        String unit=storeOrderMaterialR.getStr("unit");//小单位
         String unitBig=storeOrderMaterialR.getStr("unit_big");//大单位
         String boxAttr=storeOrderMaterialR.getStr("box_attr");//装箱规格单位
         String outUnit=storeOrderMaterialR.getStr("out_unit");//提货单位
@@ -191,7 +196,7 @@ public class StoreOrderSrv2 {
         int boxAttrNum=NumberUtils.parseInt(boxAttrNumObj,-1);
         int unitNum=NumberUtils.parseInt(unitNumObj,-1);
 
-        return UnitConversion.smallUnit2outUnit(wantNum,unitBig,unitNum,boxAttr,boxAttrNum,outUnit);
+        return UnitConversion.smallUnit2outUnit(wantNum,unit,unitBig,unitNum,boxAttr,boxAttrNum,outUnit);
     }
 
     /**

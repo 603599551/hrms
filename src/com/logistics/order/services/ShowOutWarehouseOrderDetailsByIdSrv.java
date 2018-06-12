@@ -48,7 +48,7 @@ public class ShowOutWarehouseOrderDetailsByIdSrv {
         /*
         查询该订单的出库原材料
          */
-        String sql="select a.*,b.want_num,c.number from warehouse_out_order_material_detail a inner join store_order_material b on a.material_id=b.material_id and a.store_order_id=b.store_order_id left join warehouse_stock c on a.warehouse_stock_id=c.id where a.warehouse_out_order_id=? order by material_id,batch_code ";
+        String sql="select a.*,b.want_num,c.number,c.warehouse_id from warehouse_out_order_material_detail a inner join store_order_material b on a.material_id=b.material_id and a.store_order_id=b.store_order_id left join warehouse_stock c on a.warehouse_stock_id=c.id where a.warehouse_out_order_id=? order by material_id,batch_code ";
         List<Record> warehouseOutOrderMaterialDetailList=Db.find(sql,id);
 
         //获取安存
@@ -74,7 +74,8 @@ public class ShowOutWarehouseOrderDetailsByIdSrv {
             Object boxAttrNumObj=warehouseOutOrderMaterialR.get("box_attr_num");//大单位换算成箱的数值
             String unitBig=warehouseOutOrderMaterialR.getStr("unit_big");//大单位
             String unit=warehouseOutOrderMaterialR.getStr("unit");//最小单位
-            Object unitNumObj=warehouseOutOrderMaterialR.getStr("unit_num");//小单位换算成大单位的数值
+            Object unitNumObj=warehouseOutOrderMaterialR.get("unit_num");//小单位换算成大单位的数值
+            String warehouseId=warehouseOutOrderMaterialR.getStr("warehouse_id");//小单位换算成大单位的数值
 
             int boxAttrNum= NumberUtils.parseInt(boxAttrNumObj,0);
             int unitNum= NumberUtils.parseInt(unitNumObj,0);
@@ -104,6 +105,7 @@ public class ShowOutWarehouseOrderDetailsByIdSrv {
             map.put("warehouseStockNumber",warehouseStockNumber);
             map.put("isEdit",true);
             map.put("warehouse_stock_id",warehouseStockId);
+            map.put("warehouse_id",warehouseId);
 
             String attribute2= UnitConversion.getAttrByOutUnit(unit,unitNum,unitBig,boxAttrNum,boxAttr,outUnit);
             map.put("attribute_2_text",attribute2);

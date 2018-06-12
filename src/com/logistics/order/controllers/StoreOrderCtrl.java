@@ -114,12 +114,34 @@ public class StoreOrderCtrl extends BaseCtrl {
                 return;
             }else{
                 String status=r.getStr("status");
-                if("20".equals(status)){
+                if("10".equals(status)){
+
+                }else if("20".equals(status)){
                     jhm.putCode(0).putMessage("已经接收订单！");
                     renderJson(jhm);
                     return;
                 }else if("30".equals(status)){
                     jhm.putCode(0).putMessage("已经生成出库单！");
+                    renderJson(jhm);
+                    return;
+                }else if("40".equals(status)){
+                    jhm.putCode(0).putMessage("已经出库！");
+                    renderJson(jhm);
+                    return;
+                }else if("50".equals(status)){
+                    jhm.putCode(0).putMessage("已经完成此订单！");
+                    renderJson(jhm);
+                    return;
+                }else if("110".equals(status)){
+                    jhm.putCode(0).putMessage("门店已经撤销，不能接收此订单！");
+                    renderJson(jhm);
+                    return;
+                }else if("120".equals(status)){
+                    jhm.putCode(0).putMessage("物流已经退回此订单，不能接收此订单！");
+                    renderJson(jhm);
+                    return;
+                }else{
+                    jhm.putCode(0).putMessage("不能接收此订单！");
                     renderJson(jhm);
                     return;
                 }
