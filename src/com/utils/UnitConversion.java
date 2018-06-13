@@ -64,7 +64,7 @@ public class UnitConversion {
 
     /**
      * 根据出库单位返回规格（该规格的最大单位是出库单位）<br/>
-     * 从record中取出如下数据：out_unit，box_attr，box_attr_num，unit_big，unit，unit_num
+     * 从record中取出如下数据：out_unit,box_attr,box_attr_num,unit_big,unit,unit_num
      * 如：提货单位是箱，返回规格是：100袋/箱
      * @return
      */
