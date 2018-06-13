@@ -33,7 +33,6 @@ public class StoreOrderSrv2 {
      */
     @Before(Tx.class)
     public JsonHashMap buildOutWarehouse(String storeOrderId,UserSessionUtil usu) throws Exception{
-        System.out.println(this.getClass().getSimpleName());
         this.usu=usu;
         JsonHashMap jhm=new JsonHashMap();
         try{
@@ -126,7 +125,7 @@ public class StoreOrderSrv2 {
         Iterator<Map.Entry<String,Record>> it=warehouseOutOrderMap.entrySet().iterator();
         while(it.hasNext()){
             Map.Entry<String,Record> en=it.next();
-            en.getValue().set("store_color", usu.getUserBean().get("store_color"));
+            en.getValue().set("store_color", storeOrderRecord.getStr("store_color"));
             reList.add(en.getValue());
         }
         return reList;
