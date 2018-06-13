@@ -12,6 +12,7 @@ import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
+import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class StoreOrderCtrl extends BaseCtrl {
 
     /*
     物流查询门店订单
+    排序：order by arrive_date , create_time
      */
     public void queryOrders(){
         JsonHashMap jhm=new JsonHashMap();
@@ -38,8 +40,6 @@ public class StoreOrderCtrl extends BaseCtrl {
                 "(select name from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_text,"+
                 "IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 1,1),0) as print_time," +
                 "(select status_color from dictionary where dictionary.value=store_order.status and dictionary.parent_id='1') as status_color";
-
-//        StringBuilder sqlExceptSelect=new StringBuilder("  where ?<=arrive_date and arrive_date<=? and type=? and store_id=? and status=? ");
         try {
 
 //            JSONObject jsonObject = RequestTool.getJson(getRequest());
@@ -62,14 +62,18 @@ public class StoreOrderCtrl extends BaseCtrl {
             int pageNum= NumberUtils.parseInt(pageNumStr,1);
             int pageSize=NumberUtils.parseInt(pageSizeStr,10);
 
-//            if(StringUtils.isEmpty(status)){
-//                status="1";
-//            }
+            if("-1".equals(storeId))storeId="";
+            if("-1".equals(orderType))orderType="";
+            if("-1".equals(status)){
+                status="";
+            }
 
             SelectUtil sqlUtil = new SelectUtil(" from store_order ");
             if(arrivalDate!=null) {
                 if(arrivalDate.length==1){
-                    sqlUtil.addWhere("and ?<=arrive_date", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, arrivalDate[0]);
+                    if(StringUtils.isNotBlank(arrivalDate[0])) {
+                        sqlUtil.addWhere("and ?<=arrive_date", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, arrivalDate[0]);
+                    }
                 }else if(arrivalDate.length==2) {
                     sqlUtil.addWhere("and ?<=arrive_date", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, arrivalDate[0]);
                     sqlUtil.addWhere("and arrive_date<=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, arrivalDate[1]);
@@ -77,17 +81,13 @@ public class StoreOrderCtrl extends BaseCtrl {
             }
             sqlUtil.addWhere("and type=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderType);
             sqlUtil.addWhere("and store_id=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, storeId);
-            if(status != null && status.length() > 0){
-                if("-1".equals(status)){
-                    sqlUtil.addWhere("and status<>?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, "5");
-                }else{
-                    sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
-                }
+            if(status == null || "".equals(status)){
+                sqlUtil.in("and status not in", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, "5","110");
             }else{
-                sqlUtil.addWhere("and status<>?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, "5");
+                sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);
             }
             sqlUtil.addWhere("and order_number=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderCode);
-            sqlUtil.order(" order by arrive_date desc , create_time desc");
+            sqlUtil.order(" order by arrive_date , create_time ");
             String sqlExceptSelect=sqlUtil.toString();
             Page<Record> page=Db.paginate(pageNum, pageSize,select,sqlExceptSelect,sqlUtil.getParameterList().toArray());
             jhm.putCode(1).put("data",page);
