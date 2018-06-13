@@ -97,7 +97,8 @@ public class ShowOutWarehouseOrderDetailsByIdSrv {
             map.put("material_id",materialId);
             map.put("name",name);
             map.put("code",code);
-            map.put("unit_text",outUnit);
+            map.put("unit",unit);
+            map.put("out_unit",outUnit);
             map.put("want_num",wantNum);
             map.put("security_stock",security_stock);//安存数量
             map.put("batch_code",batchCode);
