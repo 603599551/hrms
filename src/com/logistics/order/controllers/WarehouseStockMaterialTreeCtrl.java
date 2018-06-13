@@ -6,6 +6,7 @@ import com.ss.controllers.BaseCtrl;
 import com.ss.services.MaterialTypeService;
 import com.ss.stock.services.SecurityStockService;
 import com.utils.HanyuPinyinHelper;
+import com.utils.SelectUtil;
 import com.utils.UnitConversion;
 import utils.bean.JsonHashMap;
 
@@ -39,6 +40,7 @@ public class WarehouseStockMaterialTreeCtrl extends BaseCtrl{
      warehouse_stock_id:''//库存（warehouse_stock）id
      */
     public void index(){
+        String warehouseId=getPara("warehouseId");
         JsonHashMap jhm=new JsonHashMap();
         /*
         查询material_type原材料分类sql
@@ -48,8 +50,12 @@ public class WarehouseStockMaterialTreeCtrl extends BaseCtrl{
         查询仓库库存原材料信息
         material表的status字段为1
          */
-        String warehouseStockSql="select a.out_unit,a.out_unit as unit_text,a.box_attr,a.box_attr_num,a.unit_big,a.unit,a.unit_num,a.warehouse_id,a.id as warehouse_stock_id,CONCAT(a.material_id,'-',batch_code) as id,'' as tid,a.material_id,a.code,a.name,CONCAT(a.name,'(',batch_code,')') as label,a.batch_code,a.number as warehouseStockNumber,0 as want_num,0 as send_number,CONCAT(a.name,'-',batch_code,'-',b.pinyin) as search_text,b.type_2 from warehouse_stock a left join material b on a.material_id=b.id where a.number>0 order by a.material_id,a.batch_code,a.id";
+        String warehouseStockSql="select a.out_unit,a.out_unit as unit_text,a.box_attr,a.box_attr_num,a.unit_big,a.unit,a.unit_num,a.warehouse_id,a.id as warehouse_stock_id,CONCAT(a.material_id,'-',batch_code) as id,'' as tid,a.material_id,a.code,a.name,CONCAT(a.name,'(',batch_code,')') as label,a.batch_code,a.number as warehouseStockNumber,0 as want_num,0 as send_number,CONCAT(a.name,'-',batch_code,'-',b.pinyin) as search_text,b.type_2 from warehouse_stock a left join material b on a.material_id=b.id ";
         try {
+            SelectUtil selectUtil=new SelectUtil(warehouseStockSql);
+            selectUtil.addWhere("and a.number>0");
+            selectUtil.addWhere("and a.warehouse_id=?",SelectUtil.NOT_NULL_AND_NOT_EMPTY_STRING,warehouseId);
+            selectUtil.order("order by a.material_id,a.batch_code,a.id");
             /*
             查询分类并给分类加拼音
              */
@@ -60,7 +66,7 @@ public class WarehouseStockMaterialTreeCtrl extends BaseCtrl{
                 r.set("search_text",name+"-"+pinyin);
             }
 
-            List<Record> warehouseStockList=Db.find(warehouseStockSql);
+            List<Record> warehouseStockList=Db.find(selectUtil.toString(),selectUtil.getParameters());
             //获取安存
             Map securityStock= SecurityStockService.getSecurityStockMap();
 
