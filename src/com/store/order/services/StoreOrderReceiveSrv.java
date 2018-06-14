@@ -173,7 +173,8 @@ public class StoreOrderReceiveSrv {
             String attribute1OfStoreOrderMaterialR=storeOrderMaterialR.getStr("attribute_1");
             String attribute2OfStoreOrderMaterialR=storeOrderMaterialR.getStr("attribute_2");
             String unitOfStoreOrderMaterialR=storeOrderMaterialR.getStr("unit");
-            int receiveNum=storeOrderMaterialR.getInt("receive_num");
+//            int receiveNum=storeOrderMaterialR.getInt("receive_num");
+            int realSendNum=storeOrderMaterialR.getInt("real_send_num");
 //            int wantNum=storeOrderMaterialR.getInt("want_num");//门店想要的量，单位是最小单位
 
             Record warehouseOutOrderMaterialDetailR=getByMaterialId(materialIdOfStoreOrderMaterialR,warehouseOutOrderMaterialDetailList);
@@ -190,7 +191,7 @@ public class StoreOrderReceiveSrv {
             /*
             门店库存的数量是最小单位，物流发送的单位是提货单位，此处换算成最小单位
              */
-            int smallUnitNum= UnitConversion.outUnit2SmallUnit(receiveNum,unit,unitBig,unitNum,boxAttr,boxAttrNum,outUnit);
+            int smallUnitNum= UnitConversion.outUnit2SmallUnit(realSendNum,unit,unitBig,unitNum,boxAttr,boxAttrNum,outUnit);
 
             boolean has=false;
             for(Record storeStockR:storeStockList){
