@@ -111,7 +111,8 @@ public class StoreOrderReceiveSrv {
         更新门店库存
          */
         //门店订单原材料
-        List<Record> storeOrderMaterialList=Db.find("select * from store_order_material where store_order_id=?",storeOrderId);
+//        List<Record> storeOrderMaterialList=Db.find("select * from store_order_material where store_order_id=?",storeOrderId);
+        List<Record> warehouseOutOrderMaterialDetailList=Db.find("select * from warehouse_out_order_material_detail where store_order_id=?",storeOrderId);
         //当前门店库存list
         List<Record> storeStockList=Db.find("select * from store_stock where store_id=?",usu.getUserBean().getDeptId());
 
@@ -120,7 +121,7 @@ public class StoreOrderReceiveSrv {
         List<Record> insertDataList=new ArrayList();
 
 
-        buildData(usu,storeOrderMaterialList,storeStockList,insertDataList,updateDataList,storeOrderId);
+        buildData(usu,warehouseOutOrderMaterialDetailList,storeStockList,insertDataList,updateDataList,storeOrderId);
 
         if(updateDataList!=null && !updateDataList.isEmpty()){
             Object[][] dataArray=new Object[updateDataList.size()][2];
@@ -149,35 +150,35 @@ public class StoreOrderReceiveSrv {
      * 如果订单中的原材料，在本店库存中有，就将该记录放入到updateDataList中
      如果没有，就将记录放入到insertDataList中
      * @param usu
-     * @param storeOrderMaterialList
+     * @param warehouseOutOrderMaterialDetailList
      * @param storeStockList
      * @param insertDataList
      * @param updateDataList
      */
-    private void buildData(UserSessionUtil usu,List<Record> storeOrderMaterialList,List<Record> storeStockList,List<Record> insertDataList,List<Object[]> updateDataList,String storeOrderId){
+    private void buildData(UserSessionUtil usu,List<Record> warehouseOutOrderMaterialDetailList,List<Record> storeStockList,List<Record> insertDataList,List<Object[]> updateDataList,String storeOrderId){
         String datetime= DateTool.GetDateTime();
         String store_id=usu.getUserBean().getDeptId();
 
-        List<Record> warehouseOutOrderMaterialDetailList=queryOutWarehouseDetail(storeOrderId,storeOrderMaterialList);
+//        List<Record> warehouseOutOrderMaterialDetailList=queryOutWarehouseDetail(storeOrderId,storeOrderMaterialList);
 
         /*
         查询当前门店的库存最大序号
          */
         int maxSort=getMaxSortOfStoreStock(usu.getUserBean().getDeptId());
 
-        for(Record storeOrderMaterialR:storeOrderMaterialList){
-            String materialIdOfStoreOrderMaterialR=storeOrderMaterialR.getStr("material_id");
-            String codeOfStoreOrderMaterialR=storeOrderMaterialR.getStr("code");
-            String nameOfStoreOrderMaterialR=storeOrderMaterialR.getStr("name");
-            String pinyinOfStoreOrderMaterialR=storeOrderMaterialR.getStr("pinyin");
-            String attribute1OfStoreOrderMaterialR=storeOrderMaterialR.getStr("attribute_1");
-            String attribute2OfStoreOrderMaterialR=storeOrderMaterialR.getStr("attribute_2");
-            String unitOfStoreOrderMaterialR=storeOrderMaterialR.getStr("unit");
+        for(Record warehouseOutOrderMaterialDetailR:warehouseOutOrderMaterialDetailList){
+            String materialIdOfWarehouseOutOrderMaterialDetailR=warehouseOutOrderMaterialDetailR.getStr("material_id");
+            String codeOfWarehouseOutOrderMaterialDetailR=warehouseOutOrderMaterialDetailR.getStr("code");
+            String nameOfWarehouseOutOrderMaterialDetailR=warehouseOutOrderMaterialDetailR.getStr("name");
+            String pinyinOfWarehouseOutOrderMaterialDetailR=warehouseOutOrderMaterialDetailR.getStr("pinyin");
+            String attribute1OfWarehouseOutOrderMaterialDetailR=warehouseOutOrderMaterialDetailR.getStr("attribute_1");
+            String attribute2OfWarehouseOutOrderMaterialDetailR=warehouseOutOrderMaterialDetailR.getStr("attribute_2");
+            String unitOfWarehouseOutOrderMaterialDetailR=warehouseOutOrderMaterialDetailR.getStr("unit");
 //            int receiveNum=storeOrderMaterialR.getInt("receive_num");
-            int realSendNum=storeOrderMaterialR.getInt("real_send_num");
+            int sendNum=warehouseOutOrderMaterialDetailR.getInt("send_num");//发货数量
 //            int wantNum=storeOrderMaterialR.getInt("want_num");//门店想要的量，单位是最小单位
 
-            Record warehouseOutOrderMaterialDetailR=getByMaterialId(materialIdOfStoreOrderMaterialR,warehouseOutOrderMaterialDetailList);
+//            Record warehouseOutOrderMaterialDetailR=getByMaterialId(materialIdOfStoreOrderMaterialR,warehouseOutOrderMaterialDetailList);
             Object boxAttrNumObj=warehouseOutOrderMaterialDetailR.get("box_attr_num");
             Object unitNumObj=warehouseOutOrderMaterialDetailR.get("unit_num");
             String unit=warehouseOutOrderMaterialDetailR.getStr("unit");//小单位
@@ -191,14 +192,14 @@ public class StoreOrderReceiveSrv {
             /*
             门店库存的数量是最小单位，物流发送的单位是提货单位，此处换算成最小单位
              */
-            int smallUnitNum= UnitConversion.outUnit2SmallUnit(realSendNum,unit,unitBig,unitNum,boxAttr,boxAttrNum,outUnit);
+            int smallUnitNum= UnitConversion.outUnit2SmallUnit(sendNum,unit,unitBig,unitNum,boxAttr,boxAttrNum,outUnit);
 
             boolean has=false;
             for(Record storeStockR:storeStockList){
                 String idOfStoreStockR=storeStockR.getStr("id");
                 String materialIdOfStoreStockR=storeStockR.getStr("material_id");
                 int numberOfStoreStockR=storeStockR.get("number");
-                if(materialIdOfStoreOrderMaterialR.equals(materialIdOfStoreStockR)){//如果相同，就放入到updateDataList里，用于后续的更新
+                if(materialIdOfWarehouseOutOrderMaterialDetailR.equals(materialIdOfStoreStockR)){//如果相同，就放入到updateDataList里，用于后续的更新
                     has=true;
                     updateDataList.add(new Object[]{smallUnitNum+numberOfStoreStockR,idOfStoreStockR});
                     break;
@@ -210,13 +211,13 @@ public class StoreOrderReceiveSrv {
                 r.set("id", UUIDTool.getUUID());
                 r.set("store_id", store_id);
                 r.set("store_color", usu.getUserBean().get("store_color"));
-                r.set("material_id", materialIdOfStoreOrderMaterialR);
-                r.set("code", codeOfStoreOrderMaterialR);
-                r.set("name", nameOfStoreOrderMaterialR);
-                r.set("pinyin", pinyinOfStoreOrderMaterialR);
-                r.set("attribute_1", attribute1OfStoreOrderMaterialR);
-                r.set("attribute_2", attribute2OfStoreOrderMaterialR);
-                r.set("unit", unitOfStoreOrderMaterialR);
+                r.set("material_id", materialIdOfWarehouseOutOrderMaterialDetailR);
+                r.set("code", codeOfWarehouseOutOrderMaterialDetailR);
+                r.set("name", nameOfWarehouseOutOrderMaterialDetailR);
+                r.set("pinyin", pinyinOfWarehouseOutOrderMaterialDetailR);
+                r.set("attribute_1", attribute1OfWarehouseOutOrderMaterialDetailR);
+                r.set("attribute_2", attribute2OfWarehouseOutOrderMaterialDetailR);
+                r.set("unit", unitOfWarehouseOutOrderMaterialDetailR);
                 r.set("type_1", warehouseOutOrderMaterialDetailR.get("type_1"));
                 r.set("type_2", warehouseOutOrderMaterialDetailR.get("type_2"));
                 r.set("unit_num", warehouseOutOrderMaterialDetailR.get("unit_num"));
