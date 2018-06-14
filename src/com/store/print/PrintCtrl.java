@@ -1,5 +1,6 @@
 package com.store.print;
 
+import com.common.services.OrderNumberGenerator;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
@@ -53,6 +54,8 @@ public class PrintCtrl extends BaseCtrl {
         for(String s : send_goods_one_page_arr){
             onePageData.put(s, dataRecord.getStr(s));
         }
+        OrderNumberGenerator ong = new OrderNumberGenerator();
+        onePageData.put("order_num", ong.getSendGoodsOrderNumber());
         File onePageTemp = new File(this.getRequest().getSession().getServletContext().getRealPath("") + "/template/sendGoodsOnePage.template");
         BufferedReader br = null;
         String onePageTempStr = "";
