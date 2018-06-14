@@ -9,10 +9,7 @@ import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
-import com.logistics.order.controllers.OutWarehouseOrderCtrl;
-import com.logistics.order.controllers.ReconciliationCtrl;
-import com.logistics.order.controllers.StoreScrapCtrl;
-import com.logistics.order.controllers.WarehouseStockMaterialTreeCtrl;
+import com.logistics.order.controllers.*;
 import com.ss.controllers.HomeCtrl;
 import com.ss.controllers.LoginCtrl;
 import com.ss.controllers.MenuCtrl;
@@ -25,6 +22,7 @@ import com.ss.organization.controllers.StoreCtrl;
 import com.ss.stock.controllers.DailySummaryCtrl;
 import com.store.controllers.StoreStockManagerCtrl;
 import com.store.order.controllers.*;
+import com.store.order.controllers.StoreOrderCtrl;
 import com.store.print.PrintCtrl;
 import com.warehouse.controllers.WarehouseManagerCtrl;
 import com.warehouse.controllers.WarehouseMovementCtrl;
@@ -93,6 +91,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/common/store", com.common.controllers.StoreCtrl.class);
 		routes.add("/mgr/warehouse/warehouseManager", WarehouseManagerCtrl.class);
 		routes.add("/mgr/common/selectDataBuilder", SelectDataBuilderCtrl.class);
+		routes.add("/mgr/logistics/outWarehouseOrderStatistics", OutWarehouseOrderStatisticsCtrl.class);
 		/*
 		门店订单
 		 */
