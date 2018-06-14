@@ -200,6 +200,8 @@ public class StoreOrderManagerSrv {
                     //saveR.set("type", "day");
                     //saveR.set("city", usu.getUserBean().get("city"));
                     saveR.set("want_num", json.getString("number"));
+                    saveR.set("real_send_num", 0);
+                    saveR.set("send_num", 0);
                     saveR.set("next1_order_num", json.getString("nextOneNum"));
                     saveR.set("next2_order_num", json.getString("nextTwoNum"));
 

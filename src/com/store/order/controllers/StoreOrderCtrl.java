@@ -141,7 +141,9 @@ public class StoreOrderCtrl extends BaseCtrl {
                     sqlUtil.addWhere("and arrive_date<=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, arrivalDate[1]);
                 }
             }
-            sqlUtil.addWhere("and type=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderType);
+            if(orderType != null && orderType.length() > 0 && !"-1".equals(orderType)){
+                sqlUtil.addWhere("and type=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, orderType);
+            }
             sqlUtil.addWhere("and store_id=?", usu.getUserBean().getDeptId());
             if(status != null && status.length() > 0 && !"-1".equals(status)){
                 sqlUtil.addWhere("and status=?", SQLUtil.NOT_NULL_AND_NOT_EMPTY_STRING, status);

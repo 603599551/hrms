@@ -153,6 +153,8 @@ public class StoreOrderManagerCtrl extends BaseCtrl implements Constants{
                     materialR.set("name", r.getStr("mname"));
                     materialR.set("code", r.getStr("mcode"));
                     materialR.set("unit_text", r.getStr("munit"));
+                    materialR.set("unit", r.getStr("m_unit"));
+//                    materialR.set("unit_text", r.getStr("m_unit"));
                     double actual_order = new Double(String.format("%.2f", getDouble(r.getDouble("gmnet_num") * number)));
                     materialR.set("actual_order", actual_order);
                     if(stockR != null){
