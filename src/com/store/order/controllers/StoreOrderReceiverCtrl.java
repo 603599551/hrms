@@ -107,8 +107,12 @@ public class StoreOrderReceiverCtrl extends BaseCtrl {
             map.put("stock_num",stockNum);
             map.put("unit",unit);
 
-            String attribute2= UnitConversion.getAttrByOutUnit(unit,unitNum,unitBig,boxAttrNum,boxAttr,outUnit);
-            map.put("attribute_2_text",attribute2);
+            try {
+                String attribute2 = UnitConversion.getAttrByOutUnit(unit, unitNum, unitBig, boxAttrNum, boxAttr, outUnit);
+                map.put("attribute_2_text", attribute2);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
 
             if(materialId.equals(lastMaterialId)){//如果与上一个相同
                 /*

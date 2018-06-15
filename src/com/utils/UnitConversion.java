@@ -24,7 +24,12 @@ public class UnitConversion {
      * @return
      */
     public static int smallUnit2outUnit(int num,String unit,String unitBig,int unitNum,String boxAttr,int boxAttrNum,String outUnit){
-
+        if(StringUtils.isBlank(unit)){
+            throw new NullPointerException("unit不能为空！");
+        }
+        if(StringUtils.isBlank(outUnit)){
+            throw new NullPointerException("outUnit不能为空！");
+        }
         int reNum=0;
         if(StringUtils.isNotBlank(boxAttr) && outUnit.equals(boxAttr)){//如果“提货单位”与“装箱规格单位”相同
             reNum=(int)Math.ceil((double)num/(double)(unitNum*boxAttrNum));
@@ -32,6 +37,8 @@ public class UnitConversion {
             reNum=(int)Math.ceil((double)num/(double)unitNum);
         }else if(StringUtils.isNotBlank(unit) && outUnit.equals(unit)){
             reNum=num;
+        }else{
+            throw new RuntimeException("没有与提货单位相匹配的转换单位！");
         }
         return reNum;
     }
@@ -49,7 +56,12 @@ public class UnitConversion {
      * @return
      */
     public static int outUnit2SmallUnit(int num,String unit,String unitBig,int unitNum,String boxAttr,int boxAttrNum,String outUnit){
-
+        if(StringUtils.isBlank(unit)){
+            throw new NullPointerException("unit不能为空！");
+        }
+        if(StringUtils.isBlank(outUnit)){
+            throw new NullPointerException("outUnit不能为空！");
+        }
         int reNum=0;
         if(StringUtils.isNotBlank(boxAttr) && outUnit.equals(boxAttr)){//如果“提货单位”与“装箱规格单位”相同
             reNum=num*unitNum*boxAttrNum;
@@ -57,6 +69,8 @@ public class UnitConversion {
             reNum=num*unitNum;
         }else if(outUnit.equals(unit)){
             reNum=num;
+        }else{
+            throw new RuntimeException("没有与提货单位相匹配的转换单位！");
         }
         return reNum;
     }
@@ -88,6 +102,13 @@ public class UnitConversion {
      * @return
      */
     public static String getAttrByOutUnit(String unit,int unitNum,String unitBig,int boxAttrNum,String boxAttr,String outUnit){
+        if(StringUtils.isBlank(unit)){
+            throw new NullPointerException("unit不能为空！");
+        }
+        if(StringUtils.isBlank(outUnit)){
+            throw new NullPointerException("outUnit不能为空！");
+        }
+
         String attribute2="";
         if(outUnit.equals(boxAttr)){
             attribute2=boxAttrNum+unitBig+"/"+boxAttr;
@@ -95,6 +116,8 @@ public class UnitConversion {
             attribute2=unitNum+unit+"/"+unitBig;
         }else if(outUnit.equals(unit)){
             attribute2=unit;
+        }else{
+            throw new RuntimeException("没有与提货单位相匹配的转换单位！");
         }
         return attribute2;
     }
