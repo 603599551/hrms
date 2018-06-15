@@ -87,7 +87,7 @@ public class PrintCtrl extends BaseCtrl {
         Map<String,Object> data = new HashMap();
         String table = "";
         String tableStr = "";
-        List<Record> dataList = Db.find("select so.order_number order_number, som.*, (select name from goods_unit gu where gu.id=som.unit) uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, store_order so where so.id=som.store_order_id and store_order_id=?", orderId);
+        List<Record> dataList = Db.find("select so.order_number order_number, som.*, (select name from goods_unit gu where gu.id=som.unit) uname, (select name from goods_attribute where id=som.attribute_1) ganame from store_order_material som, store_order so where so.id=som.store_order_id and store_order_id=? order by som.material_id", orderId);
         String title = "<table class=\"order-list\"><thead style=\"display:table-header-group\"><tr><td colspan=\"5\"><table class=\"order-top\"><tr><th colspan=\"2\" align=\"center\">送货单</th></tr><tr><td width=\"60%\">送货单位：${send_company}</td><td>送货日期：${send_date}</td></tr><tr><td width=\"60%\">地址：${send_address}</td><td>餐厅名称：${store_name}</td></tr><tr><td width=\"60%\">客服电话：${phone}</td><td>单据号：${order_num}</td></tr></table></td></tr></thead></table>";
         for(String s : send_goods_one_page_arr){
             title = title.replace("${" + s + "}", onePageData.get(s));
@@ -210,7 +210,7 @@ public class PrintCtrl extends BaseCtrl {
                 " warehouse_out_order so " +
                 "WHERE " +
                 " so.id = som.warehouse_out_order_id " +
-                "AND warehouse_out_order_id =?";
+                "AND warehouse_out_order_id =? order by som.material_id";
         List<Record> dataList = Db.find(warehouse_out_order_sql, orderId);
         if(dataList != null && dataList.size() > 0){
             dataRecord.set("order_number", dataList.get(0).get("order_number"));

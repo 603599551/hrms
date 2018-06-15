@@ -211,6 +211,7 @@ public class ReturnGoodsService {
                 storeStocktakingList.add(storeStocktaking);
             }
         }
+        //TODO 批量修改问题，暂时不变，可以批量删除数据，然后再批量新增数据，提高效率
         if(wsUpdateList != null && wsUpdateList.size() > 0){
             for(Record r : wsUpdateList){
                 Db.update("warehouse_stock", r);

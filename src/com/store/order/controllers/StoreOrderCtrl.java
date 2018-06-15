@@ -167,7 +167,7 @@ public class StoreOrderCtrl extends BaseCtrl {
     public void showOrderDetailsById(){
         String id=getPara("id");
         JsonHashMap jsonHashMap=new JsonHashMap();
-        String sql="select *,(select name from store where store.id=store_order.store_id) as store_text,substr(create_time,1,16) as create_time_short,IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 1,1),0) as print_time from store_order where id=?";
+        String sql="select *,(select name from store where store.id=store_order.store_id) as store_text,substr(create_time,1,16) as create_time_short,IFNULL((select sort from print_details where order_id = store_order.id order by sort desc limit 0,1),0) as print_time from store_order where id=?";
         try{
             Record r=Db.findFirst(sql,id);
             String returnReason=r.getStr("return_reason");

@@ -44,7 +44,7 @@ public class OutWarehouseOrderStatisticsCtrl extends BaseCtrl {
         if("-1".equals(printFlag))printFlag="";
 
         JsonHashMap jhm=new JsonHashMap();
-        String select="select a.id, a.order_number, (select name from store where store.id = a.store_id) as store_text,(select store_color from store where store.id = a.store_id) as store_color, (select name from warehouse where warehouse.id = a.warehouse_id) as warehourse_text, a.out_time, a.status, case a.status when '10' then '新建' when '20' then '保存' when '30' then '出库' when '40' then '完成' end as status_text, (select d.status_color status_color from dictionary d where d.parent_id='1' and d.value=a.status) status_color, b.want_date, b.arrive_date,IFNULL((select sort from print_details where order_id = a.id order by sort desc limit 1,1),0) as print_time";
+        String select="select a.id, a.order_number, (select name from store where store.id = a.store_id) as store_text,(select store_color from store where store.id = a.store_id) as store_color, (select name from warehouse where warehouse.id = a.warehouse_id) as warehourse_text, a.out_time, a.status, case a.status when '10' then '新建' when '20' then '保存' when '30' then '出库' when '40' then '完成' end as status_text, (select d.status_color status_color from dictionary d where d.parent_id='1' and d.value=a.status) status_color, b.want_date, b.arrive_date,IFNULL((select sort from print_details where order_id = a.id order by sort desc limit 0,1),0) as print_time";
         String sql=" from warehouse_out_order a inner join store_order b on a.store_order_id = b.id";
         try{
             SelectUtil selectSQL=new SelectUtil(sql);
@@ -101,7 +101,7 @@ public class OutWarehouseOrderStatisticsCtrl extends BaseCtrl {
         String warehouseOutOrderId=getPara("id");//出库订单id
         JsonHashMap jhm=new JsonHashMap();
 
-        Record r=Db.findFirst("select a.order_number,(select name from store where store.id=a.store_id ) as store_name,out_time,(select name from warehouse where warehouse.id=a.warehouse_id) as warehouse_name ,IFNULL((select sort from print_details where order_id = a.id order by sort desc limit 1,1),0) as print_time,IFNULL((select return_reason from store_order where store_order.id=a.store_order_id),'') as return_reason from warehouse_out_order a where id=?",warehouseOutOrderId);
+        Record r=Db.findFirst("select a.order_number,(select name from store where store.id=a.store_id ) as store_name,out_time,(select name from warehouse where warehouse.id=a.warehouse_id) as warehouse_name ,IFNULL((select sort from print_details where order_id = a.id order by sort desc limit 0,1),0) as print_time,IFNULL((select return_reason from store_order where store_order.id=a.store_order_id),'') as return_reason from warehouse_out_order a where id=?",warehouseOutOrderId);
 
         List<Record> list=Db.find("select code,name,out_unit,box_attr,box_attr_num,unit_big,unit,unit_num,batch_code,send_num from warehouse_out_order_material_detail where warehouse_out_order_id=? order by sort,material_id,batch_code",warehouseOutOrderId);
         List<Map> dataList=new ArrayList<>(list.size());

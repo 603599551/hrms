@@ -133,7 +133,7 @@ public class MaterialTypeCtrl extends BaseCtrl {
             return;
         }
         //验证scrap_goods_material中的两个类别是否占用，type_1和type_2
-        hasList = Db.find("select * from scrap_goods_material where type_1=? or type_2=?", id, id);
+        hasList = Db.find("select * from store_scrap_material where type_1=? or type_2=?", id, id);
         if(hasList != null && hasList .size() > 0){
             jhm.putCode(-1).putMessage("该类别被报废商品原料引用，不能删除！");
             renderJson(jhm);
