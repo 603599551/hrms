@@ -863,11 +863,40 @@ public class OutWarehouseOrderSrv {
                 storeOrderMaterialR.set("material_id", materialId);
                 storeOrderMaterialR.set("code", code);
                 storeOrderMaterialR.set("name", name);
+                storeOrderMaterialR.set("pinyin", r.get("pinyin"));
+                storeOrderMaterialR.set("yield_rate",r.get("yield_rate"));
+                storeOrderMaterialR.set("purchase_price",r.get("purchase_price"));
+                storeOrderMaterialR.set("balance_price",r.get("balance_price"));
+                storeOrderMaterialR.set("wm_type",r.get("wm_type"));
+                storeOrderMaterialR.set("attribute_1",r.get("attribute_1"));
+                storeOrderMaterialR.set("attribute_2",r.get("attribute_2"));
+                storeOrderMaterialR.set("unit",unit);
+//                storeOrderMaterialR.set("sort",sort);
+                storeOrderMaterialR.set("type_1",r.get("type_1"));
+                storeOrderMaterialR.set("type_2",r.get("type_2"));
                 storeOrderMaterialR.set("use_num", 0);
                 storeOrderMaterialR.set("send_num", sendNum);
+//                storeOrderMaterialR.set("receive_num", 0);
                 storeOrderMaterialR.set("real_send_num", sendNum);
                 storeOrderMaterialR.set("status", "20");//物流主动给门店发的货物
                 storeOrderMaterialR.set("want_num", 0);
+//                storeOrderMaterialR.set("next1_order_num", 0);
+//                storeOrderMaterialR.set("next1_order_num", 0);
+                storeOrderMaterialR.set("security_time",r.get("security_time"));
+                storeOrderMaterialR.set("unit_num",r.get("unit_num"));
+                storeOrderMaterialR.set("unit_big",r.get("unit_big"));
+                storeOrderMaterialR.set("box_attr_num",r.get("box_attr_num"));
+                storeOrderMaterialR.set("box_attr",r.get("box_attr"));
+                storeOrderMaterialR.set("out_unit",r.get("out_unit"));
+                storeOrderMaterialR.set("out_price",r.get("out_price"));
+                storeOrderMaterialR.set("shelf_life_num",r.get("shelf_life_num"));
+                storeOrderMaterialR.set("shelf_life_unit",r.get("shelf_life_unit"));
+                storeOrderMaterialR.set("storage_condition",r.get("storage_condition"));
+                storeOrderMaterialR.set("order_type",r.get("order_type"));
+                storeOrderMaterialR.set("is_out_unit",r.get("is_out_unit"));
+                storeOrderMaterialR.set("model",r.get("model"));
+                storeOrderMaterialR.set("size",r.get("size"));
+                storeOrderMaterialR.set("brand",r.get("brand"));
 
                 storeOrderMaterialList.add(storeOrderMaterialR);
 
