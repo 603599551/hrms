@@ -43,7 +43,8 @@ public class PrintCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        if(!"40".equals(dataRecord.getStr("sostatus"))){
+        String status=dataRecord.getStr("sostatus");
+        if(!"40".equals(status) && !"50".equals(status)){
             jhm.putCode(-1).putMessage("只有已出库的订单可以打印送货单！");
             renderJson(jhm);
             return;
@@ -214,9 +215,10 @@ public class PrintCtrl extends BaseCtrl {
         if(dataList != null && dataList.size() > 0){
             dataRecord.set("order_number", dataList.get(0).get("order_number"));
             int i = 1;
-            for(; i < dataList.size(); i++){
-                Record r = dataList.get(i);
-                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + r.get("name") + "</td><td>" + r.get("box_attr") + "</td><td>" + r.get("out_unit") + "</td><td>" + r.get("box_attr_num") + "</td></tr>";
+            for(int j = 0; j < dataList.size(); j++,i++){
+                Record r = dataList.get(j);
+                String attr = UnitConversion.getAttrByOutUnit(r);
+                tableStr += "<tr><td>" + r.get("code") + "</td><td>" + r.get("name") + "</td><td>" + r.get("batch_code") + "</td><td>" + attr + "</td><td>" + r.get("out_unit") + "</td><td>" + r.get("send_num") + "</td></tr>";
                 if(i % 31 == 0){
                     table += onePageTempStr.replace("${table}", tableStr);
                     table += "<div class='pageNext'></div>";
