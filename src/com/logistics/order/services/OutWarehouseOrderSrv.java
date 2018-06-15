@@ -909,6 +909,12 @@ public class OutWarehouseOrderSrv {
                 Record warehouseOutOrderMaterialR=warehouseOutOrderMaterialList.get(warehouseOutOrderMaterialList.size()-1);
                 int sendNumInList=warehouseOutOrderMaterialR.getInt("send_num");
                 warehouseOutOrderMaterialR.set("send_num",sendNumInList+sendNum);
+
+                Record storeOutOrderMaterialR=storeOrderMaterialList.get(storeOrderMaterialList.size()-1);
+                int sendNumInStoreOutOrderMaterial=storeOutOrderMaterialR.getInt("real_send_num");
+                int newNum=sendNumInStoreOutOrderMaterial+sendNum;
+                storeOutOrderMaterialR.set("send_num",newNum);
+                storeOutOrderMaterialR.set("real_send_num",newNum);
                 /*
                 给warehouse_out_order_material_detail表数据回填warehouse_out_order_material表的id
                  */
