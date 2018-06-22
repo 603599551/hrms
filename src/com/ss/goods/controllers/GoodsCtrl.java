@@ -42,6 +42,7 @@ public class GoodsCtrl extends BaseCtrl {
             String type_2=jsonObject.getString("type");
             String state=jsonObject.getString("state");
             String desc=jsonObject.getString("desc");
+            String costPrice = jsonObject.getString("cost_price");
 
 
             if(org.apache.commons.lang.StringUtils.isEmpty(name)){
@@ -116,6 +117,7 @@ public class GoodsCtrl extends BaseCtrl {
             r.set("modify_time",datetime);
             r.set("status",state);
             r.set("desc",desc);
+            r.set("cost_price",costPrice);
 
 //            boolean b=Db.save("goods",r);
 //            if(b){
@@ -211,6 +213,7 @@ public class GoodsCtrl extends BaseCtrl {
             String type_2=jsonObject.getString("type");
             String state=jsonObject.getString("state");
             String desc=jsonObject.getString("desc");
+            String costPrice = jsonObject.getString("cost_price");
 
 
             if(org.apache.commons.lang.StringUtils.isEmpty(name)){
@@ -287,6 +290,7 @@ public class GoodsCtrl extends BaseCtrl {
             r.set("modify_time",datetime);
             r.set("status",state);
             r.set("desc",desc);
+            r.set("cost_price",costPrice);
 
             boolean b=Db.update("goods",r);
             if(b){

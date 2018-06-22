@@ -5,6 +5,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import utils.bean.JsonHashMap;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -70,6 +71,28 @@ public class DictionaryCtrl extends BaseCtrl {
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(0).putMessage(e.toString());
+        }
+        renderJson(jhm);
+    }
+
+    public void getUnit(){
+        String dict = getPara("dict");
+        JsonHashMap jhm = new JsonHashMap();
+        if("material".equals(dict)){
+            List<Record> list = Db.find("select name name from goods_unit order by sort");
+//            Record all = new Record();
+//            all.set("name", "请选择");
+//            all.set("value", "-1");
+//            list.add(0, all);
+            List<String> result = new ArrayList<>();
+            if(list != null && list.size() > 0){
+                for(Record r : list){
+                    result.add(r.getStr("name"));
+                }
+            }
+            jhm.put("list", result);
+        }else{
+
         }
         renderJson(jhm);
     }

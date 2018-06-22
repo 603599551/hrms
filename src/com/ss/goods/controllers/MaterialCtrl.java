@@ -7,10 +7,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.ss.controllers.BaseCtrl;
 import com.ss.goods.services.MaterialService;
 import com.ss.services.MaterialTypeService;
-import com.utils.HanyuPinyinHelper;
-import com.utils.RequestTool;
-import com.utils.SQLUtil;
-import com.utils.UserSessionUtil;
+import com.utils.*;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
@@ -57,6 +54,9 @@ public class MaterialCtrl extends BaseCtrl {
             String model = jsonObject.getString("model");
             String size = jsonObject.getString("size");
             String brand = jsonObject.getString("brand");
+            String shelf_life_num = jsonObject.getString("shelf_life_num");
+            String shelf_life_unit = jsonObject.getString("shelf_life_unit");
+            String out_price = jsonObject.getString("out_price");
 
 
             if(org.apache.commons.lang.StringUtils.isEmpty(code)){
@@ -73,6 +73,13 @@ public class MaterialCtrl extends BaseCtrl {
                 jhm.putCode(-1).putMessage("请输入商品名称！");
                 renderJson(jhm);
                 return;
+            }else{
+                List<Record> list = Db.find("select * from material where name=? ", name );
+                if(list != null && list .size() > 0){
+                    jhm.putCode(-1).putMessage("名称不能重复，请重新填写！");
+                    renderJson(jhm);
+                    return;
+                }
             }
             if(org.apache.commons.lang.StringUtils.isEmpty(purchasePriceStr)){
                 jhm.putCode(-1).putMessage("请输入采购价格！");
@@ -173,7 +180,26 @@ public class MaterialCtrl extends BaseCtrl {
             r.set("model",model);
             r.set("size",size);
             r.set("brand",brand);
+            r.set("shelf_life_num",shelf_life_num);
+//            r.set("shelf_life_unit",shelf_life_unit);
 
+            int num = 0;
+
+            if(box_attr_num != null && box_attr_num.length() > 0){
+                num = UnitConversion.outUnit2SmallUnit(1, unit, unit_big, new Integer(unit_num), box_attr, new Integer(box_attr_num), out_unit);
+            }else{
+                num = UnitConversion.outUnit2SmallUnit(1, unit, unit_big, new Integer(unit_num), box_attr, 0, out_unit);
+                r.set("box_attr_num",null);
+            }
+            if(shelf_life_num == null || shelf_life_num.trim().length() == 0){
+                r.set("shelf_life_num",null);
+            }
+
+            double outPrice = new Double(out_price);
+            double price = new Double(String.format("%.7f", outPrice / num));
+            r.set("purchase_price",price);
+            r.set("balance_price",price);
+            r.set("out_price",out_price);
 
             boolean b=Db.save("material",r);
             if(b){
@@ -258,6 +284,21 @@ public class MaterialCtrl extends BaseCtrl {
 //            String type_1=jsonObject.getString("type_1");
             String type_2=jsonObject.getString("type");
             String desc=jsonObject.getString("desc");
+
+            String unit_num = jsonObject.getString("unit_num");
+            String unit_big = jsonObject.getString("unit_big");
+            String box_attr_num = jsonObject.getString("box_attr_num");
+            String box_attr = jsonObject.getString("box_attr");
+            String out_unit = jsonObject.getString("out_unit");
+            String storage_condition = jsonObject.getString("storage_condition");
+            String security_time = jsonObject.getString("security_time");
+            String order_type = jsonObject.getString("order_type");
+            String model = jsonObject.getString("model");
+            String size = jsonObject.getString("size");
+            String brand = jsonObject.getString("brand");
+            String shelf_life_num = jsonObject.getString("shelf_life_num");
+            String shelf_life_unit = jsonObject.getString("shelf_life_unit");
+            String out_price = jsonObject.getString("out_price");
 
 
 //            if(org.apache.commons.lang.StringUtils.isEmpty(code)){
@@ -369,6 +410,37 @@ public class MaterialCtrl extends BaseCtrl {
             r.set("modify_time",datetime);
             r.set("status",1);
             r.set("desc",desc);
+
+//            r.set("unit_num",unit_num);
+//            r.set("unit_big",unit_big);
+//            r.set("box_attr_num",box_attr_num);
+//            r.set("box_attr",box_attr);
+//            r.set("out_unit",out_unit);
+//            r.set("storage_condition",storage_condition);
+            r.set("security_time",security_time);
+            r.set("order_type",order_type);
+            r.set("model",model);
+            r.set("size",size);
+            r.set("brand",brand);
+            r.set("shelf_life_num",shelf_life_num);
+
+            int num = 0;
+
+            if(box_attr_num != null && box_attr_num.length() > 0){
+                num = UnitConversion.outUnit2SmallUnit(1, unit, unit_big, new Integer(unit_num), box_attr, new Integer(box_attr_num), out_unit);
+            }else{
+                num = UnitConversion.outUnit2SmallUnit(1, unit, unit_big, new Integer(unit_num), box_attr, 0, out_unit);
+                r.set("box_attr_num",null);
+            }
+            double outPrice = new Double(out_price);
+            double price = new Double(String.format("%.7f", outPrice / num));
+            r.set("purchase_price",price);
+            r.set("balance_price",price);
+            r.set("out_price",out_price);
+            if(shelf_life_num == null || shelf_life_num.trim().length() == 0){
+                r.set("shelf_life_num",null);
+            }
+
 
             boolean b=Db.update("material",r);
             if(b){
