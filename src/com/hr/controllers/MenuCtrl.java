@@ -1,13 +1,12 @@
-package com.ss.controllers;
+package com.hr.controllers;
 
-import com.jfinal.KEY;
+import com.common.controllers.BaseCtrl;
+import com.hr.service.MenuService;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
-import com.ss.services.MenuService;
 import com.utils.UserSessionUtil;
 import utils.bean.JsonHashMap;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,11 +22,11 @@ public class MenuCtrl extends BaseCtrl {
         try {
             List reList=null;
             if ("admin".equals(usu.getUsername())) {
-                List<Record> list = Db.find("select id,name as title,CONCAT('/',ifnull(url,'')) as link,parent_id,sort,icon as iconName,type from menu order by sort");
+                List<Record> list = Db.find("select id,name as title,ifnull(url,'') as link,parent_id,sort,icon as iconName,type from h_menu order by sort");
                 reList = MenuService.getMe().sort(list);
             } else {
                 String jobId = usu.getUserBean().getJobId();
-                List<Record> list = Db.find("select m.id,m.name as title,CONCAT('/',ifnull(m.url,'')) as link,m.parent_id,m.sort,m.icon as iconName,m.type from menu m,author_job_menu ajm where m.ID=ajm.menu_id and ajm.job_id=? and ajm.access='1' order by sort", jobId);
+                List<Record> list = Db.find("select m.id,m.name as title,ifnull(url,'') as link,m.parent_id,m.sort,m.icon as iconName,m.type from h_menu m,h_author_job_menu ajm where m.ID=ajm.menu_id and ajm.job_id=? and ajm.access='1' order by sort", jobId);
                 reList = MenuService.getMe().sort(list);
             }
 
@@ -36,7 +35,7 @@ public class MenuCtrl extends BaseCtrl {
                 String link=(String)map.get("link");
                 jhm.put("defaultLink",link);
             }
-            jhm.putCode(1).put("list", reList);
+            jhm.putCode(1).put("data", reList);
             renderJson(jhm);
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,4 +1,4 @@
-package com.ss.controllers;
+package com.hr.controllers;
 
 import com.jfinal.core.Controller;
 import com.utils.UserSessionUtil;

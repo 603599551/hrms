@@ -2,7 +2,6 @@ package com.common.controllers;
 
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
-import com.ss.controllers.BaseCtrl;
 import utils.bean.JsonHashMap;
 
 import java.util.List;

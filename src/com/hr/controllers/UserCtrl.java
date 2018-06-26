@@ -1,6 +1,7 @@
-package com.ss.controllers;
+package com.hr.controllers;
 
 import com.alibaba.fastjson.JSONObject;
+import com.common.controllers.BaseCtrl;
 import com.jfinal.KEY;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
@@ -11,8 +12,6 @@ import utils.jfinal.RecordUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 当前用户操作
@@ -42,9 +41,9 @@ public class UserCtrl extends BaseCtrl {
                 return;
             }
             UserSessionUtil usu=new UserSessionUtil(getRequest());
-            Record r= Db.findFirst("select * from staff where username=? and password=?",usu.getUsername(),currentPwd);
+            Record r= Db.findFirst("select * from h_staff where username=? and password=?",usu.getUsername(),currentPwd);
             if(r!=null){
-                int sqlNum=Db.update("update staff set password=? where id=? ",confirmPwd,usu.getUserId());
+                int sqlNum= Db.update("update h_staff set password=? where id=? ",confirmPwd,usu.getUserId());
                 if(sqlNum>0){
                     jhm.putCode(1);
                     jhm.putMessage("更新成功！");
@@ -74,7 +73,7 @@ public class UserCtrl extends BaseCtrl {
             return ;
         }
         try{
-            Record r=Db.findFirst("select s.*,case gender when 1 then '男' when 0 then '女' end as gender_text,(select name from dictionary where id=s.status) as status_text,(select name from job where id=s.job) as job_text,dept.name as dept_text from staff s  left join (select id,name from dept  union all select id,name from store ) as dept on s.dept=dept.id where s.id=?",usu.getUserId());
+            Record r= Db.findFirst("select s.*,case gender when 1 then '男' when 0 then '女' end as gender_text,(select name from h_dictionary where id=s.status) as status_text,(select name from h_job where id=s.job) as job_text,dept.name as dept_text from h_staff s  left join (select id,name from h_dept  union all select id,name from h_store ) as dept on s.dept=dept.id where s.id=?",usu.getUserId());
             r.remove("password");
             RecordUtils.obj2str(r);
             jhm.putCode(1).put("data",r);

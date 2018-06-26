@@ -1,4 +1,4 @@
-package com.ss.services;
+package com.hr.service;
 
 import com.jfinal.plugin.activerecord.Record;
 
@@ -56,7 +56,7 @@ public class MenuService {
                 if("/".equals(link)){
                     mapTemp.put("link",linkTop);
                 }else {
-                    mapTemp.put("link", linkTop + link);
+                    mapTemp.put("link", link);
                 }
 
                 listInMap.add(mapTemp);
