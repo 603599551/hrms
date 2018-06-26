@@ -25,4 +25,7 @@
         <filter-name>jfinal</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
+    <session-config>
+        <session-timeout>1200</session-timeout>
+    </session-config>
 </web-app>
