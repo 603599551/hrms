@@ -159,12 +159,18 @@ public class StaffCtrl extends BaseCtrl {
  "emp_num": "123", //工号
  "hiredate": "2018-06-29", //入职时间
  "dept_id": "部门id",
- "job": "职位",
- "kind": "岗位",
- "status": "在职", //在职状态
+ "dept_text": "部门名称",
+ "job": "trainer",
+ "job_text": "职位",
+ "kind": ["passed","band"],
+ "kind_text": ["传菜员","带位员"],
+ "status": "on_loan", //在职状态
+ "status_text": "在职", //在职状态
  "id_num": "身份证号",
- "type": "全职", //工作类型
- "level": "二星训练员",//级别
+ "type": "full_time", //工作类型
+ "type_text": "全职", //工作类型
+ "level": "2",//级别
+ "level_text": "二星训练员",//级别
  "hour_wage": "16", //时薪，返回为字符串
  "month_wage": "3000", //月薪，返回为字符串
  "bank": "工商银行", //开户行

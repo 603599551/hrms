@@ -8,6 +8,7 @@ import com.hr.controllers.UserCtrl;
 import com.hr.hr.controllers.HrCtrl;
 import com.hr.staff.controllers.StaffCtrl;
 import com.hr.staff.controllers.StaffNotOnJobCtrl;
+import com.hr.store.controllers.MoveOutCtrl;
 import com.hr.store.controllers.StoreCtrl;
 import com.hr.store.controllers.StoreMgrCtrl;
 import com.jfinal.config.*;
@@ -58,6 +59,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/staff", StaffCtrl.class);
 		routes.add("/mgr/staffNotOnJob", StaffNotOnJobCtrl.class);
 		routes.add("/mgr/storeMgr", StoreMgrCtrl.class);
+		routes.add("/mgr/moveOut", MoveOutCtrl.class);
 	}
 
 	@Override

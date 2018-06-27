@@ -108,7 +108,8 @@ public class StaffNotOnJobCtrl extends BaseCtrl {
  "month_wage": "3000", //月薪，返回为字符串
  "bank": "工商银行", //开户行
  "bank_card_num": "20023987413", //银行卡号
- "desc": "不在职原因"
+ "desc": "不在职原因",
+ "modifier_id":"操作人"
  }
  }
  失败	{
@@ -127,7 +128,7 @@ public class StaffNotOnJobCtrl extends BaseCtrl {
  */
 
     public void showById(){
-        renderJson("{\"code\":1,\"data\":{\"id\":\"员工id\",\"name\":\"鹿晗\",\"gender\":\"0\",\"birthday\":\"1990-03-29\",\"phone\":\"138888888\",\"address\":\"北京王府井1号\",\"emp_num\":\"123\",\"hiredate\":\"2018-06-29\",\"dept_id\":\"部门id\",\"job\":\"职位\",\"kind\":\"岗位\",\"status\":\"在职\",\"id_num\":\"身份证号\",\"type\":\"全职\",\"level\":\"二星训练员\",\"hour_wage\":\"16\",\"month_wage\":\"3000\",\"bank\":\"工商银行\",\"bank_card_num\":\"20023987413\",\"desc\":\"不在职原因\"}}");
+        renderJson("{\"code\":1,\"data\":{\"id\":\"员工id\",\"name\":\"鹿晗\",\"gender\":\"0\",\"birthday\":\"1990-03-29\",\"phone\":\"138888888\",\"address\":\"北京王府井1号\",\"emp_num\":\"123\",\"hiredate\":\"2018-06-29\",\"dept_id\":\"部门id\",\"job\":\"职位\",\"kind\":\"岗位\",\"status\":\"在职\",\"id_num\":\"身份证号\",\"type\":\"全职\",\"level\":\"二星训练员\",\"hour_wage\":\"16\",\"month_wage\":\"3000\",\"bank\":\"工商银行\",\"bank_card_num\":\"20023987413\",\"desc\":\"不在职原因\",\"modifier_id\":\"操作人\"}}");
     }
 
 }
