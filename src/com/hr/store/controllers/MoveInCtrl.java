@@ -38,6 +38,8 @@ type	string		是	调出类型。接口获取
             "staff_id": "员工id",
 			"out_store_name": "调出门店名称",
 			"in_store_name": "调入门店名称",
+	 		"out_store_color":"#fa7a19",
+	 		"in_store_color":"#7e7e74",
 			"name": "姓名",
 			"date": "2018-06-23",//调出日期
 			"type": "调出",//数据字典的字面值
@@ -55,7 +57,7 @@ type	string		是	调出类型。接口获取
 }
 */
     public void list(){
-        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"staff_id\":\"员工id\",\"out_store_name\":\"调出门店名称\",\"in_store_name\":\"调入门店名称\",\"name\":\"姓名\",\"date\":\"2018-06-23\",\"type\":\"调出\",\"id\":\"id\"}]}}");
+        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"staff_id\":\"员工id\",\"out_store_name\":\"调出门店名称\",\"in_store_name\":\"调入门店名称\",\"out_store_color\":\"#fa7a19\",\"in_store_color\":\"#7e7e74\",\"name\":\"姓名\",\"date\":\"2018-06-23\",\"type\":\"调出\",\"id\":\"id\"}]}}");
     }
     /**
 7.2.	查看调入信息
@@ -85,13 +87,14 @@ id	string		是	调入记录的id
    "job": "员工",//职位
    "kind": "服务员、传菜员",
    "money": "16",
-   "work_type": "全职",//工作类型
+   "work_type": "全职"//工作类型
 }
 ],
 			"date": "2018-06-23",//调出日期
 			"type": "调入",//数据字典的字面值
-			"id": ""//调出记录id
-	}
+			"id": "",//调出记录id
+	  "desc":"说明"
+	 }
 }
 失败	{
 	"code": 0,
@@ -105,7 +108,7 @@ id	string		是	调入记录的id
 
      */
     public void showById(){
-        renderJson("");
+        renderJson("{\"code\":1,\"data\":{\"out_store_name\":\"长大店\",\"staffList\":[{\"name\":\"鹿晗\",\"gender\":\"男\",\"phone\":\"1370000\",\"job\":\"员工\",\"kind\":\"服务员、传菜员\",\"money\":\"16\",\"work_type\":\"全职\"}],\"date\":\"2018-06-23\",\"type\":\"调入\",\"id\":\"id\",\"desc\":\"说明\"}}");
     }
 
 }

@@ -130,5 +130,41 @@ public class StaffNotOnJobCtrl extends BaseCtrl {
     public void showById(){
         renderJson("{\"code\":1,\"data\":{\"id\":\"员工id\",\"name\":\"鹿晗\",\"gender\":\"0\",\"birthday\":\"1990-03-29\",\"phone\":\"138888888\",\"address\":\"北京王府井1号\",\"emp_num\":\"123\",\"hiredate\":\"2018-06-29\",\"dept_id\":\"部门id\",\"job\":\"职位\",\"kind\":\"岗位\",\"status\":\"在职\",\"id_num\":\"身份证号\",\"type\":\"全职\",\"level\":\"二星训练员\",\"hour_wage\":\"16\",\"month_wage\":\"3000\",\"bank\":\"工商银行\",\"bank_card_num\":\"20023987413\",\"desc\":\"不在职原因\",\"modifier_id\":\"操作人\"}}");
     }
+/**
+6.10.	恢复在职
+名称	将离职员工恢复在职
+描述	通过id将离职员工恢复在职
+验证	根据id验证员工是否存在
+权限	Hr、店长可见
+URL	http://localhost:8081/mgr/staffNotOnJob/recovery
+请求方式	get
+请求参数类型	key=value
 
+请求参数列表：
+参数名	类型	最大长度	允许空	描述
+id	string		否	员工id
+
+返回数据：
+返回格式	JSON
+成功	{
+	"code": 1,
+	"message": "恢复成功！"
+}
+失败	{
+	"code": 0,
+	"message": "员工不存在！"
+}
+或者
+{
+	"code": 0,
+	"message": ""//其实失败信息
+}
+报错	{
+	"code": -1,
+	"message": "服务器发生异常！"
+}
+ */
+    public void recovery(){
+        renderJson("{\"code\":1,\"message\":\"恢复成功！\"}");
+    }
 }

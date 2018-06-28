@@ -6,11 +6,14 @@ import com.hr.controllers.LoginCtrl;
 import com.hr.controllers.MenuCtrl;
 import com.hr.controllers.UserCtrl;
 import com.hr.hr.controllers.HrCtrl;
+import com.hr.hr.controllers.PerformanceCtrl;
+import com.hr.question.controllers.ExamCtrl;
+import com.hr.question.controllers.QuestionCtrl;
 import com.hr.staff.controllers.StaffCtrl;
 import com.hr.staff.controllers.StaffNotOnJobCtrl;
-import com.hr.store.controllers.MoveOutCtrl;
-import com.hr.store.controllers.StoreCtrl;
-import com.hr.store.controllers.StoreMgrCtrl;
+import com.hr.store.controllers.*;
+import com.hr.train.controllers.ArticleCtrl;
+import com.hr.train.controllers.TypeCtrl;
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
@@ -60,6 +63,16 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/staffNotOnJob", StaffNotOnJobCtrl.class);
 		routes.add("/mgr/storeMgr", StoreMgrCtrl.class);
 		routes.add("/mgr/moveOut", MoveOutCtrl.class);
+		routes.add("/mgr/moveIn", MoveInCtrl.class);
+		routes.add("/mgr/apply", ApplyCtrl.class);
+		routes.add("/mgr/performance", PerformanceCtrl.class);
+
+		//培训
+		routes.add("/mgr/train/type", TypeCtrl.class);
+		routes.add("/mgr/train/article", ArticleCtrl.class);
+
+		routes.add("/mgr/question", QuestionCtrl.class);
+		routes.add("/mgr/exam", ExamCtrl.class);
 	}
 
 	@Override

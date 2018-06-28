@@ -20,7 +20,8 @@ public class StoreCtrl extends BaseCtrl {
     private StoreService service = enhance(StoreService.class);
 
     /**
-     *
+     * @author wangze
+     * @date 2018-06-27
      *  名称	添加门店
         描述	添加门店。
         验证	门店名称不能重复
@@ -83,6 +84,8 @@ public class StoreCtrl extends BaseCtrl {
     }
 
     /**
+     * @author wangze
+     * @date 2018-06-27
      名称	停用门店
      描述	根据id停用门店。
      验证	根据id查询该门店是否存在
@@ -137,6 +140,8 @@ public class StoreCtrl extends BaseCtrl {
     }
 
     /**
+     * @author wangze
+     * @date 2018-06-27
      *   名称	修改后保存门店
          描述	修改后保存门店。
          验证	门店名称不能重复，根据id修改信息
@@ -213,6 +218,8 @@ public class StoreCtrl extends BaseCtrl {
     }
 
     /**
+     * @author wangze
+     * @date 2018-06-27
      名称	显示所有门店
      描述	显示所有门店。
      验证	无
@@ -284,6 +291,8 @@ public class StoreCtrl extends BaseCtrl {
     }
 
     /**
+     * @author wangze
+     * @date 2018-06-27
      * 分页查询
      * 分页常调用Db.paginate方法，参数分别是：
      * 页号，每页数量，要查询的项，条件和关联条件，传入参数
@@ -332,6 +341,8 @@ public class StoreCtrl extends BaseCtrl {
     }
 
     /**
+     * @author wangze
+     * @date 2018-06-27
      名称	查看门店
      描述	根据id查询门店信息
      验证	根据传入id判断门店是否存在
@@ -398,6 +409,8 @@ public class StoreCtrl extends BaseCtrl {
     }
 
     /**
+     * @author wangze
+     * @date 2018-06-27
      * 获取门店字典值接口
      * 字典值格式都是name，value格式
      */

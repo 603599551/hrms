@@ -166,5 +166,43 @@ public class ApplyCtrl extends BaseCtrl {
     public void cancelById(){
         renderJson("{\"code\":1,\"message\":\"撤销成功！\"}");
     }
+    /**
+     4.4.	处理申请
+     名称	处理申请
+     描述	处理其他店申请从本店调派店员
+     处理申请，同意或者拒绝，如果拒绝必须填写拒绝原因
+     并将该条通知设置为已读
+     验证	根据id验证是否存在该通知，该通知是否撤销
+     权限	店长可见
+     URL	http://localhost:8081/mgr/apply/deal
+     请求方式	post
+     请求参数类型	json
+
+     请求参数：
+     参数名	类型	最大长度	允许空	描述
+     id	string		否	通知id
+     status	string		否	值如下：
+     0：拒绝
+     1：同意
+     desc	string		是	拒绝时必须填写
+
+     返回数据：
+     返回格式	JSON
+     成功	{
+     "code": 1,
+     "message": "操作成功！"//提示成功信息
+     }
+     失败	{
+     "code": 0,
+     "message": ""//显示失败提示
+     }
+     报错	{
+     "code": -1,
+     "message": "服务器发生异常！"
+     }
+     */
+    public void deal(){
+        renderJson("{\"code\":1,\"message\":\"操作成功！\"}");
+    }
 
 }
