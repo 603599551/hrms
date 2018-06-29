@@ -185,6 +185,7 @@ public class ApplyCtrl extends BaseCtrl {
      0：拒绝
      1：同意
      desc	string		是	拒绝时必须填写
+     type   string      否  通知类型
 
      返回数据：
      返回格式	JSON

@@ -87,6 +87,8 @@ public class ArticleCtrl extends BaseCtrl {
      }
 */
     public void add(){
+        String content = getPara("content");
+        System.out.println(content);
         renderJson("{\"code\":1,\"message\":\"添加成功！\"}");
     }
     /**
@@ -102,6 +104,7 @@ public class ArticleCtrl extends BaseCtrl {
      请求参数：
      参数名	类型	最大长度	允许空	描述
      id	string		否	文章id
+     class_id  string  否  分类id
      title	string		否	文章名称
      content	string		是	内容
 
@@ -147,9 +150,12 @@ public class ArticleCtrl extends BaseCtrl {
      成功	{
      "code": 1,
      "data": {
-     "id": "134adjfwe",//分类id
+     "id": "134adjfwe",//文章id
      "title": "餐具的摆放",//标题
-     "content": ""//内容
+     "class_id": "234k5jl234j5lkj24l35j423l5j",//分类id
+     "content": "<hr><h1>sdfsdfd</h1>",//内容
+     "create_time": "2018-06-28",
+     "author": "作者"
      }
      }
      失败	{
@@ -160,9 +166,10 @@ public class ArticleCtrl extends BaseCtrl {
      "code": -1,
      "message": "服务器发生异常！"
      }
+
 */
     public void showById(){
-        renderJson("{\"code\":1,\"data\":{\"id\":\"134adjfwe\",\"title\":\"餐具的摆放\",\"content\":\"\"}}");
+        renderJson("{\"code\":1,\"data\":{\"id\":\"134adjfwe\",\"title\":\"餐具的摆放\",\"class_id\":\"234k5jl234j5lkj24l35j423l5j\",\"content\":\"<hr><h1>sdfsdfd</h1>\",\"create_time\":\"2018-06-28\",\"author\":\"作者\"}}");
     }
     /**
      15.11.	删除文章

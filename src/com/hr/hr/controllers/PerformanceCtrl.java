@@ -58,7 +58,7 @@ public class PerformanceCtrl extends BaseCtrl {
      }
 */
     public void list(){
-        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"奖罚记录id\",\"staff_id\":\"员工id\",\"store_id\":\"门店id\",\"store_name\":\"门店名\",\"name\":\"姓名\",\"type\":\"奖励或者惩罚\",\"date\":\"奖罚日期\",\"money\":\"金额\"}]}}");
+        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"奖罚记录id\",\"staff_id\":\"员工id\",\"store_id\":\"门店id\",\"store_name\":\"面对面（长大店）\",\"name\":\"鹿晗\",\"type\":\"奖励\",\"date\":\"2018-02-03\",\"money\":\"200\"}]}}");
     }
     /**
      14.2.	添加奖罚
@@ -140,7 +140,7 @@ public class PerformanceCtrl extends BaseCtrl {
      }
 */
     public void showById(){
-        renderJson("{\"code\":1,\"data\":{\"id\":\"id\",\"names\":\"鹿晗、吴亦凡\",\"date\":\"2018-02-04\",\"type\":\"1\",\"type_text\":\"奖励\",\"money\":\"200\",\"desc\":\"说明\"}}");
+        renderJson("{\"code\":1,\"data\":{\"id\":\"id\",\"names\":\"鹿晗\",\"date\":\"2018-02-03\",\"type\":\"1\",\"type_text\":\"奖励\",\"money\":\"200\",\"desc\":\"扶老奶奶过马路\"}}");
     }
     /**
      14.4.	修改奖罚

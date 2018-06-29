@@ -58,7 +58,7 @@ public class MoveOutCtrl extends BaseCtrl {
      }
 */
     public void list(){
-        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"staff_id\":\"员工id\",\"out_store_name\":\"调出门店名称\",\"in_store_name\":\"调入门店名称\",\"name\":\"姓名\",\"date\":\"2018-06-23\",\"type\":\"调出\",\"status\":\"0\",\"status_text\":\"已调出\",\"id\":\"\"}]}}");
+        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"staff_id\":\"员工id\",\"out_store_name\":\"面对面（长大店）\",\"in_store_name\":\"面对面（红旗街店）\",\"out_store_color\":\"#b7a6d4\",\"in_store_color\":\"#fa7a19\",\"name\":\"马云\",\"date\":\"2018-06-23\",\"type\":\"调出\",\"status\":\"0\",\"status_text\":\"已调出\",\"id\":\"id\"}]}}");
     }
     /**
      8.2.	调出店员
@@ -148,7 +148,7 @@ public class MoveOutCtrl extends BaseCtrl {
      }
 */
     public void showById(){
-        renderJson("{\"code\":1,\"data\":{\"id\":\"调出记录id\",\"name\":\"鹿晗、吴亦凡\",\"date\":\"2018-06-23\",\"type_text\":\"调出\",\"to_store_name\":\"长大店\",\"desc\":\"说明\",\"status\":\"0\",\"status_text\":\"已调出\"}}");
+        renderJson("{\"code\":1,\"data\":{\"id\":\"调出记录id\",\"name\":\"鹿晗、吴亦凡\",\"date\":\"2018-06-23\",\"type_text\":\"调出\",\"to_store_name\":\"长大店\",\"desc\":\"这两个人可以用\",\"status\":\"0\",\"status_text\":\"已调出\"}}");
     }
 
     /**

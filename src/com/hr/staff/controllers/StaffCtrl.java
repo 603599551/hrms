@@ -65,7 +65,7 @@ public class StaffCtrl extends BaseCtrl {
  }
 */
     public void list(){
-        String result = "{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"员工id\",\"store_id\":\"门店id\",\"store_name\":\"门店名\",\"name\":\"姓名\",\"gender\":\"性别\",\"phone\":\"电话号码\",\"job\":\"职位名称\",\"kind\":\"岗位名称\",\"wage\":\"时薪/月薪\",\"type\":\"工作类型名称\",\"status_text\":\"在职状态\"}]}}";
+        String result = "{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"员工id\",\"store_id\":\"门店id\",\"store_name\":\"长大店\",\"name\":\"鹿晗\",\"gender\":\"男\",\"phone\":\"13888888888\",\"job\":\"员工\",\"kind\":\"收银员/传菜员\",\"wage\":\"20/1500\",\"type\":\"兼职\",\"status_text\":\"在职\"}]}}";
         renderJson(result);
     }
 /**
@@ -192,7 +192,7 @@ public class StaffCtrl extends BaseCtrl {
  }
 */
     public void showById(){
-        renderJson("{\"code\":1,\"data\":{\"id\":\"员工id\",\"name\":\"鹿晗\",\"gender\":\"0\",\"birthday\":\"1990-03-29\",\"phone\":\"138888888\",\"address\":\"北京王府井1号\",\"emp_num\":\"123\",\"hiredate\":\"2018-06-29\",\"dept_id\":\"部门id\",\"job\":\"职位\",\"kind\":\"岗位\",\"status\":\"在职\",\"id_num\":\"身份证号\",\"type\":\"全职\",\"level\":\"二星训练员\",\"hour_wage\":\"16\",\"month_wage\":\"3000\",\"bank\":\"工商银行\",\"bank_card_num\":\"20023987413\"}}");
+        renderJson("{\"code\":1,\"data\":{\"id\":\"员工id\",\"name\":\"鹿晗\",\"gender\":\"1\",\"gender_text\":\"男\",\"birthday\":\"1990-03-29\",\"phone\":\"138888888\",\"address\":\"北京王府井1号\",\"emp_num\":\"123\",\"hiredate\":\"2018-06-29\",\"dept_id\":\"234k5jl234j5lkj24l35j423l5j\",\"dept_text\":\"长大店\",\"job\":\"staff\",\"kind\":[\"cashier\",\"passed\"],\"status\":\"on\",\"job_text\":\"员工\",\"kind_text\":\"收银员，传菜员\",\"status_text\":\"在职\",\"id_num\":\"身份证号\",\"work_type\":\"full_time\",\"level\":\"二星训练员\",\"work_type_text\":\"全职\",\"level_text\":\"二星训练员\",\"hour_wage\":\"16\",\"month_wage\":\"3000\",\"bank\":\"工商银行\",\"bank_card_num\":\"20023987413\"}}");
     }
 /**
  6.4.	修改员工信息

@@ -39,6 +39,7 @@ public class ExamCtrl extends BaseCtrl {
      "hiredate": "2018-6-26",//入职日期
      "kind": "传菜员/收银员",//岗位名称
      "examiner": "马云",//考官
+     "result_color": "success",//数据字典的颜色，success绿色（通过），warming红色（未通过）
      "result_text": "通过",//数据字典，参见考核结果状态
      "result": "1",//数据字典，参见考核结果状态
 
@@ -56,7 +57,7 @@ public class ExamCtrl extends BaseCtrl {
      */
 
     public void list(){
-        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"记录id\",\"name\":\"考生姓名\",\"datetime\":\"2018-6-26 13:52\",\"hiredate\":\"2018-6-26\",\"kind\":\"传菜员/收银员\",\"examiner\":\"马云\",\"result_text\":\"通过\",\"result\":\"1\"}]}}");
+        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"记录id\",\"name\":\"考生姓名\",\"datetime\":\"2018-6-26 13:52\",\"hiredate\":\"2018-6-26\",\"kind\":\"传菜员/收银员\",\"examiner\":\"马云\",\"result_color\": \"warming\",\"result_text\":\"通过\",\"result\":\"1\"}]}}");
     }
 
 }

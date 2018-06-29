@@ -1,12 +1,14 @@
 package com.jfinal;
 
 import com.common.controllers.DictionaryCtrl;
+import com.common.controllers.JobCtrl;
 import com.hr.controllers.HomeCtrl;
 import com.hr.controllers.LoginCtrl;
 import com.hr.controllers.MenuCtrl;
 import com.hr.controllers.UserCtrl;
 import com.hr.hr.controllers.HrCtrl;
 import com.hr.hr.controllers.PerformanceCtrl;
+import com.hr.notice.controllers.NoticeCtrl;
 import com.hr.question.controllers.ExamCtrl;
 import com.hr.question.controllers.QuestionCtrl;
 import com.hr.staff.controllers.StaffCtrl;
@@ -22,6 +24,7 @@ import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import easy.util.FileUploadPath;
+import org.quartz.Job;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -54,6 +57,7 @@ public class Config extends JFinalConfig {
 		routes.add("/login", LoginCtrl.class);
 		routes.add("/mgr/menu",MenuCtrl.class);
 		routes.add("/mgr/user", UserCtrl.class);
+		routes.add("/mgr/job", JobCtrl.class);
 
 		routes.add("/mgr/dict", DictionaryCtrl.class);
 
@@ -73,6 +77,8 @@ public class Config extends JFinalConfig {
 
 		routes.add("/mgr/question", QuestionCtrl.class);
 		routes.add("/mgr/exam", ExamCtrl.class);
+
+		routes.add("/mgr/notice", NoticeCtrl.class);
 	}
 
 	@Override

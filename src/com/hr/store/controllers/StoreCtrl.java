@@ -262,7 +262,7 @@ public class StoreCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         String name = getPara("name");
         try{
-            String sql = "select * from h_store where 1=1 ";
+            String sql = "select h_store.*, (select status_color from h_dictionary d where d.parent_id=1100 and d.value=h_store.status) status_color from h_store where 1=1 ";
             List<Object> params = new ArrayList<>();
             if(!StringUtils.isEmpty(name)){
                 name = "%" + name + "%";

@@ -5,7 +5,7 @@ import com.jfinal.plugin.activerecord.Record;
 
 import java.util.Enumeration;
 
-public class BaseCtrl extends Controller {
+public abstract class BaseCtrl extends Controller {
 
     /**
      * 将前台的参数整理到Record对象中

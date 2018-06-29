@@ -30,11 +30,11 @@ public class UserSessionUtil {
 //            Record r = Db.findFirst("select * from staff where id=?", "60a6f36a65f341c78ee07c9fc250e916");
             //红旗街店长
 //            Record r = Db.findFirst("select * from staff where id=?", "713765d2815845efbbdeafc6ede3310c");
-            Record r = Db.findFirst("select sta.*, sto.city city, sto.store_color store_color from h_staff sta, h_store sto where sta.dept=sto.id and sta.id=?", "1");
+            Record r = Db.findFirst("select sta.*, sto.city city, sto.store_color store_color from h_staff sta, h_store sto where sta.dept_id=sto.id and sta.id=?", "1");
             userBean.setId(r.get("id"));
             userBean.setName(r.getStr("username"));
             userBean.setRealName(r.getStr("name" ));
-            userBean.setDeptId(r.getStr("dept"));
+            userBean.setDeptId(r.getStr("dept_id"));
             userBean.setDeptName(r.getStr("dept_name"));
             Object job=r.get("job");
             if(job==null)
@@ -43,7 +43,7 @@ public class UserSessionUtil {
                 job=job+"";
             userBean.setJobId((String)job);
             userBean.setJobName(r.getStr("job_name"));
-            userBean.put("store_id", r.getStr("dept"));
+            userBean.put("store_id", r.getStr("dept_id"));
             userBean.put("store_color", r.getStr("store_color"));
             userBean.put("city", r.getStr("city"));
 
