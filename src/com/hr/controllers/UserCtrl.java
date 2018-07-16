@@ -25,9 +25,9 @@ public class UserCtrl extends BaseCtrl {
     public void modifyMyPwd(){
         JsonHashMap jhm=new JsonHashMap();
         try{
-            JSONObject json= RequestTool.getJson(getRequest());
-            String currentPwd=json.getString("currentPwd");
-            String confirmPwd=json.getString("confirmPwd");
+            //JSONObject json= RequestTool.getJson(getRequest());
+            String currentPwd=getPara("currentPwd");
+            String confirmPwd=getPara("confirmPwd");
             if(currentPwd==null || "".equalsIgnoreCase(currentPwd)){
                 jhm.putCode(-1);
                 jhm.putMessage("请输入原密码！");

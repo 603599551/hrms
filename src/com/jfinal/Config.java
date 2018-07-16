@@ -25,6 +25,10 @@ import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import easy.util.FileUploadPath;
 import org.quartz.Job;
+import paiban.controllers.SchedulingCtrl;
+import paiban.controllers.StaffIdleTimeCtrl;
+import paiban.controllers.StoreForecastTurnoverCtrl;
+import paiban.controllers.VariableTimeGuideCtrl;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -79,6 +83,12 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/exam", ExamCtrl.class);
 
 		routes.add("/mgr/notice", NoticeCtrl.class);
+
+		//测试排班
+		routes.add("/mgr/storeForecastTurnoverCtrl", StoreForecastTurnoverCtrl.class);
+		routes.add("/mgr/schedulingCtrl", SchedulingCtrl.class);
+		routes.add("/mgr/variableTimeGuideCtrl", VariableTimeGuideCtrl.class);
+		routes.add("/mgr/staffIdleTimeCtrl", StaffIdleTimeCtrl.class);
 	}
 
 	@Override
