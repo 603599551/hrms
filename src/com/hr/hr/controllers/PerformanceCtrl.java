@@ -1,6 +1,18 @@
 package com.hr.hr.controllers;
 
 import com.common.controllers.BaseCtrl;
+import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Page;
+import com.jfinal.plugin.activerecord.Record;
+import com.utils.UserSessionUtil;
+import easy.util.DateTool;
+import easy.util.NumberUtils;
+import easy.util.UUIDTool;
+import org.apache.commons.lang.StringUtils;
+import utils.bean.JsonHashMap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PerformanceCtrl extends BaseCtrl {
 
@@ -58,7 +70,54 @@ public class PerformanceCtrl extends BaseCtrl {
      }
 */
     public void list(){
-        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"奖罚记录id\",\"staff_id\":\"员工id\",\"store_id\":\"门店id\",\"store_name\":\"面对面（长大店）\",\"name\":\"鹿晗\",\"type\":\"奖励\",\"date\":\"2018-02-03\",\"money\":\"200\"}]}}");
+        JsonHashMap jhm = new JsonHashMap();
+        List<Object> params = new ArrayList<>();
+        
+        StringBuilder select = new StringBuilder(" SELECT p.id,p.staff_id,p.store_id,(SELECT store.name FROM h_store store WHERE store.id = p.store_id) store_name , staff.name  name , (SELECT d.name FROM h_dictionary d WHERE d.value = p.type AND  d.parent_id = 800 ) type ,p.date,p.money ");
+        StringBuilder sql = new StringBuilder(" FROM h_performance p,h_staff staff where p.staff_id = staff.id  ");
+
+
+        //页码和每页数据量
+        String pageNumStr=getPara("pageNum");
+        String pageSizeStr=getPara("pageSize");
+
+        int pageNum= NumberUtils.parseInt(pageNumStr,1);
+        int pageSize=NumberUtils.parseInt(pageSizeStr,10);
+
+        //判断所给数据是否为空
+        String storeId = getPara("store_id");
+        if(!(StringUtils.isEmpty(storeId) || storeId.equals("-1") )){
+            sql.append( " and p.store_id = ?");
+            params.add(storeId);
+        }
+        String startDate = getPara("start_date");
+        if(!StringUtils.isEmpty(startDate)){
+            sql.append( " and p.date >= ? ");
+            params.add(startDate);
+        }
+        String endDate = getPara("end_date");
+        if(!StringUtils.isEmpty(endDate)){
+            sql.append(" and p.date <= ? ");
+            params.add(endDate);
+        }
+
+        //模糊查询拼音和名字
+        String keyWord = getPara("keyword");
+        if(!StringUtils.isEmpty(keyWord)) {
+            keyWord = "%" + keyWord + "%";
+            sql.append(" and (staff.name like ? OR staff.pinyin like ?)");
+            params.add(keyWord);
+            params.add(keyWord);
+        }
+
+        try {
+            Page<Record> page = Db.paginate(pageNum,pageSize,select.toString(),sql.toString(),params.toArray());
+            jhm.put("data",page);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+        renderJson(jhm);
     }
     /**
      14.2.	添加奖罚
@@ -99,8 +158,94 @@ public class PerformanceCtrl extends BaseCtrl {
      "message": "服务器发生异常！"
      }
 */
+
+
+    //还没有测试
     public void add(){
-        renderJson("{\"code\":1,\"message\":\"添加成功！\"}");
+        JsonHashMap jhm = new JsonHashMap();
+
+        //获取staff_id
+        String staffs[] = getParaValues("staff_id");
+
+        if(!(staffs.length > 0 && staffs != null)){
+            jhm.putCode(0).putMessage("请选择添加员工！");
+            renderJson(jhm);
+            return;
+        }
+
+        String staffId = staffs[0];
+
+        //前台传的是String还是array
+//        String staffId = getPara("staff_id");
+
+        Record staffRecord = Db.findFirst("select s.dept_id from h_staff s where id = ?",staffId);//Db.findById("h_staff",staffId);
+        String deptId = staffRecord.getStr("dept_id");
+
+        //为空判断
+        if(staffRecord == null){
+            jhm.putCode(0).putMessage("找不到该员工！");
+            renderJson(jhm);
+            return;
+        }
+        String date = getPara("date");
+        if(StringUtils.isEmpty(date)){
+            jhm.putCode(0).putMessage("请选择日期！");
+            renderJson(jhm);
+            return;
+        }
+        String type = getPara("type");
+        if(StringUtils.isEmpty(type)){
+            jhm.putCode(0).putMessage("请选择类型！");
+            renderJson(jhm);
+            return;
+        }
+        String money = getPara("money");
+        if(StringUtils.isEmpty(money)){
+            jhm.putCode(0).putMessage("请添加奖惩金额！");
+            renderJson(jhm);
+            return;
+        }
+        String desc = getPara("desc");
+        if(StringUtils.isEmpty(desc)){
+            jhm.putCode(0).putMessage("请添加奖惩说明！");
+            renderJson(jhm);
+            return;
+        }
+
+        Record record = new Record();
+
+        //当前登录人时间即创建时间
+        String createrTime = DateTool.GetDateTime();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        String createId = usu.getUserId();
+
+        //按格式放入数据
+        record.set("id",UUIDTool.getUUID());
+        record.set("staff_id",staffId);
+        record.set("store_id",deptId);
+        record.set("type",type);
+        record.set("date",date);
+        record.set("money",money);
+        record.set("desc",desc);
+        record.set("creater_id",createId);
+        record.set("create_time",createrTime);
+        record.set("modifier_id",createId);
+        record.set("modify_time",createrTime);
+
+
+        try{
+            boolean flag = Db.save("h_performance",record);
+            if(flag){
+                jhm.putCode(1).putMessage("添加成功！");
+            }else{
+                jhm.putCode(0).putMessage("添加失败！");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+
+        renderJson(jhm);
     }
     /**
      14.3.	查看惩罚
@@ -140,7 +285,30 @@ public class PerformanceCtrl extends BaseCtrl {
      }
 */
     public void showById(){
-        renderJson("{\"code\":1,\"data\":{\"id\":\"id\",\"names\":\"鹿晗\",\"date\":\"2018-02-03\",\"type\":\"1\",\"type_text\":\"奖励\",\"money\":\"200\",\"desc\":\"扶老奶奶过马路\"}}");
+        JsonHashMap jhm = new JsonHashMap();
+        String id = getPara("id");
+
+        if(StringUtils.isEmpty(id)){
+            jhm.putCode(0).putMessage("请选择员工！");
+            renderJson(jhm);
+            return;
+        }
+
+
+        String sql = "SELECT p.id,(SELECT staff.name FROM h_staff staff WHERE staff.id = p.staff_id) names,p.date,p.type,(SELECT d.name FROM h_dictionary d WHERE p.type = d.value and d.parent_id = 800) type_text , p.money , p.desc FROM h_performance p where id = ? ";
+        try{
+            Record record = Db.findFirst(sql,id);
+            if(record == null){
+                jhm.putCode(0).putMessage("记录不存在！");
+            }else{
+                jhm.put("data",record);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+
+        renderJson(jhm);
     }
     /**
      14.4.	修改奖罚
@@ -181,7 +349,69 @@ public class PerformanceCtrl extends BaseCtrl {
      }
 */
     public void updateById(){
-        renderJson("{\"code\":1,\"message\":\"修改成功！\"}");
+        JsonHashMap jhm = new JsonHashMap();
+
+        String id = getPara("id");
+        if(StringUtils.isEmpty(id)) {
+            jhm.putCode(0).putMessage("请选择奖罚信息！");
+            renderJson(jhm);
+            return;
+        }
+
+        Record record = new Record();
+
+        //为空判断
+        String date = getPara("date");
+        if(StringUtils.isEmpty(date)){
+            jhm.putCode(0).putMessage("请输入奖惩日期！");
+            renderJson(jhm);
+            return;
+        }
+        String type = getPara("type");
+        if(StringUtils.isEmpty(type) || type.equals("-1")){
+            jhm.putCode(0).putMessage("请输入奖惩类型！");
+            renderJson(jhm);
+            return;
+        }
+        String money = getPara("money");
+        if(StringUtils.isEmpty(money)){
+            jhm.putCode(0).putMessage("请输入奖惩金额！");
+            renderJson(jhm);
+            return;
+        }
+        String desc = getPara("desc");
+        if(StringUtils.isEmpty(desc)){
+            jhm.putCode(0).putMessage("请输入奖惩说明！");
+            renderJson(jhm);
+            return;
+        }
+
+        String modifyTime = DateTool.GetDateTime();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        String modifierId = usu.getUserId();
+
+        //加入需要修改的信息，其中加入id为依据判断修改哪一个，没有的数据不会发生修改
+        record.set("id",id);
+        record.set("type",type);
+        record.set("date",date);
+        record.set("money",money);
+        record.set("desc",desc);
+        record.set("modifier_id",modifierId);
+        record.set("modify_time",modifyTime);
+
+        try{
+            boolean flag = Db.update("h_performance",record);
+            if(flag){
+                jhm.putCode(1).putMessage("修改成功！");
+            }else {
+                jhm.putCode(0).putMessage("修改失败！");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+
+        renderJson(jhm);
     }
     /**
      14.5.	删除奖罚
@@ -214,7 +444,34 @@ public class PerformanceCtrl extends BaseCtrl {
 
      */
     public void deleteById(){
-        renderJson("{\"code\":1,\"message\":\"删除成功！\"}");
+        JsonHashMap jhm = new JsonHashMap();
+        String id = getPara("id");
+        if(StringUtils.isEmpty(id)){
+            jhm.putCode(0).putMessage("所选员工不能为空！");
+            renderJson(jhm);
+            return;
+        }
+
+        try{
+            Record record = Db.findFirst("select count(*) c from h_performance where id = ?",id);
+
+            //是否被删了已经
+            if(record.getLong("c") == 0 ){
+                jhm.putCode(0).putMessage("找不到该记录！");
+            }else {
+                boolean flag = Db.deleteById("h_performance",id);
+                if(flag){
+                    jhm.putCode(1).putMessage("删除成功！");
+                }else{
+                    jhm.putCode(0).putMessage("删除失败!");
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+
+        renderJson(jhm);
     }
 
 }
