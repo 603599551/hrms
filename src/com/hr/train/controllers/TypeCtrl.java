@@ -486,7 +486,6 @@ public class TypeCtrl extends BaseCtrl{
      */
     public void getTypeDict(){
 //        renderJson("{\"code\":1,\"data\":[{\"name\":\"请选择分类\",\"value\":\"-1\"},{\"name\":\"A分类\",\"value\":\"234k5jl234j5lkj24l35j423l5j\"},{\"name\":\" B分类\",\"value\":\"4a8d594591ea4c1eb708fcc8a5c67c47\"},{\"name\":\" C分类\",\"value\":\"c95a33cf41a9433d9dbca1ba84603358\"},{\"name\":\" D分类\",\"value\":\"e1866af6ec1a4342aed66b0a71f0a6ee\"}]}");
-//        renderJson("{\"code\":1,\"data\":[{\"name\":\"请选择分类\",\"value\":\"-1\"}");
         JsonHashMap jhm = new JsonHashMap();
         String sql = "select id as value,name from h_train_type where parent_id = -1";
         try {
