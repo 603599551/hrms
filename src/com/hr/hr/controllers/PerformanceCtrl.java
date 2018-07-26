@@ -72,7 +72,7 @@ public class PerformanceCtrl extends BaseCtrl {
     public void list(){
         JsonHashMap jhm = new JsonHashMap();
         List<Object> params = new ArrayList<>();
-        
+
         StringBuilder select = new StringBuilder(" SELECT p.id,p.staff_id,p.store_id,(SELECT store.name FROM h_store store WHERE store.id = p.store_id) store_name , staff.name  name , (SELECT d.name FROM h_dictionary d WHERE d.value = p.type AND  d.parent_id = 800 ) type ,p.date,p.money ");
         StringBuilder sql = new StringBuilder(" FROM h_performance p,h_staff staff where p.staff_id = staff.id  ");
 
