@@ -1,7 +1,7 @@
-jdbcUrl = jdbc:mysql://rm-2zef6b8a6ox0c8uu7jo.mysql.rds.aliyuncs.com:3306/hr?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
-#jdbcUrl = jdbc:mysql://127.0.0.1:3308/hr?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
-username = hr
-password = Mianduimian1700_hr
+#jdbcUrl = jdbc:mysql://rm-2zef6b8a6ox0c8uu7jo.mysql.rds.aliyuncs.com:3306/hr?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
+jdbcUrl = jdbc:mysql://127.0.0.1:3306/hr?useUnicode=true&autoReconnect=true&rewriteBatchedStatements=TRUE
+username = root
+password = 123456
 #password =
 devMode = true
 
