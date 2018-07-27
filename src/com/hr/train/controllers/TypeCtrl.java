@@ -73,7 +73,7 @@ public class TypeCtrl extends BaseCtrl{
                     }
                 }
             }else{
-                jhm.putCode(0).putMessage("无记录！");
+                jhm.putCode(1).putMessage("无记录");
             }
             jhm.put("data", list);
         } catch (Exception e) {
