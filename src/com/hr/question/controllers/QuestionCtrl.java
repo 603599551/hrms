@@ -4,13 +4,13 @@ import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
-import com.utils.HanyuPinyinHelper;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class QuestionCtrl extends BaseCtrl {
      */
     public void list() {
         JsonHashMap jhm = new JsonHashMap();
-        String keyword = getPara("keyword");
+        String keyword = getPara("keyword").trim();
         String pageNumStr = getPara("pageNum");
         String pageSizeStr = getPara("pageSize");
         //如果为空时赋给默认值
@@ -74,11 +74,10 @@ public class QuestionCtrl extends BaseCtrl {
             List<Object> params = new ArrayList<>();
             if (!StringUtils.isEmpty(keyword)) {
                 keyword = "%" + keyword + "%";
-                sql += " and (title like ? or h_question.pinyin like ?) ";
-                params.add(keyword);
+                sql += " and (title like ? ) ";
                 params.add(keyword);
             }
-            sql+=" order by h_question.create_time desc,id";
+            sql += " order by h_question.create_time desc,id";
             Page<Record> page = Db.paginate(pageNum, pageSize, select, sql, params.toArray());
             jhm.put("data", page);
         } catch (Exception e) {
@@ -87,6 +86,7 @@ public class QuestionCtrl extends BaseCtrl {
         }
         renderJson(jhm);
     }
+
     /**
      * 16.2.	添加考题
      * 名称	添加考题
@@ -126,24 +126,24 @@ public class QuestionCtrl extends BaseCtrl {
         //renderJson("{\"code\":1,\"message\":\"添加成功！\"}");
         JsonHashMap jhm = new JsonHashMap();
         Record question = this.getParaRecord();
-        String title = question.getStr("title");
+        String title = question.getStr("title").trim();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
-        //考题标题不允许为空
-        if (StringUtils.isEmpty(title)) {
+        //考题标题不允许为空也不允许为空格
+        if (StringUtils.isEmpty(title) || StringUtils.isBlank(title)) {
             jhm.putCode(0).putMessage("请填写考题标题！");
             renderJson(jhm);
             return;
         }
         //考题标题不能重复
-        String sql = "select count(*) c from h_question where title=?";
-        Record record = Db.findFirst(sql, title);
-        if (record.getInt("c") != 0) {
-            jhm.putCode(0).putMessage("考题标题重复！");
-        } else {
-            try {
-                String pinyin = HanyuPinyinHelper.getFirstLettersLo(title);
+        try {
+            String sql = "select count(*) c from h_question where title=?";
+            Record record = Db.findFirst(sql, title);
+            if (record.getInt("c") != 0) {
+                jhm.putCode(0).putMessage("考题标题重复！");
+            } else {
+//              String pinyin = HanyuPinyinHelper.getFirstLettersLo(title);
                 question.set("id", UUIDTool.getUUID());//获取主键（UUID）的通用方法
-                question.set("pinyin", pinyin);
+//              question.set("pinyin", pinyin);
                 question.set("creater_id", usu.getUserId());
                 question.set("modifier_id", usu.getUserId());
                 String time = DateTool.GetDateTime();
@@ -158,10 +158,10 @@ public class QuestionCtrl extends BaseCtrl {
                     //添加失败
                     jhm.putCode(0).putMessage("添加失败！");
                 }
-            } catch (Exception e) {
-                jhm.putCode(-1).putMessage("服务器发生异常！");
-                e.printStackTrace();
             }
+        } catch (Exception e) {
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+            e.printStackTrace();
         }
         renderJson(jhm);
     }
@@ -212,23 +212,24 @@ public class QuestionCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        if (StringUtils.isEmpty(question.getStr("title"))) {
+        String title = question.getStr("title").trim();
+        //标题不允许为空也不允许为空格
+        if (StringUtils.isEmpty(question.getStr("title")) || StringUtils.isBlank(title)) {
             jhm.putCode(0).putMessage("请填写考题标题！");
             renderJson(jhm);
             return;
         }
         //考题标题不能重复
-        String sql = "select count(*) c from h_question where title=? and id <>?";
-        String title = question.getStr("title");
-        String id = question.getStr("id");
-        Record record = Db.findFirst(sql, title, id);
-        if (record.getInt("c") != 0) {
-            jhm.putCode(0).putMessage("考题标题重复！");
-        } else {
-            try {
+        try {
+            String sql = "select count(*) c from h_question where title=? and id <>?";
+            String id = question.getStr("id");
+            Record record = Db.findFirst(sql, title, id);
+            if (record.getInt("c") != 0) {
+                jhm.putCode(0).putMessage("考题标题重复！");
+            } else {
                 String time = DateTool.GetDateTime();
-                String pinyin = HanyuPinyinHelper.getFirstLettersLo(title);
-                question.set("pinyin", pinyin);
+//              String pinyin = HanyuPinyinHelper.getFirstLettersLo(title);
+//              question.set("pinyin", pinyin);
                 question.set("modifier_id", usu.getUserId());
                 question.set("modify_time", time);
                 question.remove("datetime");
@@ -239,10 +240,10 @@ public class QuestionCtrl extends BaseCtrl {
                 } else {
                     jhm.putCode(0).putMessage("修改失败！");
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                jhm.putCode(-1).putMessage("服务器发生异常！");
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }
@@ -293,7 +294,6 @@ public class QuestionCtrl extends BaseCtrl {
             String sql = "select h_question.id id,h_question.title title,h_question.modify_time datetime,h_staff.name creater_name from h_question left join h_staff  on h_staff.id=h_question.creater_id where h_question.id=? ";
             Record record = Db.findFirst(sql, id);
             if (record != null) {
-                jhm.put("code", 1);
                 jhm.put("data", record);
             } else {
                 jhm.putCode(0).putMessage("查看失败！");
