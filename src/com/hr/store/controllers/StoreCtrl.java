@@ -270,7 +270,7 @@ public class StoreCtrl extends BaseCtrl {
                 params.add(name);
                 params.add(name);
             }
-            sql += "order by sort ";
+            sql += "order by status desc ,sort ";
             List<Record> list = Db.find(sql, params.toArray());
             if(list != null && list.size() > 0){
                 for(Record r : list){
@@ -389,7 +389,7 @@ public class StoreCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         String id = getPara("id");
         try{
-            String sql = "select s.*, d.name city_text from h_store s, h_dictionary d where s.city=d.value and d.parent_id=(select id from h_dictionary where value='city') and s.id=?";
+            String sql = "select s.*, d.name city_text from h_store s, h_dictionary d where s.city=d.value and d.parent_id=(select id from h_dictionary where value='city') and s.id=? ";
             Record store = Db.findFirst(sql, id);
             if(store != null){
                 if(0 == store.getInt("status")){
