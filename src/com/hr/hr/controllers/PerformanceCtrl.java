@@ -194,7 +194,7 @@ public class PerformanceCtrl extends BaseCtrl {
             return;
         }
         String type = getPara("type");
-        if(StringUtils.isEmpty(type)){
+        if(StringUtils.isEmpty(type) || StringUtils.equals(type,"-1")){
             jhm.putCode(0).putMessage("请选择类型！");
             renderJson(jhm);
             return;
