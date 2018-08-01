@@ -78,6 +78,7 @@ public class LoginCtrl extends BaseCtrl{
         try {
             String username = getPara("username");
             String password = getPara("password");
+            String type = getPara("type");
 
             //对传入参数进行非空验证
             if(StringUtils.isEmpty("username")){
@@ -100,6 +101,15 @@ public class LoginCtrl extends BaseCtrl{
                     renderJson(jhm);
                     return;
                 }
+
+                //暂时只有餐厅经理，副经理，见习经理能够登陆店长端
+                String sql = "SELECT count(*) AS c FROM h_staff WHERE username = ? AND PASSWORD = ? AND ( job = 'store_manager' OR job = 'assistant_manager' OR job = 'trainee_manager' )";
+                Record r = Db.findFirst(sql, username, password);
+                if(StringUtils.equals("1",type) && r.getInt("c") == 0){
+                    jhm.putCode(0).putMessage("您没有登录权限！");
+                    renderJson(jhm);
+                    return;
+                }
                 UserBean ub = new UserBean();
                 ub.setId(record.get("id"));
                 ub.setName(record.getStr("username"));
@@ -119,17 +129,18 @@ public class LoginCtrl extends BaseCtrl{
                 ub.setJobName(record.getStr("job_name"));
                 setSessionAttr(KEY.SESSION_USER,ub);
                 setCookie("userId", record.get("id"), 60 * 60 * 24 * 3);
-
+                if(record.getStr("kind") == null){
+                    record.set("kind","");
+                }
                 jhm.put("user_info",record);
                 jhm.put("sessionId",getSession().getId());
-
                 jhm.putCode(1).putMessage("登录成功！");
             }else{
                 jhm.putCode(0).putMessage("用户名或密码错误！登录失败！");
             }
         }catch (Exception e){
             e.printStackTrace();
-            jhm.putCode(-1).putMessage("服务器出错！");
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }
