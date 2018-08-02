@@ -1,11 +1,16 @@
 package paiban.controllers;
 
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
+import easy.util.DateTool;
+import easy.util.NumberUtils;
+import easy.util.UUIDTool;
+import paiban.service.SchedulingService;
 import utils.bean.JsonHashMap;
 
 import java.text.ParseException;
@@ -31,6 +36,12 @@ public class SchedulingCtrl extends BaseCtrl {
         for(int i = 0; i < 66; i++){
             time4OneHourArr[i] = i + "";
         }
+    }
+
+    private SchedulingService service = enhance(SchedulingService.class);
+
+    public void test(){
+        service.paiban("234k5jl234j5lkj24l35j423l5j", "2018-08-06");
     }
 
     public void save(){
@@ -67,28 +78,36 @@ public class SchedulingCtrl extends BaseCtrl {
      *  Map<日期, Map<时间段, Map<岗位, Map<color:单元格颜色（红色代码人员不足，需要手动排班），emp:List<Record（name:人名）>>>>>>
      *
      */
-    public void createSchedulingTable(){
+    public void createSchedulingTable() {
         JsonHashMap jhm = new JsonHashMap();
-        String startDate = getPara("startDate");
-        String endDate = getPara("endDate");
+        String[] date = getParaValues("date");
+        String startDate = date[0];
+        String endDate = date[1];
+        int day = NumberUtils.parseInt(getPara("day"), 0);
         /**/
-        startDate = this.startDate;
-        endDate = this.endDate;
+//        startDate = this.startDate;
+//        endDate = this.endDate;
         UserSessionUtil usu = new UserSessionUtil(getRequest());
         /**/
         /*
         String store_id =  usu.getBean().get("store_id");
          */
-        /*
+
         String store_id = "234k5jl234j5lkj24l35j423l5j";
+
+        List<Record> staffList = Db.find("select * from h_staff_paiban where date=? and store_id=?", day, store_id);
+        if(staffList != null && staffList.size() > 0){
+
+        }
+
         List<Record> storeForecastTurnoverList = Db.find("select * from h_store_forecast_turnover where scheduling_date BETWEEN ? and ? ORDER BY scheduling_date", startDate, endDate);
         List<Record> variableTimeGuideList = Db.find("select * from h_variable_time_guide where store_id=? order by h_money", store_id);
         List<Record> staffIdleTimeList = Db.find("select *, staff_id as name from h_staff_idle_time where store_id=? order by staff_id", store_id);
-        if(staffIdleTimeList != null && staffIdleTimeList != null){
-            for(Record r : staffIdleTimeList){
+        if (staffIdleTimeList != null && staffIdleTimeList != null) {
+            for (Record r : staffIdleTimeList) {
                 JSONObject json = JSONObject.parseObject(r.getStr("content"));
                 Iterator<Entry<String, Object>> it = json.entrySet().iterator();
-                while(it.hasNext()){
+                while (it.hasNext()) {
                     Entry<String, Object> entry = it.next();
                     r.set(entry.getKey(), entry.getValue());
                 }
@@ -99,14 +118,127 @@ public class SchedulingCtrl extends BaseCtrl {
             int totalWorkTime = getTotalWorkTime(oneDayOneTimeOneKindEmpNum);
             int oneEmpWorkTime = totalWorkTime / staffIdleTimeList.size();
             Map<String, Map<String, Map<String, Map<String, Object>>>> result = createSchedulingTable(oneDayOneTimeOneKindEmpNum, staffIdleTimeList, oneEmpWorkTime, startDate);
-            jhm.put("data", result.get(startDate));
+
+            List<Record> dataListResult = new ArrayList<>();
+            List<Record> problemDataResult = new ArrayList<>();
+
+            List<Record> saveList = new ArrayList<>();
+            for (int dayIndex = 0; dayIndex < 7; dayIndex++) {
+                Map<String, List<Record>> dataMap = getDataByDate(result, nextDay(startDate, dayIndex));
+                List<Record> dataList = dataMap.get("dataList");
+
+                if (dayIndex == day) {
+                    dataListResult = dataList;
+                    problemDataResult = dataMap.get("problemData");
+                }
+                String time = DateTool.GetDateTime();
+                for (int i = 0; i < dataList.size(); i++) {
+                    Record r = dataList.get(i);
+                    Record record = new Record();
+                    record.set("id", UUIDTool.getUUID());
+                    record.set("staff_id", r.get("id"));
+                    record.set("store_id", r.get("store_id"));
+                    record.set("date", r.get("date"));
+                    record.set("create_time", time);
+                    record.set("modify_time", time);
+                    record.set("creater_id", usu.getUserId());
+                    record.set("modifier_id", usu.getUserId());
+                    //String work = JSONObject.toJSONString(r.get("work"));
+                    List<Record> recordList = r.get("work");
+                    List<Map<String, Object>> workMapList = new ArrayList<>();
+                    if(recordList != null && recordList.size() > 0){
+                        for(Record rMap : recordList){
+                            Map<String, Object> workMap = rMap.getColumns();
+                            workMapList.add(workMap);
+                        }
+                    }
+                    String work = net.sf.json.JSONArray.fromObject(workMapList).toString();
+                    record.set("content", work);
+                    saveList.add(record);
+                }
+            }
+
+
+            if (saveList != null && saveList.size() > 0) {
+                Db.batchSave("h_staff_paiban", saveList, saveList.size());
+            }
+
+            jhm.put("data", dataListResult);
+            jhm.put("problemData", problemDataResult);
+            //jhm.put("data", result.get(startDate));
         } catch (Exception e) {
             e.printStackTrace();
             jhm.putCode(-1).putMessage(e.getMessage());
         }
-        */
-//        renderJson(jhm);
-        renderJson("{\"code\":1,\"data\":[{\"id\":\"1\",\"name\":\"张三\",\"color\":\"#FF5722\",\"work\":[{\"pos\":[0,1],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,0],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"2\",\"name\":\"李四\",\"color\":\"#448AFF\",\"work\":[{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,5],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,5],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"3\",\"name\":\"王五\",\"color\":\"#AFB42B\",\"work\":[{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,1],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[2,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,2],\"kind\":\"岗位\",\"salary\":7}]}],\"problemData\":[{\"pos\": [1, 2], \"maxNum\": 6},{\"pos\": [2, 2], \"maxNum\": 4},{\"pos\": [3,5], \"maxNum\": 5}]}");
+
+        renderJson(jhm);
+        //renderJson("{\"code\":1,\"data\":[{\"id\":\"1\",\"name\":\"张三\",\"color\":\"#FF5722\",\"work\":[{\"pos\":[0,1],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,0],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"2\",\"name\":\"李四\",\"color\":\"#448AFF\",\"work\":[{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,5],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,5],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"3\",\"name\":\"王五\",\"color\":\"#AFB42B\",\"work\":[{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,1],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[2,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,2],\"kind\":\"岗位\",\"salary\":7}]}],\"problemData\":[{\"pos\": [1, 2], \"maxNum\": 6},{\"pos\": [2, 2], \"maxNum\": 4},{\"pos\": [3,5], \"maxNum\": 5}]}");
+    }
+
+    private Map<String, List<Record>> getDataByDate(Map<String, Map<String, Map<String, Map<String, Object>>>> result, String date){
+        Map<String, Record> dataMap = new HashMap<>();
+        Map<String, Map<String, Map<String, Object>>> result_day = result.get(date);
+        List<Record> problemData = new ArrayList<>();
+
+        List<Record> colorList = Db.find("select * from h_store_color order by sort");
+        int colorIndex = 0;
+
+        for(int x = 0; x < 66; x++){
+            Map<String, Map<String, Object>> result_day_time = result_day.get(x + "");
+            if(result_day_time != null && result_day_time.size() > 0){
+                for(int y = 0; y < posts.length; y++){
+                    Map<String, Object> result_day_time_posts = result_day_time.get(posts[y]);
+                    if(result_day_time_posts != null && result_day_time_posts.size() > 0){
+                        Object obj = result_day_time_posts.get("empList");
+                        if(obj != null){
+                            List<Record> empList = (List<Record>) result_day_time_posts.get("empList");
+                            String color = (String) result_day_time_posts.get("color");
+                            int empNum = (int) result_day_time_posts.get("empNum");
+                            if(empNum > 0){
+                                Record pr = new Record();
+                                pr.set("maxNum", empNum);
+                                int[] posArr = {x, y};
+                                pr.set("pos", posArr);
+                                problemData.add(pr);
+                            }
+                            if(empList != null && empList.size() > 0){
+                                for(Record r : empList){
+                                    Record dataRecord = dataMap.get(r.getStr("id"));
+                                    if(dataRecord == null){
+                                        dataRecord = new Record();
+                                        dataMap.put(r.getStr("id"), dataRecord);
+                                        dataRecord.set("id", r.getStr("id"));
+                                        dataRecord.set("name", r.getStr("name"));
+                                        dataRecord.set("color", colorList.get(colorIndex++).get("color"));
+                                        dataRecord.set("work", new ArrayList<Record>());
+                                        dataRecord.set("store_id", r.get("store_id"));
+                                        dataRecord.set("date", date);
+                                    }
+                                    List<Record> works = dataRecord.get("work");
+                                    Record work = new Record();
+                                    int[] pos = {x, y};
+                                    work.set("pos", pos);
+                                    work.set("kind", posts[y]);
+                                    work.set("salary", r.get("salary"));
+                                    works.add(work);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        List<Record> dataList = new ArrayList<>();
+        Iterator<Entry<String, Record>> dataMapIt = dataMap.entrySet().iterator();
+        while(dataMapIt.hasNext()){
+            Entry<String, Record> entry = dataMapIt.next();
+            dataList.add(entry.getValue());
+        }
+        Map<String, List<Record>> resultMap = new HashMap<>();
+        resultMap.put("dataList", dataList);
+        resultMap.put("problemData", problemData);
+        return resultMap;
     }
 
     /**
@@ -140,7 +272,7 @@ public class SchedulingCtrl extends BaseCtrl {
                             oneTimeOneKindEmpNumMap.put(kind, empNumMap);
                             int empNum = oneKindEmpNumMap.get(kind);
                             if("19".equals(time)){
-                                System.out.println();
+                                //System.out.println();
                             }
                             List<Record> staffList = staffTimeKindMap.get(day).get(time).get(kind);
                             List<Record> staffAllowedList = new ArrayList<>();
@@ -150,6 +282,10 @@ public class SchedulingCtrl extends BaseCtrl {
 //                                if(staffTimeIsAllowedExclude(time, staff)){
                                     Record s = new Record();
                                     s.set("name", staff.get("name"));
+                                    s.set("id", staff.get("id"));
+                                    s.set("color", "#FF5722");
+                                    s.set("salary", 15);
+                                    s.set("store_id", staff.get("store_id"));
                                     staffAllowedList.add(s);
                                     staff.set(time, 2);
                                     staff.set("workTimes", staff.getInt("workTimes") != null ? staff.getInt("workTimes") + 1 : 1);
@@ -239,7 +375,10 @@ public class SchedulingCtrl extends BaseCtrl {
                 secMap.put(s, map);
                 List<Record> list = new ArrayList<>();
                 for(Record r : staffIdleTimeList){
-                    if(r.getInt("date") != i + 1){
+//                    if(new Integer(r.getStr("date")) != i + 1){
+//                        continue;
+//                    }
+                    if(!date.equals(r.getStr("date"))){
                         continue;
                     }
                     if(1 == r.getInt(s)){
@@ -339,18 +478,6 @@ public class SchedulingCtrl extends BaseCtrl {
             r.put(posts[j], p[j]);
         }
         return r;
-    }
-
-    private String nextDay(String date, int nextDay){
-        String result = "";
-        try {
-            Date today = sdf_ymd.parse(date);
-            today = new Date(today.getTime() + nextDay * ONE_DAY_TIME);
-            result = sdf_ymd.format(today);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return result;
     }
 
 }
