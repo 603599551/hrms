@@ -91,14 +91,14 @@ public class LeaveCtrl extends BaseCtrl {
             Record record = Db.findFirst(sql, id);
             if(record.getInt("c") != 0){
                 if(StringUtils.equals("store_manager",record.getStr("job"))){ //店长
-                    String noticeSearch = "SELECT leave_start_time AS lt, leave_end_time AS et FROM h_staff_leave s WHERE  s.date = ? AND s.store_id = ? ";
+                    String noticeSearch = "SELECT leave_start_time AS start, leave_end_time AS end FROM h_staff_leave s WHERE  s.date = ? AND s.store_id = ? ";
                     List<Record> recordList = Db.find(noticeSearch ,date, usu.getUserBean().getDeptId());
                     jhm.put("staff_id", id);
                     jhm.put("date", date);
                     jhm.put("list", recordList);
                     jhm.putCode(1);
                 } else {  //员工
-                    String noticeSearch = "select leave_start_time as lt, leave_end_time as et from h_staff_leave where staff_id = ? and date = ?";
+                    String noticeSearch = "select leave_start_time as start, leave_end_time as end from h_staff_leave where staff_id = ? and date = ?";
                     List <Record> recordList = Db.find(noticeSearch, id, date);
                     jhm.put("staff_id", id);
                     jhm.put("date", date);

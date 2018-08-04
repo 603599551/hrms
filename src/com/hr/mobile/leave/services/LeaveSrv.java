@@ -64,7 +64,6 @@ public class LeaveSrv {
             //批量新增
             int[] flagBatchSave = Db.batchSave("h_staff_leave", recordList, recordList.size());
 
-
             //获取该员工餐厅经理的id，job暂时不查字典值表，用store_manager代替
             String managerSearch = "select s.name as name, s.id as id from h_staff s where dept_id = ? and job = 'store_manager' ";
             Record managerR = Db.findFirst(managerSearch, usu.getUserBean().getDeptId());
