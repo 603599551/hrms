@@ -15,9 +15,9 @@ public class ContentTransformationUtil {
     /**
      *
      * @param appStr app端需要的格式key为"start"和"end"的json数组转成的字符串
-     * @return   PC端需要的格式,key为1-66,value为 0/1 的jsonObject转成的字符串
+     * @return   PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      */
-    public static String AppToPcPaiban(String appStr){
+    public static String AppToPcXianShi(String appStr){
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         JSONArray jsonArray = new JSONArray();
         JSONObject jsonSave = new JSONObject();
@@ -58,10 +58,10 @@ public class ContentTransformationUtil {
 
     /**
      *
-     * @param pcStr PC端需要的格式,key为1-66,value为 0/1 的jsonObject转成的字符串
+     * @param pcStr PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      * @return  app端需要的格式key为"start"和"end"的json数组转成的字符串
      */
-    public static String PcToAppPaiban(String pcStr){
+    public static String PcToAppXianShi(String pcStr){
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         JSONArray jsonArray = new JSONArray();
         String pcContent = "";
@@ -100,7 +100,7 @@ public class ContentTransformationUtil {
 
     /**
      *
-     * @param pcStr PC端需要的格式,key为1-66,value为 0/1 的jsonObject转成的字符串
+     * @param pcStr PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      * @return  格式key为"start"和"end"的json数组转成的字符串，装的是一段时间的开始时间和结束时间
      */
     public static String PcToAppPaibanTimePeriod(String pcStr){
@@ -153,7 +153,7 @@ public class ContentTransformationUtil {
 
     /**
      *
-     * @param jsonTime  PC端需要的格式,key为1-66,value为 0/1 的jsonObject转成的字符串
+     * @param jsonTime  PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      * @return  用List装好的一个或多个连续时间段时间段 etc: size = 2    0 = 07:30:00-08:30:00     1 = 09:30:00-10:30:00
      */
     public static List<String> JsonTimeToStringTimePaiban(String jsonTime){
@@ -201,7 +201,7 @@ public class ContentTransformationUtil {
     /**
      *
      * @param stringTime 用逗号分割的连续时间段 etc: 07:30:00-08:30:00 , 09:30:00-10:30:00
-     * @return  PC端需要的格式,key为1-66,value为 0/1 的jsonObject转成的字符串
+     * @return  PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      */
     public static String StringTimeToJsonTimePaiban(String stringTime){
         String jsonTime = "";
