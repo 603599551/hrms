@@ -9,6 +9,7 @@ import com.hr.controllers.UserCtrl;
 import com.hr.hr.controllers.HrCtrl;
 import com.hr.hr.controllers.PerformanceCtrl;
 import com.hr.mobile.addresslist.AddressListCtrl;
+import com.hr.mobile.leave.controllers.LeaveCtrl;
 import com.hr.question.controllers.ExamCtrl;
 import com.hr.question.controllers.QuestionCtrl;
 import com.hr.staff.controllers.StaffCtrl;
@@ -94,6 +95,10 @@ public class Config extends JFinalConfig {
 
 		//员工端消息回显
 		routes.add("/mgr/mobile/notice", com.hr.mobile.notice.controllers.NoticeCtrl.class);
+
+		//app端
+		routes.add("/mgr/mobile/leave", LeaveCtrl.class);
+		routes.add("/mobile/login", LoginCtrl.class);
 	}
 
 	@Override
