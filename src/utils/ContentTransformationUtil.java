@@ -103,7 +103,7 @@ public class ContentTransformationUtil {
      * @param pcStr PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      * @return  格式key为"start"和"end"的json数组转成的字符串，装的是一段时间的开始时间和结束时间
      */
-    public static String PcToAppPaibanTimePeriod(String pcStr){
+    public static String PcToAppXianShiTimePeriod(String pcStr){
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         JSONArray jsonArray = new JSONArray();
         String pcContent = "";
@@ -156,7 +156,7 @@ public class ContentTransformationUtil {
      * @param jsonTime  PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      * @return  用List装好的一个或多个连续时间段时间段 etc: size = 2    0 = 07:30:00-08:30:00     1 = 09:30:00-10:30:00
      */
-    public static List<String> JsonTimeToStringTimePaiban(String jsonTime){
+    public static List<String> JsonTimeToStringTimeXianShi(String jsonTime){
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         List<String> timeList = new ArrayList();
         String stringTime = "";                                        //记录返回的字符串时间格式
@@ -203,7 +203,7 @@ public class ContentTransformationUtil {
      * @param stringTime 用逗号分割的连续时间段 etc: 07:30:00-08:30:00 , 09:30:00-10:30:00
      * @return  PC端需要的格式,key为0-65,value为 0/1 的jsonObject转成的字符串
      */
-    public static String StringTimeToJsonTimePaiban(String stringTime){
+    public static String StringTimeToJsonTimeXianShi(String stringTime){
         String jsonTime = "";
         DateTool dateTool = new DateTool();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
