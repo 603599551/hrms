@@ -8,7 +8,7 @@ import utils.bean.JsonHashMap;
 
 import java.util.List;
 
-public class SettingCtrl extends BaseCtrl{
+public class SettingCtrl  extends BaseCtrl{
 
     /**
      * @author zhanjinqi
