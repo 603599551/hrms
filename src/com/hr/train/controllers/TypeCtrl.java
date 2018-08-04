@@ -78,7 +78,7 @@ public class TypeCtrl extends BaseCtrl {
             jhm.put("data", list);
         } catch (Exception e) {
             e.printStackTrace();
-            jhm.putCode(-1).putMessage("服务器出错！");
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }
@@ -126,8 +126,9 @@ public class TypeCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         Record type = this.getParaRecord();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
+
         //根据接口要求进行非空验证
-        if (StringUtils.isBlank(type.getStr("name"))) {
+        if (StringUtils.isBlank(type.getStr("name").trim())) {
             jhm.putCode(0).putMessage("分类名称不能为空！");
             renderJson(jhm);
             return;
@@ -144,14 +145,15 @@ public class TypeCtrl extends BaseCtrl {
             type.set("enable", 1);
         }
         try {
-            String sql = "select count(*)c from h_train_type where name = ? ";
             String name = type.getStr("name");
+
+            //验证分类名重复
+            String sql = "select count(*)c from h_train_type where name = ? ";
             Record typeSearch = Db.findFirst(sql, name);
             if (typeSearch.getInt("c") != 0) {
                 jhm.putCode(0).putMessage("分类名称重复！");
                 renderJson(jhm);
             } else {
-
                 type.set("id", UUIDTool.getUUID());//获取主键（UUID）的通用方法
                 type.set("creater_id", usu.getUserId());
                 type.set("modifier_id", usu.getUserId());
@@ -167,7 +169,7 @@ public class TypeCtrl extends BaseCtrl {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            jhm.putCode(-1).putMessage("服务器出错！");
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }
@@ -218,7 +220,7 @@ public class TypeCtrl extends BaseCtrl {
         UserSessionUtil usu = new UserSessionUtil(getRequest());
 
         //对传入数据进行非空验证
-        if (StringUtils.isBlank(type.getStr("name"))) {
+        if (StringUtils.isBlank(type.getStr("name").trim())) {
             jhm.putCode(0).putMessage("分类名称不能为空！");
             renderJson(jhm);
             return;
@@ -228,35 +230,48 @@ public class TypeCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
+        //赋予默认值
         if (StringUtils.isEmpty(type.getStr("sort"))) {
             type.set("sort", 0);
         }
         if (StringUtils.isEmpty(type.getStr("enable"))) {
             type.set("enable", 1);
         }
-
-        //分类名称重复验证
-        String sql = "select count(*)c from h_train_type where name = ? and id<>? ";
-        String name = type.getStr("name");
-        String id = type.getStr("id");
-        Record typeSearch = Db.findFirst(sql, name, id);
-        if (typeSearch.getInt("c") != 0) {
-            jhm.putCode(0).putMessage("分类名重复！");
-        } else {
-            try {
-                type.set("modifier_id", usu.getUserId());
-                String time = DateTool.GetDateTime();//获取时间的通用方法，yyyy-MM-dd HH:mm:ss   这个类中也有其他格式的获取方法
-                type.set("modify_time", time);
-                boolean flag = Db.update("h_train_type", type);
-                if (flag) {
-                    jhm.putCode(1).putMessage("修改成功！");
-                } else {
-                    jhm.putCode(0).putMessage("修改失败！");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                jhm.putCode(-1).putMessage("服务器出错！");
+        try {
+            //验证分类名称重复
+            String sql = "select count(*)c from h_train_type where name = ? and id <> ? ";
+            String name = type.getStr("name");
+            String id = type.getStr("id");
+            Record typeSearch = Db.findFirst(sql, name, id);
+            if (typeSearch.getInt("c") != 0) {
+                jhm.putCode(0).putMessage("分类名重复！");
+                renderJson(jhm);
+                return;
             }
+
+            //判断是否为一级分类
+//            String search = " select parent_id from h_train_type where id = ?";
+//            Record record = Db.findFirst(search,type.getStr("id"));
+//            if(StringUtils.equals(record.getStr("parent_id"),"-1")){
+//                if(!StringUtils.equals(id,type.getStr("parent_id"))){
+//                    jhm.putCode(0).putMessage("一级分类不能更改分类！");
+//                    renderJson(jhm);
+//                    return;
+//                }
+//                type.set("parent_id","-1");
+//            }
+            type.set("modifier_id", usu.getUserId());
+            String time = DateTool.GetDateTime();//获取时间的通用方法，yyyy-MM-dd HH:mm:ss   这个类中也有其他格式的获取方法
+            type.set("modify_time", time);
+            boolean flag = Db.update("h_train_type", type);
+            if (flag) {
+                jhm.putCode(1).putMessage("修改成功！");
+            } else {
+                jhm.putCode(0).putMessage("修改失败！");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }
@@ -301,6 +316,8 @@ public class TypeCtrl extends BaseCtrl {
 //        renderJson("{\"code\":1,\"data\":{\"id\":\"134adjfwe\",\"name\":\"新人培训\",\"parent_id\":\"234k5jl234j5lkj24l35j423l5j\",\"enable\":\"1\",\"sort\":50,\"desc\":\"\"}}");
         JsonHashMap jhm = new JsonHashMap();
         String id = getPara("id");
+
+        //进行非空验证
         if (StringUtils.isEmpty(id)) {
             jhm.putCode(0).putMessage("id不能为空！");
             renderJson(jhm);
@@ -319,7 +336,7 @@ public class TypeCtrl extends BaseCtrl {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            jhm.putCode(-1).putMessage("服务器出错！");
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }
@@ -372,8 +389,8 @@ public class TypeCtrl extends BaseCtrl {
         if (type == null) {
             jhm.putCode(0).putMessage("分类不存在！");
         } else {
-            String sql = "select count(*)c from h_train_article where type_id = ?";
-            String sonSearch = "select count(*)c from h_train_type where parent_id = ?";
+            String sql = "select count(*)c from h_train_article where type_2 = ? ";
+            String sonSearch = "select count(*)c from h_train_type where parent_id = ? and enable <> 0 ";
             try {
                 Record article = Db.findFirst(sql, type.getStr("id"));
                 Record sonRecord = Db.findFirst(sonSearch, id);
@@ -394,11 +411,10 @@ public class TypeCtrl extends BaseCtrl {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                jhm.putCode(-1).putMessage("服务器出错！");
+                jhm.putCode(-1).putMessage("服务器发生异常！");
             }
         }
         renderJson(jhm);
-
     }
 
     /**
@@ -488,27 +504,85 @@ public class TypeCtrl extends BaseCtrl {
      * "message": "服务器发生异常！"
      * }
      */
+//    public void getTypeDict() {
+////        renderJson("{\"code\":1,\"data\":[{\"name\":\"请选择分类\",\"value\":\"-1\"},{\"name\":\"A分类\",\"value\":\"234k5jl234j5lkj24l35j423l5j\"},{\"name\":\" B分类\",\"value\":\"4a8d594591ea4c1eb708fcc8a5c67c47\"},{\"name\":\" C分类\",\"value\":\"c95a33cf41a9433d9dbca1ba84603358\"},{\"name\":\" D分类\",\"value\":\"e1866af6ec1a4342aed66b0a71f0a6ee\"}]}");
+//        JsonHashMap jhm = new JsonHashMap();
+////        String status = getPara("status");
+//        String status = "0";
+//        try {
+//            if(StringUtils.equals(status, "0")){
+//                String sql = "select id as value,name from h_train_type where parent_id = -1";
+//                List<Record> dictList = Db.find(sql);
+//                if (dictList == null) {
+//                    jhm.putCode(1).putMessage("无记录！");
+//                } else {
+//                    jhm.putCode(1);
+//                    Record r = new Record();
+//                    r.set("name", "一级分类");
+//                    r.set("value", "-1");
+//                    dictList.add(0, r);
+//                    jhm.put("data", dictList);
+//                }
+//            } else {
+////                String sql = "select id as value,name from h_train_type where parent_id = -1";
+////                List<Record> dictList = Db.find(sql);
+////                if (dictList == null) {
+////                    jhm.putCode(1).putMessage("无记录！");
+////                } else {
+//                    List <Record> dictList = new ArrayList<>();
+//                    Record r = new Record();
+//                    r.set("name", "一级分类");
+//                    r.set("value", "-1");
+//                    dictList.add(0, r);
+//                    jhm.putCode(1);
+//                    jhm.put("data", dictList);
+////                }
+//            }
+//        } catch (Exception e){
+//            e.printStackTrace();
+//            jhm.putCode(-1).putMessage("服务器发生异常！");
+//        }
+//        renderJson(jhm);
+//    }
+//}
+
+//    public void getTypeArticle(){
     public void getTypeDict() {
 //        renderJson("{\"code\":1,\"data\":[{\"name\":\"请选择分类\",\"value\":\"-1\"},{\"name\":\"A分类\",\"value\":\"234k5jl234j5lkj24l35j423l5j\"},{\"name\":\" B分类\",\"value\":\"4a8d594591ea4c1eb708fcc8a5c67c47\"},{\"name\":\" C分类\",\"value\":\"c95a33cf41a9433d9dbca1ba84603358\"},{\"name\":\" D分类\",\"value\":\"e1866af6ec1a4342aed66b0a71f0a6ee\"}]}");
         JsonHashMap jhm = new JsonHashMap();
-        String sql = "select id as value,name from h_train_type where parent_id = -1";
+        String sql = "select id as value, name from h_train_type where parent_id = -1 and enable <> 0  order by sort desc";
+        String sonSql = "select id as value, parent_id, name from h_train_type where parent_id <> -1 and enable <> 0  order by sort desc";
+        List<Record> list = new ArrayList<>();
+
         try {
-            List<Record> dictList = Db.find(sql);
-            if (dictList == null) {
-                jhm.putCode(0).putMessage("无记录！");
-            } else {
-                jhm.putCode(1);
-                Record r = new Record();
-                r.set("name", "请选择分类");
-                r.set("value", "-1");
-                dictList.add(0, r);
-                jhm.put("data", dictList);
+                List<Record> dictList = Db.find(sql);
+                List<Record> sonList = Db.find(sonSql);
+
+                if (dictList == null) {
+                    jhm.putCode(1).putMessage("无记录！");
+                    renderJson(jhm);
+                    return;
+                }
+                if (dictList.size() > 0 && dictList != null) {
+                    for (int i = dictList.size() - 1; i >= 0; i--) {
+                        dictList.get(i).set("name", "┗" + dictList.get(i).getStr("name"));
+                        String pid = dictList.get(i).getStr("value");
+                        list.add(dictList.get(i));
+                        for (int j = sonList.size() - 1; j >= 0; j--) {
+                            if (StringUtils.equals(pid, sonList.get(j).getStr("parent_id"))) {
+                                sonList.get(j).set("name", "　　┣" + sonList.get(j).getStr("name"));
+                                list.add(sonList.get(j));
+                                sonList.remove(j);
+                            }
+                        }
+                        dictList.remove(i);
+                    }
+                jhm.put("data", list);
             }
-        } catch (Exception e) {
+        } catch (Exception e){
             e.printStackTrace();
-            jhm.putCode(-1).putMessage("服务器出错！");
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
-
     }
 }
