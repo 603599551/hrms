@@ -91,6 +91,11 @@ public class LoginCtrl extends BaseCtrl{
                 renderJson(jhm);
                 return;
             }
+            if(StringUtils.isEmpty("type")){
+                jhm.putCode(0).putMessage("请输入登陆端！");
+                renderJson(jhm);
+                return;
+            }
 
             //对传入信息进行条件验证
             Record record = Db.findFirst("select *, (select name from h_store s where h_staff.dept_id = s.id) dept_name, (select coordinates from h_store s where h_staff.dept_id = s.id) store_coordinates, (select store_color from h_store s where s.id=h_staff.dept_id) store_color,(select city from h_store s where s.id=h_staff.dept_id) city, (select name from h_dictionary d where h_staff.job = d.value) job_name from h_staff where username = ? and password = ?", username, password);
