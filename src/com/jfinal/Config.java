@@ -8,7 +8,7 @@ import com.hr.controllers.MenuCtrl;
 import com.hr.controllers.UserCtrl;
 import com.hr.hr.controllers.HrCtrl;
 import com.hr.hr.controllers.PerformanceCtrl;
-import com.hr.notice.controllers.NoticeCtrl;
+import com.hr.mobile.addresslist.AddressListCtrl;
 import com.hr.question.controllers.ExamCtrl;
 import com.hr.question.controllers.QuestionCtrl;
 import com.hr.staff.controllers.StaffCtrl;
@@ -24,7 +24,6 @@ import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import easy.util.FileUploadPath;
-import org.quartz.Job;
 import paiban.controllers.SchedulingCtrl;
 import paiban.controllers.StaffIdleTimeCtrl;
 import paiban.controllers.StoreForecastTurnoverCtrl;
@@ -82,13 +81,19 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/question", QuestionCtrl.class);
 		routes.add("/mgr/exam", ExamCtrl.class);
 
-		routes.add("/mgr/notice", NoticeCtrl.class);
+		routes.add("/mgr/NoticeCtrl", com.hr.notice.controllers.NoticeCtrl.class);
 
 		//测试排班
 		routes.add("/mgr/storeForecastTurnoverCtrl", StoreForecastTurnoverCtrl.class);
 		routes.add("/mgr/schedulingCtrl", SchedulingCtrl.class);
 		routes.add("/mgr/variableTimeGuideCtrl", VariableTimeGuideCtrl.class);
 		routes.add("/mgr/staffIdleTimeCtrl", StaffIdleTimeCtrl.class);
+
+		//通讯录
+		routes.add("/mgr/mobile/addresslist", AddressListCtrl.class);
+
+		//员工端消息回显
+		routes.add("/mgr/mobile/notice", com.hr.mobile.notice.controllers.NoticeCtrl.class);
 	}
 
 	@Override
