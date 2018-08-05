@@ -67,7 +67,8 @@ public class LeaveSrv {
             //获取该员工餐厅经理的id，job暂时不查字典值表，用store_manager代替
             String managerSearch = "select s.name as name, s.id as id from h_staff s where dept_id = ? and job = 'store_manager' ";
             Record managerR = Db.findFirst(managerSearch, usu.getUserBean().getDeptId());
-
+            String test = usu.getUserBean().getDeptId();
+            System.out.println(test);
             //请假总表操作
             r.set("id",leave_info_id);
             r.set("staff_id", userId);
@@ -138,7 +139,7 @@ public class LeaveSrv {
         String dateTime = DateTool.GetDateTime();
 
         try {
-            String sql = " select count(*) as c,i.staff_name as staff_name from h_staff_leave_info i where i.id = ? ";
+            String sql = " select count(*) as c,i.staff_name as staff_name, i.staff_id as staff_id from h_staff_leave_info i where i.id = ? ";
             Record countR = Db.findFirst(sql, leaveId);
             if(countR.getInt("c") > 0){
                 Record leaveRecord = Db.findById("h_staff_leave_info", leaveId);
