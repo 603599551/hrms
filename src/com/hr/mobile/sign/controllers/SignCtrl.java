@@ -97,10 +97,10 @@ public class SignCtrl extends BaseCtrl {
                         return;
                     }
 
-                    //在两个工作时间之间  但是上一班在工作时间内签退了  依然提示签退
+                    //在两个工作时间之间  但是上一班在工作时间内签到了未签退  依然提示签退
                     if (i < recordList.size() - 1) {
                         //是否在两个班之间的休息时间内并且签退过
-                        if (sdfWorkTime.parse(recordList.get(i).getStr("end")).before(DateTime) && sdfWorkTime.parse(recordList.get(i + 1).getStr("start")).after(DateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "2")) {
+                        if (sdfWorkTime.parse(recordList.get(i).getStr("end")).before(DateTime) && sdfWorkTime.parse(recordList.get(i + 1).getStr("start")).after(DateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "1")) {
                             Record recordTime = Db.findFirst(selectNum, id, date);
                             if (recordTime != null && recordTime.getInt("num") != 0) {
                                 jhm.put("all_time", recordTime.getInt("num") * 15.00 / 60);
@@ -139,7 +139,7 @@ public class SignCtrl extends BaseCtrl {
                                 jhm.put("all_time", 0.00);
                             }
                             for (int j = i - 1; j >= 0; --j) {
-                                if (StringUtils.equals(recordList.get(j).getStr("status"), "2")) {
+                                if (StringUtils.equals(recordList.get(j).getStr("status"), "2") && recordList.get(i - 1).getStr("sign_out") != null) {
                                     jhm.put("sign_out", recordList.get(i - 1).getStr("sign_out").substring(11, 16));
                                     isOut = true;
                                 }
@@ -278,6 +278,7 @@ public class SignCtrl extends BaseCtrl {
         SimpleDateFormat sdfWorkTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //实际工时数
         int workNum = 0;
+        boolean flag = false;
 
 
         try {
@@ -318,7 +319,7 @@ public class SignCtrl extends BaseCtrl {
                     clockList.get(i).set("sign_back_time", dateTime);
                     Db.update("h_work_time", realNum);
                     Db.batchUpdate("h_work_time_detail", detailList, detailList.size());
-                    boolean flag = Db.update("h_staff_clock", clockList.get(i));
+                    flag = Db.update("h_staff_clock", clockList.get(i));
                     if (flag) {
                         jhm.putMessage("添加成功");
                     } else {
@@ -326,7 +327,7 @@ public class SignCtrl extends BaseCtrl {
                     }
                     break;
                     //不是第一班 在当前工作时间段内 但是没有签到过
-                } else if (i > 0 && StringUtils.equals(clockList.get(i).getStr("status"), "0") && (sdfWorkTime.parse(clockList.get(i).getStr("start_time")).getTime() <= (signOut.getTime())) && sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() >= signOut.getTime()) {
+                } else if (i > 0  && (sdfWorkTime.parse(clockList.get(i).getStr("start_time")).getTime() <= (signOut.getTime())) && sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() >= signOut.getTime()) {
                     //寻找上一个签到过的班
                     for (int k = i - 1; k >= 0; --k) {
                         if (StringUtils.equals(clockList.get(k).getStr("status"), "1")) {
@@ -344,6 +345,11 @@ public class SignCtrl extends BaseCtrl {
                                     workNum++;
                                 }
                             }
+                            clockList.get(i).remove("status");
+                            clockList.get(i).set("status", "2");
+                            clockList.get(i).set("sign_back_time", dateTime);
+                            flag = Db.update("h_staff_clock", clockList.get(i));
+
                         }
                     }
                     //判断早退情况
@@ -353,12 +359,9 @@ public class SignCtrl extends BaseCtrl {
                         clockList.get(i).set("is_leave_early", "1");
                     }
                     realNum.set("real_number", workNum);
-                    clockList.get(i).remove("status");
-                    clockList.get(i).set("status", "2");
-                    clockList.get(i).set("sign_back_time", dateTime);
+
                     Db.update("h_work_time", realNum);
                     Db.batchUpdate("h_work_time_detail", detailList, detailList.size());
-                    boolean flag = Db.update("h_staff_clock", clockList.get(i));
                     if (flag) {
                         jhm.putMessage("添加成功");
                     } else {
@@ -368,7 +371,7 @@ public class SignCtrl extends BaseCtrl {
                 }
                 //下班后签退
                 if (i < clockList.size() - 1) {
-                    if (signOut.getTime() >= sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() && signOut.getTime() <= sdfWorkTime.parse(clockList.get(i + 1).getStr("start_time")).getTime()) {
+                    if (!StringUtils.equals(clockList.get(i).getStr("status"), "0") && signOut.getTime() >= sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() && signOut.getTime() <= sdfWorkTime.parse(clockList.get(i + 1).getStr("start_time")).getTime()) {
                         //更改明细表中的状态
                         for (int j = 0; j < detailList.size(); ++j) {
                             //只操作状态为0的数据
@@ -396,7 +399,7 @@ public class SignCtrl extends BaseCtrl {
                         clockList.get(i).set("sign_back_time", dateTime);
                         Db.update("h_work_time", realNum);
                         Db.batchUpdate("h_work_time_detail", detailList, detailList.size());
-                        boolean flag = Db.update("h_staff_clock", clockList.get(i));
+                        flag = Db.update("h_staff_clock", clockList.get(i));
                         if (flag) {
                             jhm.putMessage("添加成功");
                         } else {
@@ -404,7 +407,7 @@ public class SignCtrl extends BaseCtrl {
                         }
                         break;
                     }
-                } else {
+                } else if (!StringUtils.equals(clockList.get(i).getStr("status"), "0")) {
                     //更改明细表中的状态
                     for (int j = 0; j < detailList.size(); ++j) {
                         //只操作状态为0的数据
@@ -431,7 +434,7 @@ public class SignCtrl extends BaseCtrl {
                     clockList.get(i).set("sign_back_time", dateTime);
                     Db.update("h_work_time", realNum);
                     Db.batchUpdate("h_work_time_detail", detailList, detailList.size());
-                    boolean flag = Db.update("h_staff_clock", clockList.get(i));
+                    flag = Db.update("h_staff_clock", clockList.get(i));
                     if (flag) {
                         jhm.putMessage("添加成功");
                     } else {
