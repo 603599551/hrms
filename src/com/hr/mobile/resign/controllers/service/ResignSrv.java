@@ -12,35 +12,85 @@ import utils.bean.JsonHashMap;
 
 import java.util.Map;
 
-public class ResignCtrlSrv extends BaseService {
+public class ResignSrv extends BaseService {
 
-    public JsonHashMap Review(Map paraMap) {
+    public JsonHashMap apply(Map paraMap){
+
         JsonHashMap jhm = new JsonHashMap();
         //员工端发送离职申请，在h_notice表中添加一条记录
+        String staffId = (String) paraMap.get("staffid");
+        String deptId = (String) paraMap.get("deptid");
+        String reason =(String)paraMap.get("reason");
+
+
+        //向h_resign日志表插入一条记录
+        String resignId= UUIDTool.getUUID();
+        String createTime= DateTool.GetDateTime();
+        Record resignRecord=new Record();
+        resignRecord.set("id",resignId);
+        resignRecord.set("applicant_id",staffId);//申请人id 传过来的staffid也是当前登录人的id
+        resignRecord.set("apply_time",createTime);//申请日期
+        resignRecord.set("reason",reason);//申请离职原因
+        resignRecord.set("status","0");//0:申请离职，1：同意离职，2：拒绝离职
+        boolean flag1= Db.save("h_resign",resignRecord);
+
+        //向h_notice表插入一条记录
+
+        //查询所在门店经理id
+        Record recordId=Db.findFirst("select s.id from h_staff s where s.dept_id=? and s.job='store_manager'",deptId);
+        if(recordId==null){
+            jhm.putCode(0).putMessage("部门经理不存在！");
+            return jhm;
+        }
+        String id= UUIDTool.getUUID();
+        String title="离职申请";
+        String status="0";//0为未读1为已读
+        String type="resign";//leave是请假，resign是离职
+
+        Record recordNotice =new Record();
+        recordNotice.set("id",id);
+        recordNotice.set("title",title);
+        recordNotice.set("content",reason);
+        recordNotice.set("sender_id",staffId);
+        //接收人id填写的是员工所在部门
+
+        recordNotice.set("receiver_id",recordId.getStr("id"));
+        recordNotice.set("create_time",createTime);
+        recordNotice.set("status",status);
+        recordNotice.set("type",type);
+        recordNotice.set("fid",resignId);
+        boolean flag2 = Db.save("h_notice", recordNotice);
+        if(flag1&&flag2) {
+            //离职申请提交成功
+            jhm.putCode(1).putMessage("提交成功！");
+        }else{
+            //离职申请提交失败
+            jhm.putCode(0).putMessage("提交失败！");
+        }
+        return jhm;
+    }
+
+    public JsonHashMap review(Map paraMap) {
+        JsonHashMap jhm = new JsonHashMap();
+
+
         String status = (String) paraMap.get("status");
         String reply = (String) paraMap.get("reply");
         String item = (String) paraMap.get("item");
         String noticeId = (String) paraMap.get("noticeId");
         UserSessionUtil usu = (UserSessionUtil) paraMap.get("usu");
         Record r = Db.findFirst("select n.sender_id staffId from h_notice n where n.id=?", noticeId);
-        //申请离职员工id
+        if(r==null){
+            jhm.putCode(0).putMessage("记录不存在！");
+            return jhm;
+        }
+        //获取申请离职员工id
         String staffId = r.getStr("staffId");
         //向h_notice表中添加一条记录（发给申请员工的结果通知）
-        Record noticeRecord = new Record();
-        String id = UUIDTool.getUUID();
-        noticeRecord.set("id", id);
-        noticeRecord.set("title", "离职申请回复");//title里写什么内容？？？
-        noticeRecord.set("content", reply);//记录拒绝原因
-        noticeRecord.set("sender_id", usu.getUserId());//经理id就是当前操作人（登录人）id
-        noticeRecord.set("receiver_id", staffId);
-        String date = DateTool.GetDateTime();
-        noticeRecord.set("create_time", date);//通知的创建时间
-        noticeRecord.set("status", "0");//0未读
-        noticeRecord.set("type", "3");//1为申请调入2为调入通知3为离职申请
-        Db.save("h_notice", noticeRecord);//向notice表中添加一条记录，发送给员工通知
+
         //更新h_resign日志表的员工离职申请记录
-        String sqlResign = "select * from h_resign r where r.applicant_id=? and r.status='0' ";
-        Record record = Db.findFirst(sqlResign, staffId);
+        String sqlResign = "select * from h_resign r where r.id=(select n.fid from h_notice n where n.id=?) ";
+        Record record = Db.findFirst(sqlResign, noticeId);
         if (record == null) {
             jhm.putCode(0).putMessage("该条记录不存在！");
             return jhm;
@@ -56,11 +106,28 @@ public class ResignCtrlSrv extends BaseService {
         } else if (StringUtils.equals(status, "1")) {
             record.set("status", "1");
         }
-
-
-        record.set("reviewer_id", id);//审核人id
+        record.set("reviewer_id", usu.getUserId());//审核人id
         record.set("review_time", reviewTime);//审核时间
         Db.update("h_resign", record);
+
+
+        //员工端发送离职申请，在h_notice表中添加一条记录
+        Record noticeRecord = new Record();
+        String id = UUIDTool.getUUID();
+        noticeRecord.set("id", id);
+        noticeRecord.set("title", "离职回复");
+        noticeRecord.set("content", reply);//记录拒绝原因
+        noticeRecord.set("sender_id", usu.getUserId());//经理id就是当前操作人（登录人）id
+        noticeRecord.set("receiver_id", staffId);
+        String date = DateTool.GetDateTime();
+        noticeRecord.set("create_time", date);//通知的创建时间
+        noticeRecord.set("status", "0");//0未读
+        noticeRecord.set("type", "resign");
+        noticeRecord.set("fid",resignId);
+        Db.save("h_notice", noticeRecord);//向notice表中添加一条记录，发送给员工通知
+
+
+
         //向h_resign_return表中添加物品归还记录
         JSONArray timeArray = JSONArray.fromObject(item);
         for (int i = 0; i < timeArray.size(); i++) {
@@ -83,8 +150,10 @@ public class ResignCtrlSrv extends BaseService {
             returnRecord.set("modify_time", reviewTime);
             Db.save("h_resign_return", returnRecord);
         }
-        //删除h_notice表中的员工本条申请离职记录
-        Db.deleteById("h_notice", noticeId);
+
+
+        //不用删除删除h_notice表中的员工本条申请离职记录
+//        Db.deleteById("h_notice", noticeId);
         //如果店长同意离职 还要操作：将离职员工从h_staff表中删除在h_staff_log表中添加一条记录
         if (StringUtils.equals(status, "1")) {
             String sqlStaff = "select * from h_staff s where s.id=?";
@@ -94,7 +163,7 @@ public class ResignCtrlSrv extends BaseService {
                 jhm.putCode(0).putMessage("该员工不存在！");
                 return jhm;
             }
-
+            //h_staff_log表中添加一条记录
             String staffLogId = UUIDTool.getUUID();
             staffRecord.set("staff_id", staffRecord.getStr("id"));
             staffRecord.set("id", staffLogId);
@@ -102,21 +171,11 @@ public class ResignCtrlSrv extends BaseService {
             staffRecord.set("operate_time", reviewTime);//店长点击同意的时间即审核时间
             staffRecord.set("operate_type", "quit");//店员主动提出离职
             staffRecord.set("desc", staffLogDesc);//离职原因
-            staffRecord.remove("pinyin");
             staffRecord.remove("username");
             staffRecord.remove("password");
             Db.save("h_staff_log", staffRecord);
             //删除h_staff离职员工记录
             Db.deleteById("h_staff", staffId);
-
-
-//            //查找员工姓名推送用
-//            Record pushRecord = Db.findFirst("select s.name as name from h_staff s where s.id = ?",staffId);
-//            //推送
-//            JiguangPush push = new JiguangPush("6863f15c5be031f95b5de21c", "130e4cbb7f9e821a26158183");
-//            String tag = staffId + "-"+pushRecord.getStr("name");
-//            push.setAlert("有一条离职申请的回复");
-//            push.setTag(tag);
         }
         jhm.putMessage("审核提交成功！");
         return jhm;
