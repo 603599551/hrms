@@ -9,6 +9,7 @@ import com.hr.controllers.UserCtrl;
 import com.hr.hr.controllers.HrCtrl;
 import com.hr.hr.controllers.PerformanceCtrl;
 import com.hr.mobile.addresslist.AddressListCtrl;
+import com.hr.mobile.leave.controllers.LeaveCtrl;
 import com.hr.question.controllers.ExamCtrl;
 import com.hr.question.controllers.QuestionCtrl;
 import com.hr.staff.controllers.StaffCtrl;
@@ -94,7 +95,24 @@ public class Config extends JFinalConfig {
 
 		//员工端消息回显
 		routes.add("/mgr/mobile/notice", com.hr.mobile.notice.controllers.NoticeCtrl.class);
-	}
+        //app端
+        routes.add("/mgr/mobile/leave", LeaveCtrl.class);
+
+        //测试mobile
+        routes.add("/mgr/mobile/scheduling",com.hr.mobile.scheduling.controllers.SchedulingCtrl.class);
+        routes.add("/mobile/login", com.hr.mobile.LoginCtrl.class);
+        routes.add("/mgr/mobile/Idletime",com.hr.mobile.Idletime.controllers.ldletimeCtrl.class);
+        //经理端离职审核
+        routes.add("/mgr/mobile/resign", com.hr.mobile.resign.controllers.ResignCtrl.class);
+        //员工离职申请
+        routes.add("/mgr/mobile/setting", com.hr.mobile.setting.controllers.SettingCtrl.class);
+
+
+        //		routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl1.class);
+        routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl.class);
+
+
+    }
 
 	@Override
 	public void configEngine(Engine engine) {

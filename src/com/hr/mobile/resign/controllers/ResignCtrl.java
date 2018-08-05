@@ -90,6 +90,13 @@ public class ResignCtrl extends BaseCtrl {
         String reply = getPara("reply");//拒绝时必须填写
         String item = getPara("item");//物品归还情况
         String noticeId =getPara("id");//离职记录id
+
+//        status="1";
+//        reply="";
+//
+//        item="[{\"value\":\"work_clothes\",\"status\":\"1\"},{\"value\":\"chest_card\"，\"status\":\"1\"}]";
+//        noticeId="875693af12f54e8489b00c65df1ae63d";
+
         Map paraMap=new HashMap();
         paraMap.put("usu",usu);
         paraMap.put("status",status);

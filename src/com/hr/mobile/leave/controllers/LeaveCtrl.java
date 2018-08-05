@@ -7,12 +7,12 @@ import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
-import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class LeaveCtrl extends BaseCtrl {
 
@@ -72,6 +72,7 @@ public class LeaveCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         String id = getPara("id");
         String date = getPara("date");
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
 
         //进行非空判断
         if(StringUtils.isEmpty(id)){
@@ -90,14 +91,14 @@ public class LeaveCtrl extends BaseCtrl {
             Record record = Db.findFirst(sql, id);
             if(record.getInt("c") != 0){
                 if(StringUtils.equals("store_manager",record.getStr("job"))){ //店长
-                    String noticeSearch = "SELECT leave_start_time AS lt, leave_end_time AS et FROM h_staff_leave s, h_notice n WHERE s.staff_id = n.sender_id AND s.leave_info_id = n.fid AND n.receiver_id = ? AND s.date = ? ";
-                    List<Record> recordList = Db.find(noticeSearch, id, date);
+                    String noticeSearch = "SELECT leave_start_time AS start, leave_end_time AS end FROM h_staff_leave s WHERE  s.date = ? AND s.store_id = ? ";
+                    List<Record> recordList = Db.find(noticeSearch ,date, usu.getUserBean().getDeptId());
                     jhm.put("staff_id", id);
                     jhm.put("date", date);
                     jhm.put("list", recordList);
                     jhm.putCode(1);
                 } else {  //员工
-                    String noticeSearch = "select leave_start_time as lt, leave_end_time as et from h_staff_leave where staff_id = ? and date = ?";
+                    String noticeSearch = "select leave_start_time as start, leave_end_time as end from h_staff_leave where staff_id = ? and date = ?";
                     List <Record> recordList = Db.find(noticeSearch, id, date);
                     jhm.put("staff_id", id);
                     jhm.put("date", date);
@@ -169,8 +170,8 @@ public class LeaveCtrl extends BaseCtrl {
     public void apply(){
         JsonHashMap jhm=new JsonHashMap();
         //获取用户信息的工具类
-        UserSessionUtil usu=new UserSessionUtil(getRequest());
-        String userId=usu.getUserId();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        String userId = getPara("id");
         /*
         getParameter()
          */
@@ -179,7 +180,7 @@ public class LeaveCtrl extends BaseCtrl {
         String reason = getPara("reason");
 
         //进行非空判断
-        if(StringUtils.isBlank(date)){
+        if(StringUtils.isEmpty(date)){
             jhm.putCode(0).putMessage("请输入请假的日期！");
             renderJson(jhm);
             return;
@@ -191,6 +192,7 @@ public class LeaveCtrl extends BaseCtrl {
         }
         Map paraMap=new HashMap();
         paraMap.put("usu",usu);
+        paraMap.put("id", userId);
         paraMap.put("date",date);
         paraMap.put("time",time);
         paraMap.put("reason",reason);
@@ -279,14 +281,8 @@ public class LeaveCtrl extends BaseCtrl {
         int pageSize = NumberUtils.parseInt(pageSizeStr, 10);
 
         try {
-            //找出登陆人是哪个店
-            String id = usu.getUserId();
-            String deptSearch = "select s.dept_id as dept from h_staff s where id = ?";
-            Record  record = Db.findFirst(deptSearch, id);
-
-
-            String sql = "SELECT s.pic AS pic, s. NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND store_id = ? AND i.`status` = '0' ";
-            List<Record> recordList = Db.find(sql, record.getStr("dept"));
+            String sql = "SELECT s.pic AS pic, s.NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND s.dept_id = ? AND i.`status` = '0' ";
+            List<Record> recordList = Db.find(sql, usu.getUserBean().getDeptId());
 
             DateTool dateTool = new DateTool();
             for(int i = 0; i < recordList.size(); i++){
@@ -300,7 +296,7 @@ public class LeaveCtrl extends BaseCtrl {
 
             //已审核
             String sqlReviewed = "SELECT s.pic AS pic, s. NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.`status` AS status, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id  FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND store_id = ? AND ( i.`status` = '1' OR i.`status` = '2' )";
-            List<Record> records = Db.find(sqlReviewed, record.getStr("dept"));
+            List<Record> records = Db.find(sqlReviewed, usu.getUserBean().getDeptId());
             for(int i = 0; i < records.size(); i++){
                 String date = records.get(i).getStr("date");
                 dateTool = new DateTool();

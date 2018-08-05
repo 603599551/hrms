@@ -56,6 +56,8 @@ public class ResignCtrlSrv extends BaseService {
         } else if (StringUtils.equals(status, "1")) {
             record.set("status", "1");
         }
+
+
         record.set("reviewer_id", id);//审核人id
         record.set("review_time", reviewTime);//审核时间
         Db.update("h_resign", record);
@@ -106,6 +108,15 @@ public class ResignCtrlSrv extends BaseService {
             Db.save("h_staff_log", staffRecord);
             //删除h_staff离职员工记录
             Db.deleteById("h_staff", staffId);
+
+
+//            //查找员工姓名推送用
+//            Record pushRecord = Db.findFirst("select s.name as name from h_staff s where s.id = ?",staffId);
+//            //推送
+//            JiguangPush push = new JiguangPush("6863f15c5be031f95b5de21c", "130e4cbb7f9e821a26158183");
+//            String tag = staffId + "-"+pushRecord.getStr("name");
+//            push.setAlert("有一条离职申请的回复");
+//            push.setTag(tag);
         }
         jhm.putMessage("审核提交成功！");
         return jhm;

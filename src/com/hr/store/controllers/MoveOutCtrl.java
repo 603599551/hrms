@@ -1,6 +1,12 @@
 package com.hr.store.controllers;
 
 import com.common.controllers.BaseCtrl;
+import easy.util.NumberUtils;
+import org.apache.commons.lang.StringUtils;
+import utils.bean.JsonHashMap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MoveOutCtrl extends BaseCtrl {
 
@@ -58,6 +64,55 @@ public class MoveOutCtrl extends BaseCtrl {
      }
 */
     public void list(){
+        JsonHashMap jhm = new JsonHashMap();
+        List<Object> params = new ArrayList<>();
+
+        //页码和每页数据量
+        String pageNumStr=getPara("pageNum");
+        String pageSizeStr=getPara("pageSize");
+
+        int pageNum= NumberUtils.parseInt(pageNumStr,1);
+        int pageSize=NumberUtils.parseInt(pageSizeStr,10);
+
+        //sql语句
+        String select = "SELECT ( SELECT h. NAME FROM h_dictionary h WHERE h.parent_id = 700 AND h.VALUE = info.type ) AS type, info.date AS date, info.id AS id, ( SELECT s. NAME FROM h_store s WHERE s.id = info.to_dept ) AS in_store_name, ( SELECT s. NAME FROM h_store s WHERE s.id = info.from_dept ) AS out_store_name, staff. NAME AS name, staff.staff_id AS staff_id ";
+        StringBuilder sql = new StringBuilder(" FROM h_move_info info, h_move_staff staff, h_staff s WHERE staff.move_info_id = info.id AND s.id = staff.staff_id");
+
+        String outStoreId = getPara("out_store_id");
+        String inStoreId = getPara("in_store_id");
+        String keyWord = getPara("keyword");
+        String startDate = getPara("start_date");
+        String endDate = getPara("end_date");
+        String type = getPara("type");
+        String status = getPara("status");
+
+        if(!(StringUtils.isEmpty(outStoreId) || outStoreId.equals("-1") )){
+            sql.append( " and info.from_dept =  ? ");
+            params.add(outStoreId);
+        }
+        if(!(StringUtils.isEmpty(inStoreId) || inStoreId.equals("-1") )){
+            sql.append( " and info.to_dept = ? ");
+            params.add(inStoreId);
+        }
+        if(!(StringUtils.isEmpty(status) || status.equals("-1"))){
+            sql.append( " and info.status = ? ");
+            params.add(status);
+        }
+        if(!StringUtils.isEmpty(startDate) ){
+            sql.append( " and info.date >= ? ");
+            params.add(startDate);
+        }
+        if(!StringUtils.isEmpty(endDate)){
+            sql.append( " and info.date <= ? ");
+            params.add(endDate);
+        }
+        if(!(StringUtils.isEmpty(keyWord))){
+            keyWord  = "%" + keyWord + "%";
+            sql.append(" and (staff.name like ? or staff.phone like ? or s.pinyin like ?)");
+            params.add(keyWord);
+            params.add(keyWord);
+            params.add(keyWord);
+        }
         renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"staff_id\":\"员工id\",\"out_store_name\":\"面对面（长大店）\",\"in_store_name\":\"面对面（红旗街店）\",\"out_store_color\":\"#b7a6d4\",\"in_store_color\":\"#fa7a19\",\"name\":\"马云\",\"date\":\"2018-06-23\",\"type\":\"调出\",\"status\":\"0\",\"status_text\":\"已调出\",\"id\":\"id\"}]}}");
     }
     /**
