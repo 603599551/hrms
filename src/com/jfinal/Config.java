@@ -10,6 +10,7 @@ import com.hr.hr.controllers.HrCtrl;
 import com.hr.hr.controllers.PerformanceCtrl;
 import com.hr.mobile.addresslist.AddressListCtrl;
 import com.hr.mobile.leave.controllers.LeaveCtrl;
+import com.hr.mobile.setting.controllers.SettingCtrl;
 import com.hr.question.controllers.ExamCtrl;
 import com.hr.question.controllers.QuestionCtrl;
 import com.hr.staff.controllers.StaffCtrl;
@@ -111,6 +112,11 @@ public class Config extends JFinalConfig {
         //		routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl1.class);
         routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl.class);
 
+		//设置- 修改手机号 密码
+		routes.add("/mgr/mobile/setting", SettingCtrl.class);
+
+		//员工端工资
+		routes.add("/mgr/mobile/salary", com.hr.mobile.salary.controllers.SalaryCtrl.class);
 
     }
 

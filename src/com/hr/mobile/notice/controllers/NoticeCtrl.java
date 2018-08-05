@@ -48,7 +48,7 @@ public class NoticeCtrl extends BaseCtrl{
             }
 
             //resignList
-            String resignSQL1="select count(*) as c from h_notice where type='resign'and receiver_id=? limit 0,30";
+            String resignSQL1="select count(*) as c from h_notice where type='resign'and status=0 and receiver_id=? limit 0,30";
             String resignSQL2="select * from h_notice where type='resign'and receiver_id=? order by create_time desc limit 0,1";
             String resignSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='resign'and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id order by h_notice.create_time desc limit 0,1";
             Record resignR=new Record();
@@ -107,6 +107,8 @@ public class NoticeCtrl extends BaseCtrl{
                         r.set("reason",null);
                     }
                 }
+                //未读转已读
+                Db.update("update h_notice set status=? where type='leave' and receiver_id=?",1,staffId);
             }//离职提醒
             else if(type.equals("resignList")){
                 //根据接收到的staffId和type查询最近事件的date、states、reason(clothes)、content
@@ -133,6 +135,8 @@ public class NoticeCtrl extends BaseCtrl{
                         r.remove("id");
                     }
                 }
+                //未读转已读
+                Db.update("update h_notice set status=? where type='resign' and receiver_id=?",1,staffId);
             }else{
                 list=null;
             }
