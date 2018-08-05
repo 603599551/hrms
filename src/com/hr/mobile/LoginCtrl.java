@@ -108,9 +108,14 @@ public class LoginCtrl extends BaseCtrl{
                 }
 
                 //暂时只有餐厅经理，副经理，见习经理能够登陆店长端
-                String sql = "SELECT count(*) AS c FROM h_staff WHERE username = ? AND PASSWORD = ? AND ( job = 'store_manager' OR job = 'assistant_manager' OR job = 'trainee_manager' )";
+                String sql = "SELECT count(*) AS c, s.job AS job FROM h_staff s WHERE s.username = ? AND s.PASSWORD = ? ";
                 Record r = Db.findFirst(sql, username, password);
-                if(StringUtils.equals("1",type) && r.getInt("c") == 0){
+                if(StringUtils.equals("1",type) && StringUtils.equals("staff",r.getStr("job"))){
+                    jhm.putCode(0).putMessage("您没有登录权限！");
+                    renderJson(jhm);
+                    return;
+                }
+                if(StringUtils.equals("0",type) && !StringUtils.equals("staff",r.getStr("job"))){
                     jhm.putCode(0).putMessage("您没有登录权限！");
                     renderJson(jhm);
                     return;
