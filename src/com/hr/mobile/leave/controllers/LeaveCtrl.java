@@ -281,7 +281,8 @@ public class LeaveCtrl extends BaseCtrl {
         int pageSize = NumberUtils.parseInt(pageSizeStr, 10);
 
         try {
-            String sql = "SELECT s.pic AS pic, s.NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND s.dept_id = ? AND i.`status` = '0' ";
+            //未审核
+            String sql = "SELECT s.pinyin AS pinyin, s.NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND s.dept_id = ? AND i.`status` = '0' ";
             List<Record> recordList = Db.find(sql, usu.getUserBean().getDeptId());
 
             DateTool dateTool = new DateTool();
@@ -295,7 +296,7 @@ public class LeaveCtrl extends BaseCtrl {
             jhm.put("reviewList",recordList);
 
             //已审核
-            String sqlReviewed = "SELECT s.pic AS pic, s. NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.`status` AS status, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id  FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND store_id = ? AND ( i.`status` = '1' OR i.`status` = '2' )";
+            String sqlReviewed = "SELECT s.pinyin AS pinyin, s. NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.`status` AS status, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id  FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND store_id = ? AND ( i.`status` = '1' OR i.`status` = '2' )";
             List<Record> records = Db.find(sqlReviewed, usu.getUserBean().getDeptId());
             for(int i = 0; i < records.size(); i++){
                 String date = records.get(i).getStr("date");
@@ -309,7 +310,6 @@ public class LeaveCtrl extends BaseCtrl {
                 }
             }
             jhm.put("reviewedList", records);
-
             jhm.putCode(1);
 
 
@@ -467,7 +467,7 @@ public class LeaveCtrl extends BaseCtrl {
             String sql = "select count(*) as c from h_staff_leave_info where id = ? ";
             Record countR = Db.findFirst(sql, leaveId);
             if(countR.getInt("c") > 0){
-                String search = "SELECT s.pic as pic, s.name as name, (SELECT d.name from h_dictionary d where d.value = s.job)as job, s.phone as phone, i.date as date, i.times as time, i.reason as reason, i.status as status, i.result as result from h_staff s, h_staff_leave_info i where i.staff_id = s.id and i.id = ? ";
+                String search = "SELECT s.pinyin AS pinyin, s.name as name, (SELECT d.name from h_dictionary d where d.value = s.job)as job, s.phone as phone, i.date as date, i.times as time, i.reason as reason, i.status as status, i.result as result from h_staff s, h_staff_leave_info i where i.staff_id = s.id and i.id = ? ";
                 Record record = Db.findFirst(search, leaveId);
                 record.set("day", dateTool.getWeekDayName(record.getStr("date")));
                 //返回status,0为拒绝,1为同意
