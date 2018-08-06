@@ -3,6 +3,7 @@ package com.hr.mobile.resign.controllers.service;
 import com.common.service.BaseService;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import com.jiguang.JiguangPush;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
@@ -37,7 +38,7 @@ public class ResignSrv extends BaseService {
         //向h_notice表插入一条记录
 
         //查询所在门店经理id
-        Record recordId=Db.findFirst("select s.id from h_staff s where s.dept_id=? and s.job='store_manager'",deptId);
+        Record recordId=Db.findFirst("select s.id , s.name from h_staff s where s.dept_id=? and s.job='store_manager'",deptId);
         if(recordId==null){
             jhm.putCode(0).putMessage("部门经理不存在！");
             return jhm;
@@ -61,6 +62,19 @@ public class ResignSrv extends BaseService {
         recordNotice.set("fid",resignId);
         boolean flag2 = Db.save("h_notice", recordNotice);
         if(flag1&&flag2) {
+
+            //发推送
+            JiguangPush push = new JiguangPush("00e09994649bd900d801f6ad", "5906a375d122d73ee7cffb32");
+            String tag = recordId.getStr("id");
+            String alias[] = {tag};
+            push.setAlert("您收到了一条离职申请！");
+            push.setAlias(alias);
+            try {
+                push.sendPush();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             //离职申请提交成功
             jhm.putCode(1).putMessage("提交成功！");
         }else{
@@ -152,6 +166,8 @@ public class ResignSrv extends BaseService {
         }
 
 
+        //推送查询名字
+        Record staffName = Db.findFirst("select s.name as name from h_staff s  where s.id = ?",staffId);
         //不用删除删除h_notice表中的员工本条申请离职记录
 //        Db.deleteById("h_notice", noticeId);
         //如果店长同意离职 还要操作：将离职员工从h_staff表中删除在h_staff_log表中添加一条记录
@@ -176,6 +192,25 @@ public class ResignSrv extends BaseService {
             Db.save("h_staff_log", staffRecord);
             //删除h_staff离职员工记录
             Db.deleteById("h_staff", staffId);
+        }
+
+
+        //发推送
+        JiguangPush push = new JiguangPush("6863f15c5be031f95b5de21c", "130e4cbb7f9e821a26158183");
+        String tag = staffId;
+        String alias[] = {tag};
+
+        if (StringUtils.equals(status, "0")) {
+            push.setAlert("店长已经同意了您的离职申请！");
+        } else {
+            push.setAlert("店长已经拒绝了您的离职申请！");
+        }
+        push.setAlias(alias);
+
+        try {
+            push.sendPush();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         jhm.putMessage("审核提交成功！");
         return jhm;

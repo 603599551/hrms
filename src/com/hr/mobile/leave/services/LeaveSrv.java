@@ -4,6 +4,7 @@ import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
+import com.jiguang.JiguangPush;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
@@ -112,6 +113,17 @@ public class LeaveSrv {
             boolean flagN = Db.save("h_notice", noticeR);
 
             if(flagN && flagInfo){
+                //发推送
+                JiguangPush push = new JiguangPush("00e09994649bd900d801f6ad", "5906a375d122d73ee7cffb32");
+                String tag = managerR.getStr("id");
+                String alias[] = {tag};
+                push.setAlert("您收到了一条请假申请！");
+                push.setAlias(alias);
+                try {
+                    push.sendPush();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 jhm.putCode(1).putMessage("提交成功，请等待审核！");
             } else {
                 jhm.putCode(0).putMessage("提交失败！");
@@ -173,6 +185,23 @@ public class LeaveSrv {
 
                     boolean flagN = Db.save("h_notice", record);
                     if(flagN){
+                        //发推送
+                        JiguangPush push = new JiguangPush("6863f15c5be031f95b5de21c", "130e4cbb7f9e821a26158183");
+                        String tag = countR.getStr("staff_id");
+                        String alias[] = {tag};
+
+                        if (StringUtils.equals(status, "0")) {
+                            push.setAlert("店长已经同意了您的请假！");
+                        } else {
+                            push.setAlert("店长已经拒绝了您的请假！");
+                        }
+                        push.setAlias(alias);
+                        try {
+                            push.sendPush();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
                         jhm.putCode(1).putMessage("审核完成！");
                     } else {
                         jhm.putCode(0).putMessage("审核失败！");
