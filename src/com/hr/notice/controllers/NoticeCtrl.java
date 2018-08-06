@@ -250,62 +250,6 @@ public class NoticeCtrl extends BaseCtrl {
         renderJson("{\"code\":1,\"data\":{\"date\":\"2018-06-29\",\"name\":\"小强\",\"user\":\"刘强东\",\"from_store\":\"4a8d594591ea4c1eb708fcc8a5c67c47\",\"type\":\"3\",\"type_text\":\"\",\"id\":\"该记录id\",\"remark\":\"世界那么大，我想去看看！\"}}");
     }
 
-    /**
-     名称	店长端消息页未读数量回显
-     描述	店长端消息页未读数量回显
-     验证
-     权限	店长可见
-     URL	http://localhost:8081/mgr/notice/showNRMessageNum
-     请求方式	get
-     请求参数类型	key=value
-
-     请求参数列表：
-     参数名	类型	最大长度	允许空	描述
-     staffid	string		否	店长id
-
-
-
-     返回数据：
-     返回格式	JSON
-     成功	{
-     "code": 1,
-     "check": 2,
-     "leave": 5,
-     "quit": 4
-     }
-     备注
-     check  考核（暂时不做，返回空即可）
-     leave  请假
-     quit   离职
-     }
-     失败	{
-     "code": 0,
-     "message": "此记录不存在！"
-     }
-     或者
-     {
-     "code": 0,
-     "message": "操作失败！"
-     }
-     报错	{
-     "code": -1,
-     "message": "服务器发生异常！"
-     }
-
-
-     */
-
-    public void showNRMessageNum(){
-        JsonHashMap jhm=new JsonHashMap();
-        String staffId=getPara("staffid");
-        try{
-            String sql="12345";
-        }catch (Exception e){
-
-        }
-    }
-
-
 }
 
 
