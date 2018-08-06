@@ -200,7 +200,7 @@ public class ResignSrv extends BaseService {
         String tag = staffId;
         String alias[] = {tag};
 
-        if (StringUtils.equals(status, "0")) {
+        if (!StringUtils.equals(status, "0")) {
             push.setAlert("店长已经同意了您的离职申请！");
         } else {
             push.setAlert("店长已经拒绝了您的离职申请！");
