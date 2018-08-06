@@ -107,7 +107,8 @@ public class Config extends JFinalConfig {
         routes.add("/mgr/mobile/resign", com.hr.mobile.resign.controllers.ResignCtrl.class);
         //员工离职申请
 //        routes.add("/mgr/mobile/setting", com.hr.mobile.setting.controllers.SettingCtrl.class);
-
+		//店长端排班情况配置
+		routes.add("/mgr/mobile/storeMgr/scheduling", com.hr.mobile.storeMgr.controllers.SchedulingCtrl.class);
 
         //		routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl1.class);
         routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl.class);
