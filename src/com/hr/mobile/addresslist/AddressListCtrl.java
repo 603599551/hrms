@@ -431,7 +431,7 @@ public class AddressListCtrl extends BaseCtrl {
             String sql2="select count(*)as c from h_staff where job=? and dept_id=?";
             //数据类型有可能是int long 等等
             Object countObj1=Db.findFirst(sql2,job1,deptId).get("c");
-            //将object转化为int
+            //将object转化为int          ..
             int count1= NumberUtils.parseInt(countObj1,0);
 
             Object countObj2=Db.findFirst(sql2,job2,deptId).get("c");
