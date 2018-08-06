@@ -299,7 +299,7 @@ public class NoticeCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         String staffId=getPara("staffid");
         try{
-            String sql="";
+            String sql="12345";
         }catch (Exception e){
 
         }
