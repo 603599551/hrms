@@ -25,8 +25,9 @@ public class SchedulingCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         //日期
         //测试数据
-//        date="2018-08-07";
+
         String date=getPara("date");
+        //date="2018-08-06";
         if(StringUtils.isEmpty(date)){
             jhm.putCode(0).putMessage("日期不能为空！");
             renderJson(jhm);
@@ -39,17 +40,17 @@ public class SchedulingCtrl extends BaseCtrl {
         for(int i=7;i<24;i+=2){
             HashMap map=new HashMap();
             String timeList="0"+i+":00-0"+(i+2)+":00";
-            time+="[{\"start\": \"0"+i+":00\",\"end\": \"0"+(i+2)+":00\"}]";
+            time="[{\"start\": \"0"+i+":00\",\"end\": \"0"+(i+2)+":00\"}]";
             if(i==9){
-                time+="[{\"start\": \"0"+i+":00\",\"end\": \""+(i+2)+":00\"}]";
+                time="[{\"start\": \"0"+i+":00\",\"end\": \""+(i+2)+":00\"}]";
                 timeList="0"+i+":00-"+(i+2)+":00";
             }
             if(i>=10){
-                time+="[{\"start\": \""+i+":00\",\"end\": \""+(i+2)+":00\"}]";
+                time="[{\"start\": \""+i+":00\",\"end\": \""+(i+2)+":00\"}]";
                 timeList=i+":00-"+(i+2)+":00";
             }
             if(i==23){
-                time+="[{\"start\": \""+i+":00\",\"end\": \""+(i+1)+":00\"}]";
+                time="[{\"start\": \""+i+":00\",\"end\": \""+(i+1)+":00\"}]";
                 timeList=i+":00-"+(i+1)+":00";
             }
             JSONArray timeArray = JSONArray.fromObject(time);
