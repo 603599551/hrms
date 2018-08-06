@@ -100,7 +100,7 @@ public class NoticeCtrl extends BaseCtrl{
             //请假提醒
             if (type.equals("leaveList")){
                 //根据接收到的staffId和type查询最近30事件的date、states、content
-                String sql1="select h_notice.create_time as date,h_staff_leave_info.status as states,h_staff_leave_info.result as content from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id order by h_notice.create_time desc limit 0,30";
+                String sql1="select h_notice.create_time as date,h_staff_leave_info.status as states,h_staff_leave_info.result as content from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=?  and h_staff_leave_info.status!='0' and h_notice.receiver_id=h_staff_leave_info.staff_id and h_notice.fid=h_staff_leave_info.id order by h_notice.create_time desc limit 0,30";
                 list=Db.find(sql1,staffId);
                 if(list!=null&&list.size()>0){
                     for (Record r:list){
@@ -112,7 +112,7 @@ public class NoticeCtrl extends BaseCtrl{
             }//离职提醒
             else if(type.equals("resignList")){
                 //根据接收到的staffId和type查询最近事件的date、states、reason(clothes)、content
-                String sql2="select h_notice.create_time as date,h_resign.reply as content,h_resign.status as states,h_resign.id from h_resign,h_notice where h_notice.receiver_id=? and h_notice.type='resign' and h_notice.receiver_id=h_resign.applicant_id";
+                String sql2="select h_notice.create_time as date,h_resign.reply as content,h_resign.status as states,h_resign.id from h_resign,h_notice where h_notice.receiver_id=? and h_notice.type='resign' and h_notice.receiver_id=h_resign.applicant_id and h_notice.fid=h_resign.id";
                 String sql3="select name as itemName,status as itemStatus from h_resign_return where resign_id=? ";
                 String resign_id="";
                 String itemName="";
@@ -147,6 +147,81 @@ public class NoticeCtrl extends BaseCtrl{
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器出现异常！");
+        }
+        renderJson(jhm);
+    }
+
+
+    /**
+     名称	店长端消息页未读数量回显
+     描述	店长端消息页未读数量回显
+     验证
+     权限	店长可见
+     URL	http://localhost:8081/mgr/notice/showNRMessageNum
+     请求方式	get
+     请求参数类型	key=value
+
+     请求参数列表：
+     参数名	类型	最大长度	允许空	描述
+     staffid	string		否	店长id
+
+
+
+     返回数据：
+     返回格式	JSON
+     成功	{
+     "code": 1,
+     "check": 2,
+     "leave": 5,
+     "quit": 4
+     }
+     备注
+     check  考核（暂时不做，返回空即可）
+     leave  请假
+     quit   离职
+     }
+     失败	{
+     "code": 0,
+     "message": "此记录不存在！"
+     }
+     或者
+     {
+     "code": 0,
+     "message": "操作失败！"
+     }
+     报错	{
+     "code": -1,
+     "message": "服务器发生异常！"
+     }
+
+
+     */
+
+    public void showNRMessageNum(){
+        JsonHashMap jhm=new JsonHashMap();
+        String staffId=getPara("staffid");
+        try{
+            //查询请假消息未读数量
+            String sql="select count(*) as c from h_notice where receiver_id=? and type='leave' and status='0'";
+            //数据类型有可能是int long ....
+            Object cObj1=Db.findFirst(sql,staffId).get("c");
+            //将Object转为int
+            int count1=NumberUtils.parseInt(cObj1,0);
+
+            //查询离职消息未读数量
+            String sql2="select count(*) as c from h_notice where receiver_id=? and type='resign' and status='0'";
+            //数据类型有可能是int long ....
+            Object cObj2=Db.findFirst(sql2,staffId).get("c");
+            //将Object转为int
+            int count2=NumberUtils.parseInt(cObj2,0);
+
+            jhm.putCode(1);
+            jhm.put("check",null);
+            jhm.put("leave",count1);
+            jhm.put("quit",count2);
+        }catch (Exception e){
+            jhm.putCode(-1);
+            jhm.putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }
