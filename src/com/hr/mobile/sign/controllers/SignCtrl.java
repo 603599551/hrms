@@ -42,12 +42,13 @@ public class SignCtrl extends BaseCtrl {
             jhm.putCode(0).putMessage("员工不存在");
         }
 
+        time = time.substring(11, 16);
         //寻找该员工该天的排班情况
         String selectClock = "SELECT clock.status as status , clock.start_time as start , clock.end_time as end, clock.sign_in_time as sign_in ,clock.sign_back_time as sign_out FROM h_staff_clock clock WHERE clock.staff_id = ? AND clock.date = ? ORDER BY clock.start_time";
         //寻找该员工的工作时长
         String selectNum = "SELECT time.real_number num FROM h_work_time time WHERE time.staff_id = ? and time.date = ? ";
         //上下班时间的格式转化
-        SimpleDateFormat sdfWorkTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdfWorkTime = new SimpleDateFormat("HH:mm");
         try {
             //当前时间
             Date DateTime = sdfWorkTime.parse(time);
@@ -71,7 +72,7 @@ public class SignCtrl extends BaseCtrl {
                         }
                         jhm.put("status", "1");
                         if (recordList.get(i).getStr("sign_in") != null) {
-                            jhm.put("sign_in", recordList.get(i).getStr("sign_in").substring(11, 16));
+                            jhm.put("sign_in", recordList.get(i).getStr("sign_in").substring(0, 5));
                         } else {
                             jhm.put("sign_in", "--:--");
                         }
@@ -89,7 +90,7 @@ public class SignCtrl extends BaseCtrl {
                         }
                         jhm.put("status", "1");
                         if (recordList.get(i).getStr("sign_in") != null) {
-                            jhm.put("sign_out", recordList.get(i).getStr("sign_out").substring(11, 16));
+                            jhm.put("sign_out", recordList.get(i).getStr("sign_out").substring(0, 5));
                         } else {
                             jhm.put("sign_out", "--:--");
                         }
@@ -109,7 +110,7 @@ public class SignCtrl extends BaseCtrl {
                             }
                             jhm.put("status", "1");
                             if (recordList.get(i).getStr("sign_in") != null) {
-                                jhm.put("sign_out", recordList.get(i).getStr("sign_out").substring(11, 16));
+                                jhm.put("sign_out", recordList.get(i).getStr("sign_out").substring(0, 5));
                             } else {
                                 jhm.put("sign_out", "--:--");
                             }
@@ -140,7 +141,7 @@ public class SignCtrl extends BaseCtrl {
                             }
                             for (int j = i - 1; j >= 0; --j) {
                                 if (StringUtils.equals(recordList.get(j).getStr("status"), "2") && recordList.get(i - 1).getStr("sign_out") != null) {
-                                    jhm.put("sign_out", recordList.get(i - 1).getStr("sign_out").substring(11, 16));
+                                    jhm.put("sign_out", recordList.get(i - 1).getStr("sign_out"));
                                     isOut = true;
                                 }
                             }
@@ -189,13 +190,15 @@ public class SignCtrl extends BaseCtrl {
             return;
         }
 
+        dateTime = dateTime.substring(11, 19);
         //寻找该员工该天的排班情况
         String selectClock = "SELECT clock.id , clock.status , clock.start_time , clock.end_time ,clock.sign_in_time ,clock.sign_back_time FROM h_staff_clock clock WHERE clock.staff_id = ? AND clock.date = ? ORDER BY clock.start_time";
         //查询工作明细
         String selectDetail = "SELECT start_time , end_time , work_time_id , status , id FROM h_work_time_detail WHERE staff_id = ? AND date = ? ORDER BY start_time";
-        SimpleDateFormat sdfWorkTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdfWorkTime = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat sdfSignTime = new SimpleDateFormat("HH:mm:ss");
         try {
-            Date signIn = sdfWorkTime.parse(dateTime);
+            Date signIn = sdfSignTime.parse(dateTime);
             List<Record> clockList = Db.find(selectClock, id, date);
             List<Record> detailList = Db.find(selectDetail, id, date);
 
@@ -268,6 +271,7 @@ public class SignCtrl extends BaseCtrl {
             return;
         }
 
+        dateTime = dateTime.substring(11, 19);
         //查询该员工该天的排班情况
         String selectClock = "SELECT clock.id , clock.status , clock.start_time , clock.end_time , clock.sign_in_time , clock.sign_back_time , is_late FROM h_staff_clock clock WHERE clock.staff_id = ? AND clock.date = ? ORDER BY clock.start_time";
         //查询工作明细
@@ -275,7 +279,8 @@ public class SignCtrl extends BaseCtrl {
         //查询工作工时
         String selectRealNum = "SELECT id , real_number FROM h_work_time WHERE id = ? and date = ?";
         //更改日期格式
-        SimpleDateFormat sdfWorkTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdfWorkTime = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat sdfSignTime = new SimpleDateFormat("HH:mm:ss");
         //实际工时数
         int workNum = 0;
         boolean flag = false;
@@ -283,10 +288,10 @@ public class SignCtrl extends BaseCtrl {
 
         try {
 
-            Date signOut = sdfWorkTime.parse(dateTime);
+            Date signOut = sdfSignTime.parse(dateTime);
             List<Record> clockList = Db.find(selectClock, id, date);
             List<Record> detailList = Db.find(selectDetail, id, date);
-            Record realNum = Db.findFirst(selectRealNum, detailList.get(0).getStr("work_time_id"), date);
+                Record realNum = Db.findFirst(selectRealNum, detailList.get(0).getStr("work_time_id"), date);
 
             //遍历排班情况寻找所处时间段
             for (int i = 0; i < clockList.size(); ++i) {
@@ -327,7 +332,7 @@ public class SignCtrl extends BaseCtrl {
                     }
                     break;
                     //不是第一班 在当前工作时间段内 但是没有签到过
-                } else if (i > 0  && (sdfWorkTime.parse(clockList.get(i).getStr("start_time")).getTime() <= (signOut.getTime())) && sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() >= signOut.getTime()) {
+                } else if (i > 0 && (sdfWorkTime.parse(clockList.get(i).getStr("start_time")).getTime() <= (signOut.getTime())) && sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() >= signOut.getTime()) {
                     //寻找上一个签到过的班
                     for (int k = i - 1; k >= 0; --k) {
                         if (StringUtils.equals(clockList.get(k).getStr("status"), "1")) {
