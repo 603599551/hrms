@@ -9,7 +9,6 @@ import org.apache.commons.lang.StringUtils;
 import paiban.service.StaffIdleTimeService;
 import utils.bean.JsonHashMap;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static utils.ContentTransformationUtil.*;
