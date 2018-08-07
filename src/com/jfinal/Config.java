@@ -18,6 +18,8 @@ import com.hr.staff.controllers.StaffNotOnJobCtrl;
 import com.hr.store.controllers.*;
 import com.hr.train.controllers.ArticleCtrl;
 import com.hr.train.controllers.TypeCtrl;
+import com.hr.workTime.controllers.WorkTimeCtrl;
+import com.hr.workTime.controllers.WorkTimeDetailCtrl;
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
@@ -90,6 +92,10 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/schedulingCtrl", SchedulingCtrl.class);
 		routes.add("/mgr/variableTimeGuideCtrl", VariableTimeGuideCtrl.class);
 		routes.add("/mgr/staffIdleTimeCtrl", StaffIdleTimeCtrl.class);
+		//工资统计
+		routes.add("/mgr/workTimeCtrl", WorkTimeCtrl.class);
+		//工资详情
+		routes.add("/mgr/workTimeDetailCtrl", WorkTimeDetailCtrl.class);
 
 		//通讯录
 		routes.add("/mgr/mobile/addresslist", AddressListCtrl.class);

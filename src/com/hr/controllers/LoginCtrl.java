@@ -63,6 +63,7 @@ public class LoginCtrl extends BaseCtrl {
                 jhm.put("data", user);
                 jhm.put("sessionId",getSession().getId());
                 jhm.putMessage("登录成功！");
+                this.setCookie("Admin-Token", ub.getRealName(), 60 * 60 * 24 * 3);
             } else {
                 jhm.putCode(-1);
                 jhm.putMessage("用户名或密码错误！");

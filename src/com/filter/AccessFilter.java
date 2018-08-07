@@ -30,12 +30,12 @@ public class AccessFilter implements Filter{
 	@Override
 	public void destroy() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response,
-			FilterChain chain) throws IOException, ServletException {
+						 FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest req=(HttpServletRequest)request;
 		HttpServletResponse resp=(HttpServletResponse)response;
 		resp.setContentType("text/html;charset=UTF-8");
@@ -47,10 +47,10 @@ public class AccessFilter implements Filter{
 		String domain=UrlKit.getDomain(req);
 		req.setAttribute("domain",domain);
 
-		boolean isLogin=isLogin(req,resp);//处理自动登录
-		if(isLogin){
+//		boolean isLogin=isLogin(req,resp);//处理自动登录
+//		if(isLogin){
 			chain.doFilter(request, response);
-		}
+//		}
 
 
 
@@ -64,7 +64,7 @@ public class AccessFilter implements Filter{
 	 */
 	private boolean isLogin(HttpServletRequest req,HttpServletResponse resp){
 
-		String servletPath=req.getServletPath().toLowerCase();  
+		String servletPath=req.getServletPath().toLowerCase();
 //		String suffix=servletPath.substring(servletPath.lastIndexOf(".")+1);
 //		if(servletPath.indexOf(".")==-1){
 //
@@ -104,7 +104,7 @@ public class AccessFilter implements Filter{
 			if(usu.getUserBean()==null){
 				//System.out.println("--com.club.filter.AccessFilter已经登录，不需要自动登录");
 				try {
-					resp.sendRedirect(UrlKit.getDomain(req)+"/login.html");
+					resp.sendRedirect(UrlKit.getDomain(req)+"/index.html");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
