@@ -47,7 +47,7 @@ public class LeaveSrv {
                 String sql = "select count(*) as c from h_staff_leave where staff_id=? and store_id=? and date=? and leave_start_time=? and leave_end_time=? and status='0'";
                 Record countR = Db.findFirst(sql, userId, usu.getUserBean().getDeptId(), date, timeArray[0], timeArray[1]);
                 if (countR.getInt("c") > 0 ) {
-                    jhm.putCode(0).putMessage("请不要重复提交数据！");
+                    jhm.putCode(0).putMessage("您已请假，请不要重复请假！");
                     return jhm;
                 }
                 //请假分表操作
@@ -116,7 +116,7 @@ public class LeaveSrv {
                 JiguangPush push = new JiguangPush("00e09994649bd900d801f6ad", "5906a375d122d73ee7cffb32");
                 String tag = managerR.getStr("id");
                 String alias[] = {tag};
-                push.setAlert("您收到了一条请假申请！");
+                push.setAlert("您收到了一条请假申请！(员工：" + usu.getUserBean().getRealName() + ")");
                 push.setAlias(alias);
                 try {
                     push.sendPush();
