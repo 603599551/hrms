@@ -11,6 +11,7 @@ import utils.bean.JsonHashMap;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -251,6 +252,107 @@ public class SchedulingCtrl extends BaseCtrl {
         }
         renderJson(jhm);
 
+    }
+
+
+
+
+    /**
+     * 	经理端排班详情回显
+     */
+    public void showDetailbyId (){
+        JsonHashMap jhm = new JsonHashMap();
+
+        String staffId = getPara("staff_id");
+        if(StringUtils.isEmpty(staffId)){
+            jhm.putCode(0).putMessage("请选择员工");
+            renderJson(jhm);
+            return;
+        }
+        String date = getPara("date");
+        if(StringUtils.isEmpty(date)){
+            jhm.putCode(0).putMessage("请选择时间");
+            renderJson(jhm);
+            return;
+        }
+
+        //起止时间格式
+        SimpleDateFormat sdfWorkTime = new SimpleDateFormat("HH:mm");
+        //签到时间格式
+        SimpleDateFormat sdfSignTime = new SimpleDateFormat("HH:mm:ss");
+        String sql = "SELECT c.start_time as start,c.end_time as end,c.sign_in_time as signin,c.sign_back_time as signback, c.is_late as late , c.status as status , (SELECT s.pinyin FROM h_staff s WHERE s.id = c.staff_id) as firstname , (SELECT s.name FROM h_staff s WHERE s.id = c.staff_id) as name , (SELECT s.phone FROM h_staff s WHERE s.id = c.staff_id) as phone , ( SELECT group_concat(h. NAME) kind FROM h_staff s LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, s.kind) WHERE s.id = c.staff_id GROUP BY s.id ORDER BY s.id ASC ) AS job FROM h_staff_clock c WHERE c.staff_id = ? AND c.date = ?";
+        try {
+            //查出全部记录
+            List<Record> staffList = Db.find(sql, staffId, date);
+            if (!(staffList != null && staffList.size() > 0)) {
+                jhm.putCode(0).putMessage("找不到指定信息");
+                renderJson(jhm);
+                return;
+            }
+            //存content信息
+            List list = new ArrayList();
+
+            //处理content
+            for(int i = 0 ; i < staffList.size() ; ++i ){
+                Record record = new Record();
+                record.set("time",staffList.get(i).getStr("start") + "-" + staffList.get(i).getStr("end"));
+                //是否迟到以及迟到时间
+                if(StringUtils.equals("2",staffList.get(i).getStr("late"))){
+                    record.set("late",String.valueOf((sdfSignTime.parse(staffList.get(i).getStr("signin")).getTime() - sdfWorkTime.parse(staffList.get(i).getStr("start")).getTime()) / (60 * 1000)));
+                }else {
+                    record.set("late","0");
+                }
+                //判断签到签退
+                if(StringUtils.equals("0",staffList.get(i).getStr("status"))){
+                    //未签到寻找上一个签到签退时间
+                    if(i > 0){
+                        for(int j = i - 1 ; j >= 0 ; --j){
+                            if (StringUtils.equals("2",staffList.get(j).getStr("status"))){
+                                record.set("signout",staffList.get(j).getStr("signback").substring(0,5));
+                                break;
+                            }
+                        }
+                        for(int j = i - 1 ; j >= 0 ; --j){
+                            if (StringUtils.equals("1",staffList.get(j).getStr("status"))){
+                                record.set("signin",staffList.get(j).getStr("signin").substring(0,5));
+                                break;
+                            }
+                        }
+                    } else {
+                        record.set("signin","0");
+                        record.set("signout","0");
+                    }
+                } else if(StringUtils.equals("1",staffList.get(i).getStr("status"))){
+                    record.set("signin",staffList.get(i).getStr("signin").substring(0,5));
+                    if(i > 0){
+                        //寻找上一个签退时间
+                        for(int j = i - 1 ; j >= 0 ; --j){
+                            if (StringUtils.equals("2",staffList.get(j).getStr("status"))){
+                                record.set("signout",staffList.get(j).getStr("signback").substring(0,5));
+                                break;
+                            }
+                        }
+                    } else {
+                        record.set("signout","0");
+                    }
+                } else {
+                    record.set("signin",staffList.get(i).getStr("signin").substring(0,5));
+                    record.set("signout",staffList.get(i).getStr("signback").substring(0,5));
+                }
+                list.add(record);
+            }
+
+            jhm.put("firstname",staffList.get(0).getStr("firstname").toUpperCase().substring(0,1));
+            jhm.put("name",staffList.get(0).getStr("name"));
+            jhm.put("job",staffList.get(0).getStr("job"));
+            jhm.put("phone",staffList.get(0).getStr("phone"));
+            jhm.put("content",list);
+
+        } catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常");
+        }
+        renderJson(jhm);
     }
 
 
