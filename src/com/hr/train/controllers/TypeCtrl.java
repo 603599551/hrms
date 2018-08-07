@@ -563,7 +563,7 @@ public class TypeCtrl extends BaseCtrl {
                     renderJson(jhm);
                     return;
                 }
-                if (dictList.size() > 0 && dictList != null) {
+                if (dictList != null && dictList.size() > 0) {
                     for (int i = dictList.size() - 1; i >= 0; i--) {
                         dictList.get(i).set("name", "┗" + dictList.get(i).getStr("name"));
                         String pid = dictList.get(i).getStr("value");
