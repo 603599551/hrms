@@ -83,35 +83,35 @@ public class SalaryCtrl extends BaseCtrl {
      返回数据：
      返回格式	JSON
      成功	{
-         "workHour": "87",
-         "takePay": "690",
-         "duePay": "770",
-         "month": "0",
-         "list": [{
-         "date": "2018-08-04",
-         "time": "08:00-09:00",
-         "condition": "1",
-         "change": "-30"
-         }, {
-         "date": "2018-08-04",
-         "time": "09:00-10:00",
-         "condition": "4",
-         "change": "+20"
-         }]
-         }
-         month:0:上半月 1:下半月
-         workHour:半月实际工作时长（小时）
-         takePay:半月实得工资（元）
-         duePay:半月应得工资（元）
-         condition:1:迟到 2:早退 3:旷工 4:加班 5:减班 6:请假
+     "workHour": "87",
+     "takePay": "690",
+     "duePay": "770",
+     "month": "0",
+     "list": [{
+     "date": "2018-08-04",
+     "time": "08:00-09:00",
+     "condition": "1",
+     "change": "-30"
+     }, {
+     "date": "2018-08-04",
+     "time": "09:00-10:00",
+     "condition": "4",
+     "change": "+20"
+     }]
+     }
+     month:0:上半月 1:下半月
+     workHour:半月实际工作时长（小时）
+     takePay:半月实得工资（元）
+     duePay:半月应得工资（元）
+     condition:1:迟到 2:早退 3:旷工 4:加班 5:减班 6:请假
      失败	{
-         "code": 0,
-         "message": "失败原因！"
-         }
+     "code": 0,
+     "message": "失败原因！"
+     }
      报错	{
-         "code": -1,
-         "message": "服务器发生异常！"
-         }
+     "code": -1,
+     "message": "服务器发生异常！"
+     }
      */
 
 
@@ -129,8 +129,6 @@ public class SalaryCtrl extends BaseCtrl {
             String firstDayOfMonth=SalaryCtrl.getFirstDayOfMonth();
             //获取当月中间天
             String midDayOfMonth=SalaryCtrl.getMidDayOfMonth();
-            //获取当月最后一天
-            String lastDayOfMonth=SalaryCtrl.getDefaultDay();
             //获得今天在本月的第几天(获得当前日)
             int ddCount=SalaryCtrl.getDayOfMonth();
 
@@ -173,6 +171,8 @@ public class SalaryCtrl extends BaseCtrl {
                     setWorkHour+=((float)r.getInt("number")*15.0/60.0);
                     workHour+=((float)r.getInt("real_number")*15.0/60.0);
                 }
+            }else{
+                jhm.putCode(0).putMessage("工作记录不存在！");
             }
 
             //应得工资=时薪*应工作的时长
@@ -183,6 +183,9 @@ public class SalaryCtrl extends BaseCtrl {
             //查询h_work_time中该用户在一段时间中 每天的工作情况
             String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
             List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+            if (list1==null){
+                jhm.putCode(0).putMessage("工作记录不存在！");
+            }
             String sql4="";
             //存储该员工 当天的减班加班旷工请假记录（15分钟一条）
             List<Record> list2345;
@@ -202,8 +205,8 @@ public class SalaryCtrl extends BaseCtrl {
             if (list1!=null&&list1.size()>0){
                 for (Record r1:list1){
                     //找到该员工 当天的情况
-                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
-                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id order by start_time ASC";
+                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id\n" +
+                            "and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
                     list2345=Db.find(sql4,r1.getStr("date"),staffId);
                     //finalList中的单条记录
                     Record finalRecord=new Record();
@@ -445,6 +448,8 @@ public class SalaryCtrl extends BaseCtrl {
                     setWorkHour+=((float)r.getInt("number")*15.0/60.0);
                     workHour+=((float)r.getInt("real_number")*15.0/60.0);
                 }
+            }else {
+                jhm.putCode(0).putMessage("工作记录不存在！");
             }
 
             //应得工资=时薪*应工作的时长
@@ -455,6 +460,9 @@ public class SalaryCtrl extends BaseCtrl {
             //查询h_work_time中该用户一天的工作情况
             String sql3="select * from h_work_time where date=? and staff_id=? order by date ASC";
             List<Record> list1=Db.find(sql3,date,staffId);
+            if (list1==null){
+                jhm.putCode(0).putMessage("工作记录不存在！");
+            }
             String sql4="";
             //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
             List<Record> list2345;
@@ -472,61 +480,61 @@ public class SalaryCtrl extends BaseCtrl {
 
             //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
             if (list1!=null&&list1.size()>0){
-                    //查询h_work_time_detail表该用户一天的迟到早退减班加班记录（15分钟一条）
-                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
-                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id order by start_time ASC";
-                    list2345=Db.find(sql4,date,staffId);
-                    //finalList中的单条记录
-                    Record finalRecord=new Record();
-                    //遍历list2345 合并连续的相同情况
-                    for(int i=0;i< list2345.size()-1;i++){
-                        //第一次将要合并的数条记录中的第一条
-                        if (count==0){
-                            fRDate=list2345.get(i).getStr("date");
-                            fRStartTime=list2345.get(i).getStr("start_time");
-                            fREndTime=list2345.get(i).getStr("end_time");
-                            fRCondition=list2345.get(i).getStr("status");
-                            count++;
-                        }
-                        //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
-                        if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
-                            fREndTime=list2345.get(i+1).getStr("end_time");
-                            count++;
-                        }else {
-                            finalRecord.set("date",fRDate);
-                            fRTime=fRStartTime+"-"+fREndTime;
-                            finalRecord.set("time",fRTime);
-                            finalRecord.set("condition",fRCondition);
-                            if (fRCondition.equals("3")){
-                                fRChange=count*every15Wage;
-                            }else{
-                                fRChange=-(count*every15Wage);
-                            }
-                            finalRecord.set("change",fRChange);
-                            finalList.add(finalRecord);
-                            finalRecord=new Record();
-                            count=0;
-                            //第二次开始将要合并的数条记录中的第一条
-                            fRDate=list2345.get(i+1).getStr("date");
-                            fRStartTime=list2345.get(i+1).getStr("start_time");
-                            fREndTime=list2345.get(i+1).getStr("end_time");
-                            fRCondition=list2345.get(i+1).getStr("status");
-                            count++;
-                        }
-                        if (i==list2345.size()-2){
-                            finalRecord.set("date",fRDate);
-                            fRTime=fRStartTime+"-"+fREndTime;
-                            finalRecord.set("time",fRTime);
-                            finalRecord.set("condition",fRCondition);
-                            if (fRCondition.equals("3")){
-                                fRChange=count*every15Wage;
-                            }else{
-                                fRChange=-(count*every15Wage);
-                            }
-                            finalRecord.set("change",fRChange);
-                            finalList.add(finalRecord);
-                        }
+                //查询h_work_time_detail表该用户一天的迟到早退减班加班记录（15分钟一条）
+                sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
+                        " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+                list2345=Db.find(sql4,date,staffId);
+                //finalList中的单条记录
+                Record finalRecord=new Record();
+                //遍历list2345 合并连续的相同情况
+                for(int i=0;i< list2345.size()-1;i++){
+                    //第一次将要合并的数条记录中的第一条
+                    if (count==0){
+                        fRDate=list2345.get(i).getStr("date");
+                        fRStartTime=list2345.get(i).getStr("start_time");
+                        fREndTime=list2345.get(i).getStr("end_time");
+                        fRCondition=list2345.get(i).getStr("status");
+                        count++;
                     }
+                    //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+                    if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+                        fREndTime=list2345.get(i+1).getStr("end_time");
+                        count++;
+                    }else {
+                        finalRecord.set("date",fRDate);
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",fRCondition);
+                        if (fRCondition.equals("3")){
+                            fRChange=count*every15Wage;
+                        }else{
+                            fRChange=-(count*every15Wage);
+                        }
+                        finalRecord.set("change",fRChange);
+                        finalList.add(finalRecord);
+                        finalRecord=new Record();
+                        count=0;
+                        //第二次开始将要合并的数条记录中的第一条
+                        fRDate=list2345.get(i+1).getStr("date");
+                        fRStartTime=list2345.get(i+1).getStr("start_time");
+                        fREndTime=list2345.get(i+1).getStr("end_time");
+                        fRCondition=list2345.get(i+1).getStr("status");
+                        count++;
+                    }
+                    if (i==list2345.size()-2){
+                        finalRecord.set("date",fRDate);
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",fRCondition);
+                        if (fRCondition.equals("3")){
+                            fRChange=count*every15Wage;
+                        }else{
+                            fRChange=-(count*every15Wage);
+                        }
+                        finalRecord.set("change",fRChange);
+                        finalList.add(finalRecord);
+                    }
+                }
             }
 
             //初始化时间格式
@@ -696,8 +704,6 @@ public class SalaryCtrl extends BaseCtrl {
             String firstDayOfMonth=SalaryCtrl.getFirstDayOfMonth();
             //获取当月中间天
             String midDayOfMonth=SalaryCtrl.getMidDayOfMonth();
-            //获取当月最后一天
-            String lastDayOfMonth=SalaryCtrl.getDefaultDay();
             //获得今天在本月的第几天(获得当前日)
             int ddCount=SalaryCtrl.getDayOfMonth();
 
@@ -722,23 +728,28 @@ public class SalaryCtrl extends BaseCtrl {
             float hourWage=-1;
             //每15分钟的薪水
             float every15Wage=-1;
+            //员工姓名
+            String name="";
+            //员工姓名首字母
+            String initial="";
+            //员工职位
+            String job="";
+            //员工电话
+            String phone="";
+            //员工工号
+            String number="";
             if(staff==null){
                 jhm.putCode(0).putMessage("用户不存在！");
             }else{
                 hourWage=staff.getFloat("hour_wage");
                 every15Wage=hourWage/4;
+                name=staff.getStr("name");
+                initial=staff.getStr("pinyin").substring(0,1);
+                job=staff.getStr("job");
+                phone=staff.getStr("phone");
+                number=staff.getStr("emp_num");
             }
 
-            //员工姓名
-            String name=staff.getStr("name");
-            //员工姓名首字母
-            String initial=staff.getStr("pinyin").substring(0,1);
-            //员工职位
-            String job=staff.getStr("job");
-            //员工电话
-            String phone=staff.getStr("phone");
-            //员工工号
-            String number=staff.getStr("emp_num");
 
             //应工作的时长
             float setWorkHour=0;
@@ -751,6 +762,8 @@ public class SalaryCtrl extends BaseCtrl {
                     setWorkHour+=((float)r.getInt("number")*15.0/60.0);
                     workHour+=((float)r.getInt("real_number")*15.0/60.0);
                 }
+            }else {
+                jhm.putCode(0).putMessage("工作记录不存在！");
             }
 
             //应得工资=时薪*应工作的时长
@@ -761,6 +774,9 @@ public class SalaryCtrl extends BaseCtrl {
             //查询h_work_time中该用户在一段时间中 每天的工作情况
             String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
             List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+            if (list1==null){
+                jhm.putCode(0).putMessage("工作记录不存在！");
+            }
             String sql4="";
             //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
             List<Record> list2345;
@@ -781,7 +797,7 @@ public class SalaryCtrl extends BaseCtrl {
                 for (Record r1:list1){
                     //找到该员工 当天的情况
                     sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
-                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id order by start_time ASC";
+                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
                     list2345=Db.find(sql4,r1.getStr("date"),staffId);
                     //finalList中的单条记录
                     Record finalRecord=new Record();

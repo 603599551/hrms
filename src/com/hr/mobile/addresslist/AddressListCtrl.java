@@ -206,11 +206,11 @@ public class AddressListCtrl extends BaseCtrl {
             jhm.put("data", sList);
             jhm.put("count",count);
         }catch(Exception e){
-                e.printStackTrace();
-                jhm.putCode(-1).putMessage("服务器发生异常！");
-            }
-            renderJson(jhm);
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
+        renderJson(jhm);
+    }
 
 
     private static Calendar calendar = Calendar.getInstance();//实例化日历
