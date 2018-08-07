@@ -271,12 +271,12 @@ public class ContentTransformationUtil {
      * @return  用List装好的一个或多个连续时间段时间段 etc: size = 2    0 = 07:30:00-08:30:00     1 = 09:30:00-10:30:00
      */
     public static List<String> JsonTimeToStringTimeXianShi(String jsonTime){
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
         List<String> timeList = new ArrayList();
         String stringTime = "";                                        //记录返回的字符串时间格式
         try {
             JSONObject jsonObject = JSONObject.fromObject(jsonTime);
-            Date initTime = simpleDateFormat.parse("07:30:00");        //最早上班时间
+            Date initTime = simpleDateFormat.parse("07:30");        //最早上班时间
             Long initMilliSecond = initTime.getTime();                     //最早上班时间的毫秒数
             int standardTime = 15 * 60 * 1000;                             //每15分钟的毫秒数
             String startTime= "";                         //连续时间段中开始的时间
@@ -320,10 +320,10 @@ public class ContentTransformationUtil {
     public static String StringTimeToJsonTimeXianShi(String stringTime){
         String jsonTime = "";
         DateTool dateTool = new DateTool();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
         String nowDate = dateTool.GetDateTime();
         try {
-            Date initTime = simpleDateFormat.parse("07:30:00"); //最早上班时间
+            Date initTime = simpleDateFormat.parse("07:30"); //最早上班时间
             Long initMilliSecond = initTime.getTime();             //最早上班时间的毫秒数
             int standardTime = 15 * 60 * 1000;               //每15分钟的毫秒数
             Map paramsMap = new HashMap();                        //存放15分钟一组的Map
