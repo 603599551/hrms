@@ -25,7 +25,7 @@ public class NoticeCtrl extends BaseCtrl{
             //将object转化为int
             int c=NumberUtils.parseInt(cObj,0);
             String leaveSQL2="select * from h_notice where type='leave' and receiver_id=? order by create_time desc limit 0,1";
-            String leaveSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id order by h_notice.create_time desc limit 0,1";
+            String leaveSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id and h_staff_leave_info.status!='0' order by h_notice.create_time desc limit 0,1";
             Record leaveR=new Record();
             leaveR.set("type","leaveList");
             leaveR.set("number",c);
@@ -50,7 +50,7 @@ public class NoticeCtrl extends BaseCtrl{
             //resignList
             String resignSQL1="select count(*) as c from h_notice where type='resign'and status=0 and receiver_id=? limit 0,30";
             String resignSQL2="select * from h_notice where type='resign'and receiver_id=? order by create_time desc limit 0,1";
-            String resignSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='resign'and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id order by h_notice.create_time desc limit 0,1";
+            String resignSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='resign'and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id and h_resign.status!='0' order by h_notice.create_time desc limit 0,1";
             Record resignR=new Record();
             resignR.set("type","resignList");
 
