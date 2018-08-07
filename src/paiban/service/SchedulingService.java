@@ -1,10 +1,14 @@
 package paiban.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.service.BaseService;
-import com.jfinal.json.Json;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import com.utils.UserSessionUtil;
+import easy.util.DateTool;
+import easy.util.UUIDTool;
+import utils.ContentTransformationUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,13 +22,36 @@ public class SchedulingService extends BaseService {
     public static final String[] posts = {"waiter", "passed", "band", "cleanup", "inputorder", "cashier", "preparation_xj", "preparation_lb", "pickle_xj", "pickle_lb", "Noodle", "pendulum", "preparation", "fried_noodles", "drink"};
     public static final String[] posts_houchu = {"preparation_xj", "preparation_lb", "pickle_xj", "pickle_lb", "Noodle", "pendulum", "preparation", "fried_noodles", "drink"};
     public static final String[] posts_qianting = {"waiter", "passed", "band", "cleanup", "inputorder", "cashier"};
+
+    public static final Map<String, Integer> postsMap = new HashMap<>();
     static {
         for(int i = 0; i < 66; i++){
             time4OneHourArr[i] = i + "";
         }
+        for(int i = 0; i < posts.length; i++){
+            postsMap.put(posts[i], i);
+        }
     }
 
-    public void paiban(String storeId, String beginDate){
+    public JSONArray getPaiban(String storeId, String date){
+        JSONArray result = new JSONArray();
+        String sql = "select * from h_staff_paiban where store_id=? and date=?";
+        List<Record> staffList = Db.find(sql, storeId, date);
+        if(staffList != null && staffList.size() > 0){
+            for(Record r : staffList){
+                JSONObject jsonObject = JSONObject.parseObject(r.getStr("content"));
+                if(jsonObject != null){
+                    JSONArray work = jsonObject.getJSONArray("work");
+                    if(work != null && work.size() > 0){
+                        result.add(jsonObject);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public void paiban(String storeId, String beginDate, UserSessionUtil usu){
         String[] dateArr = new String[7];
         for(int i = 0; i < dateArr.length; i++){
             dateArr[i] = nextDay(beginDate, i);
@@ -38,19 +65,250 @@ public class SchedulingService extends BaseService {
         List<Record> yjxsjeList = Db.find(yjxsjeSql, storeId, beginDate, endDate);
         Map<String, List<Record>> yjxsjeMap = yjxsjeToDateRecord(yjxsje(yjxsjeList));
         //员工闲时
-        String ygxsSql = "select sit.*, s.name from h_staff_idle_time sit, h_staff s where sit.staff_id=s.id and sit.store_id=? and sit.date between ? and ? order by date";
+        String ygxsSql = "select sit.*, s.name name, s.hour_wage salary from h_staff_idle_time sit, h_staff s where sit.staff_id=s.id and sit.store_id=? and sit.date between ? and ? order by date";
         List<Record> ygxsList = Db.find(ygxsSql, storeId, beginDate, endDate);
         Map<String, List<Record>> ygxsMap = ygxsToDateRecord(ygxsList);
         Map<String, Map<String, List<Record>>> ygxsDayTimeMap = getDayTimeYgxs(ygxsMap, dateArr);
 
+        Map<String, Map<String, Map<String, List<Record>>>> pbDateTimeStaffMap = createMap_date_time_kind(dateArr, yjxsjeMap, kbgsznList, ygxsMap, ygxsDayTimeMap);
+        save(pbDateTimeStaffMap, dateArr, usu);
+    }
+
+
+    public void update(JSONObject object){
+        String date = object.getString("date");
+        JSONArray workers = object.getJSONArray("workers");
+        List<String> staffIds = new ArrayList<>();
+        if(workers != null && workers.size() > 0){
+            for(int i = 0; i < workers.size(); i++){
+                JSONObject staffObj = workers.getJSONObject(i);
+                staffIds.add(staffObj.getString("id"));
+            }
+            String sql = "select * from h_staff_paiban where date=? and staff_id in(";
+            for(int i = 0; i < staffIds.size(); i++){
+                sql += "?,";
+            }
+            sql = sql.substring(0, sql.length() - 1) + ")";
+            staffIds.add(0, date);
+            List<Record> staffPaibanList = Db.find(sql, staffIds.toArray());
+            Map<String, Record> staffPaibanMap = new HashMap<>();
+            if(staffPaibanList != null && staffPaibanList.size() > 0){
+                for(Record r : staffPaibanList){
+                    staffPaibanMap.put(r.getStr("staff_id"), r);
+                }
+            }
+        }
+    }
+
+    private void save(Map<String, Map<String, Map<String, List<Record>>>> pbDateTimeStaffMap, String[] dateArr, UserSessionUtil usu){
+        List<Record> staffAllList = new ArrayList<>();
+        StringBuffer ids = new StringBuffer("");
+        for(String date : dateArr){
+            Map<String, Map<String, List<Record>>> timeKindStaff = pbDateTimeStaffMap.get(date);
+            for(String time : time4OneHourArr){
+                Map<String, List<Record>> kindStaff = timeKindStaff.get(time);
+                for(String kind : posts){
+                    List<Record> staffList = kindStaff.get(kind);
+                    if(staffList != null && staffList.size() > 0){
+                        for(Record r : staffList){
+                            List<Record> workPos = r.get("work_pos");
+                            if(workPos == null){
+                                workPos = new ArrayList<>();
+                                r.set("work_pos", workPos);
+                            }
+                            Record record = new Record();
+                            record.set("date", date);
+                            record.set("time", time);
+                            record.set("kind", kind);
+                            workPos.add(record);
+                            if(ids.indexOf(r.getStr("id")) < 0){
+                                staffAllList.add(r);
+                                ids.append(r.getStr("id"));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        saveStaffPaiban(staffAllList, dateArr, usu);
+    }
+
+    private void saveStaffPaiban(List<Record> staffAllList, String[] dateArr, UserSessionUtil usu){
+        String userId = usu.getUserId();
+        String saveTime = DateTool.GetDateTime();
+        if(staffAllList != null && staffAllList.size() > 0){
+            for(Record staff : staffAllList){
+                List<Record> workPos = staff.get("work_pos");
+                if(workPos != null && workPos.size() > 0){
+                    Map<String, List<Record>> map = new HashMap<>();
+                    staff.set("work_pos_map", map);
+                    for(Record r : workPos){
+                        List<Record> posList = map.get(r.getStr("date"));
+                        if(posList == null){
+                            posList = new ArrayList<>();
+                            map.put(r.getStr("date"), posList);
+                        }
+                        posList.add(r);
+                    }
+                }
+            }
+            List<Record> saveList = new ArrayList<>();
+            List<Record> colorList = Db.find("select color from h_store_color order by sort");
+            int colorIndex = 0;
+            for(Record staff : staffAllList){
+                Map<String, List<Record>> map = staff.get("work_pos_map");
+                for(String date : dateArr){
+                    List<Record> list = map.get(date);
+                    List<Map<String, Object>> work = new ArrayList<>();
+                    if(list != null && list.size() > 0){
+                        for(Record r : list){
+                            Map<String, Object> objMap = new HashMap<>();
+                            int[] pos = {toInt(r.get("time")), postsMap.get(r.getStr("kind"))};
+                            objMap.put("pos", pos);
+                            objMap.put("kind", r.get("kind"));
+                            objMap.put("salary", staff.get("salary"));
+                            work.add(objMap);
+                        }
+                    }
+                    Map<String, Object> staffJson = new HashMap<>();
+                    staffJson.put("id", staff.get("id"));
+                    staffJson.put("name", staff.get("name"));
+                    staffJson.put("color", colorList.get(colorIndex++ % colorList.size()).get("color"));
+                    staffJson.put("work", work);
+                    Record staffSave = new Record();
+                    staffSave.set("id", UUIDTool.getUUID());
+                    staffSave.set("staff_id", staff.get("id"));
+                    staffSave.set("store_id", staff.get("store_id"));
+                    staffSave.set("date", date);
+                    String json = JSONObject.toJSONString(staffJson);
+                    staffSave.set("content", json);
+                    staffSave.set("app_content", ContentTransformationUtil.PcToAppPaiban(json));
+                    staffSave.set("creater_id", userId);
+                    staffSave.set("create_time", saveTime);
+                    staffSave.set("modifier_id", userId);
+                    staffSave.set("modify_time", saveTime);
+                    saveList.add(staffSave);
+                }
+            }
+            String deleteStaffPaiBanSql = "delete from h_staff_paiban where store_id=? and date between ? and ?";
+            Db.delete(deleteStaffPaiBanSql, usu.getUserBean().get("store_id"), dateArr[0], dateArr[6]);
+            Db.batchSave("h_staff_paiban", saveList, saveList.size());
+            saveStaffClock(saveList, usu, dateArr);
+            saveWorkTime(saveList, usu, dateArr);
+        }
+    }
+
+    private void saveWorkTime(List<Record> staffPaibanList, UserSessionUtil usu, String[] dateArr){
+        String userId = usu.getUserId();
+        String time = DateTool.GetDateTime();
+        if(staffPaibanList != null && staffPaibanList.size() > 0){
+            List<Record> workTimeList = new ArrayList<>();
+            List<Record> workTimeDetailList = new ArrayList<>();
+            for(Record r : staffPaibanList){
+                Record workTime = new Record();
+                String workTimeId = UUIDTool.getUUID();
+                workTime.set("id", workTimeId);
+                workTime.set("staff_id", r.get("staff_id"));
+                workTime.set("store_id", r.get("store_id"));
+                workTime.set("date", r.get("date"));
+                String pcContent = r.getStr("content");
+                JSONObject pcContentObj = JSONObject.parseObject(pcContent);
+                JSONArray workArr = pcContentObj.getJSONArray("work");
+                workTime.set("number", workArr.size());
+                workTime.set("real_number", 0);
+                workTimeList.add(workTime);
+
+                String timeArr = ContentTransformationUtil.PcToAppXianShi(ContentTransformationUtil.PcPaibanToPcXianShi(pcContent));
+                JSONArray timeJsonArr = JSONArray.parseArray(timeArr);
+                if(timeJsonArr != null && timeJsonArr.size() > 0){
+                    for(int i = 0; i < timeJsonArr.size(); i++){
+                        JSONObject timeObj = timeJsonArr.getJSONObject(i);
+                        Record workTimeDetail = new Record();
+                        workTimeDetail.set("id", UUIDTool.getUUID());
+                        workTimeDetail.set("work_time_id", workTimeId);
+                        workTimeDetail.set("staff_id", r.get("staff_id"));
+                        workTimeDetail.set("store_id", r.get("store_id"));
+                        workTimeDetail.set("date", r.get("date"));
+                        workTimeDetail.set("start_time", timeObj.getString("start"));
+                        workTimeDetail.set("end_time", timeObj.getString("end"));
+                        workTimeDetail.set("status", 0);
+                        workTimeDetail.set("creater_id", userId);
+                        workTimeDetail.set("create_time", time);
+                        workTimeDetail.set("modifier_id", userId);
+                        workTimeDetail.set("modify_time", time);
+                        workTimeDetailList.add(workTimeDetail);
+                    }
+                }
+            }
+            String delete_work_time = "delete from h_work_time where store_id=? and date>=? and date<=?";
+            Db.delete(delete_work_time, usu.getUserBean().get("store_id"), dateArr[0], dateArr[dateArr.length - 1]);
+            String delete_work_time_detail = "delete from h_work_time_detail where store_id=? and date>=? and date<=?";
+            Db.delete(delete_work_time_detail, usu.getUserBean().get("store_id"), dateArr[0], dateArr[dateArr.length - 1]);
+            Db.batchSave("h_work_time", workTimeList, workTimeList.size());
+            Db.batchSave("h_work_time_detail", workTimeDetailList, workTimeDetailList.size());
+        }
+    }
+
+    private void saveStaffClock(List<Record> staffPaibanList, UserSessionUtil usu, String[] dateArr){
+        if(staffPaibanList != null && staffPaibanList.size() > 0){
+            String userId = usu.getUserId();
+            String time = DateTool.GetDateTime();
+            List<Record> saveList = new ArrayList<>();
+            for(Record r : staffPaibanList){
+                String appContent = r.getStr("app_content");
+                String pcContent = r.getStr("content");
+                if(appContent != null && appContent.trim().length() > 0){
+                    JSONArray appContentArr = JSONArray.parseArray(appContent);
+                    JSONObject pcContentObj = JSONObject.parseObject(pcContent);
+                    String kind = pcContentObj.getJSONArray("work").getJSONObject(0).getString("kind");
+                    String salary = pcContentObj.getJSONArray("work").getJSONObject(0).getString("salary");
+                    for(int i = 0; i < appContentArr.size(); i++){
+                        JSONObject obj = appContentArr.getJSONObject(i);
+                        Record save = new Record();
+                        save.set("id", UUIDTool.getUUID());
+                        save.set("staff_id", r.get("staff_id"));
+                        save.set("store_id", r.get("store_id"));
+                        save.set("date", r.get("date"));
+                        save.set("start_time", obj.getString("start"));
+                        save.set("end_time", obj.getString("end"));
+                        save.set("sign_in_time", "");
+                        save.set("sign_back_time", "");
+                        save.set("kind", kind);
+                        save.set("slary", salary);
+                        save.set("is_leave", 0);
+                        save.set("creater_id", userId);
+                        save.set("create_time", time);
+                        save.set("modifier_id", userId);
+                        save.set("modify_time", time);
+                        saveList.add(save);
+                    }
+                }
+            }
+            String delete = "delete from h_staff_clock where store_id=? and date>=? and date<=?";
+            Db.delete(delete, usu.getUserBean().get("store_id"), dateArr[0], dateArr[dateArr.length - 1]);
+            Db.batchSave("h_staff_clock", saveList, saveList.size());
+        }
+    }
+
+    /**
+     * 排班成日期，时间段，岗位，员工集合的格式
+     * @param dateArr
+     * @param yjxsjeMap
+     * @param kbgsznList
+     * @param ygxsMap
+     * @param ygxsDayTimeMap
+     * @return
+     */
+    private Map<String, Map<String, Map<String, List<Record>>>> createMap_date_time_kind(String[] dateArr, Map<String, List<Record>> yjxsjeMap, List<Record> kbgsznList, Map<String, List<Record>> ygxsMap,Map<String, Map<String, List<Record>>> ygxsDayTimeMap){
         Map<String, Map<String, Map<String, List<Record>>>> pbDateTimeStaffMap = new HashMap<>();
+        //排班后人员不够的map
+        List<Record> hxStaffList = new ArrayList<>();
         for(String date : dateArr){
             Map<String, Map<String, List<Record>>> timePostsStaffMap = new HashMap<>();
             pbDateTimeStaffMap.put(date, timePostsStaffMap);
+            List<Record> yjxsjeList = yjxsjeMap.get(date);
             int houchuNum = 0;
             int qiantingNum = 0;
-            int houchuIndex = 0;
-            int qiantingIndex = 0;
             for(Record yjxsje : yjxsjeList){
                 Record kbgszn = getGSByKbgsznAndYjxsje(kbgsznList, yjxsje);
                 JSONObject json = JSONObject.parseObject(kbgszn.getStr("work_num"));
@@ -60,39 +318,131 @@ public class SchedulingService extends BaseService {
                 for(String q : posts_qianting){
                     qiantingNum += toInt(json.get(q));
                 }
-                houchuNum /= ygxsMap.get(date).size();
-                qiantingNum /= ygxsMap.get(date).size();
             }
+            int staffOneWeekNum = (houchuNum + qiantingNum) / ygxsMap.get(date).size();
             for(Record yjxsje : yjxsjeList){
+                String time = yjxsje.getStr("time");
                 Map<String, List<Record>> postStaffMap = new HashMap<>();
                 timePostsStaffMap.put(yjxsje.getStr("time"), postStaffMap);
                 Record kbgszn = getGSByKbgsznAndYjxsje(kbgsznList, yjxsje);
                 JSONObject json = JSONObject.parseObject(kbgszn.getStr("work_num"));
-                List<Record> list = ygxsDayTimeMap.get(date).get(yjxsje.getStr("time"));
+                List<Record> list = ygxsDayTimeMap.get(date).get(time);
                 for(String post : posts){
                     List<Record> staffList = new ArrayList<>();
                     postStaffMap.put(post, staffList);
                     int num = toInt(json.getString(post));
-                    for(int i = 0; i < num; i++){
+                    for(int i = 0; i < list.size(); i++){
+                        if(num == 0){
+                            break;
+                        }
                         Record r = list.get(i);
-
+                        if(staffTimeIsAllowed(r, staffOneWeekNum, post, date, time)){
+                            staffList.add(r);
+                            num--;
+                        }
+                        if(i == list.size() - 1 && num > 0){
+                            //"problemData\":[{\"pos\": [1, 2], \"maxNum\": 6},{\"pos\": [2, 2], \"maxNum\": 4},{\"pos\": [3,5], \"maxNum\": 5}]
+                            Record hx = new Record();
+                            hx.set("id", UUIDTool.getUUID());
+                            hx.set("number", num);
+                            hx.set("maxNum", toInt(json.getString(post)));
+                            hx.set("date", date);
+                            hx.set("time", time);
+                            hx.set("kind", post);
+                            hx.set("store_id", r.get("store_id"));
+                            hxStaffList.add(hx);
+                        }
                     }
                 }
             }
         }
+        if(hxStaffList != null && hxStaffList.size() > 0){
+            List<Record> problemList = new ArrayList<>();
+            Map<String, List<Map<String, Object>>> dateProblemMap = new HashMap<>();
+            String store_id = "";
+            for(Record r : hxStaffList){
+                List<Map<String, Object>> problemData = dateProblemMap.get(r.getStr("date"));
+                if(problemData == null){
+                    problemData = new ArrayList<>();
+                    dateProblemMap.put(r.getStr("date"), problemData);
+                }
+                store_id = r.getStr("store_id");
+                Map<String, Object> content = new HashMap<>();
+                content.put("maxNum", r.get("maxNum"));
+                int x = 0;
+                int y = 0;
+                for(int i = 0; i < time4OneHourArr.length; i++){
+                    if(time4OneHourArr[i].equals(r.getStr("time"))){
+                        x = i;
+                        break;
+                    }
+                }
+                for(int i = 0; i < posts.length; i++){
+                    if(posts[i].equals(r.getStr("kind"))){
+                        y = i;
+                        break;
+                    }
+                }
+                int[] pos = {x, y};
+                content.put("pos", pos);
+                problemData.add(content);
+            }
+            for(String date : dateArr){
+                Record problem = new Record();
+                problem.set("id", UUIDTool.getUUID());
+                problem.set("date", date);
+                problem.set("store_id", store_id);
+                problem.set("content", JSONArray.toJSONString(dateProblemMap.get(date)));
+                problemList.add(problem);
+            }
+            String sql = "select * from h_paiban_problem where store_id=? and date>=? and date<=?";
+            List<Record> proList = Db.find(sql, store_id, dateArr[0], dateArr[dateArr.length - 1]);
+            if(proList != null && proList.size() > 0){
+                String delete = "delete from h_paiban_problem where id in(";
+                List<Object> paramsList = new ArrayList<>();
+                for(Record r : proList){
+                    delete += "?,";
+                    paramsList.add(r.get("id"));
+                }
+                delete = delete.substring(0, delete.length() - 1) + ")";
+                Db.delete(delete, paramsList.toArray());
+            }
+            Db.batchSave("h_paiban_problem", problemList, problemList.size());
+        }
+        return pbDateTimeStaffMap;
     }
 
+    /**
+     * 判断员工在date和time时间段内是否可以排班
+     * @param ygxs
+     * @param num
+     * @param posts
+     * @param date
+     * @param time
+     * @return
+     */
     private boolean staffTimeIsAllowed(Record ygxs, int num, String posts, String date, String time){
+        String key = date + " " + time + "isAllowed";
+        if(ygxs.get(key) != null && !ygxs.getBoolean(key)){
+            return false;
+        }
         if(toInt(ygxs.getStr("paiban_times")) < num){
             if(ygxs.getStr("kind").indexOf(posts) >= 0){
                 ygxs.set("paiban_times", toInt(ygxs.getStr("paiban_times")) + 1);
+                ygxs.set(key, false);
+                return true;
             }
-
-        }else{
         }
         return false;
     }
 
+    /**
+     * 整理员工闲时数据
+     * 日期，时间段，员工集合
+     * @param ygxsMap
+     * @param dateArr
+     * @return
+     */
     private Map<String, Map<String, List<Record>>> getDayTimeYgxs(Map<String, List<Record>> ygxsMap, String[] dateArr){
         Map<String, Map<String, List<Record>>> result = new HashMap<>();
         for(String date : dateArr){
@@ -212,8 +562,8 @@ public class SchedulingService extends BaseService {
                     int result = new Integer(obj.toString());
                     return result;
                 } catch (Exception e){
-                  e.printStackTrace();
-                  return 0;
+                    e.printStackTrace();
+                    return 0;
                 }
             }else{
                 return 0;

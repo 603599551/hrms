@@ -2,9 +2,11 @@ package paiban.service;
 
 import com.common.service.BaseService;
 import com.jfinal.aop.Before;
+import com.jfinal.aop.Enhancer;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
+import com.utils.UserSessionUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,8 +14,10 @@ import java.util.List;
 
 public class StoreForecastTurnoverService extends BaseService {
 
+    private SchedulingService schedulingService = Enhancer.enhance(SchedulingService.class);
+
     @Before(Tx.class)
-    public void save(List<Record> saveList, String[] days, String store_id){
+    public void save(List<Record> saveList, String[] days, String store_id, UserSessionUtil usu){
         String sql = "select * from h_store_forecast_turnover where store_id=? and scheduling_date in (?,?,?,?,?,?,?)";
         List<String> params = new ArrayList<>();
         params.add(store_id);
@@ -30,6 +34,7 @@ public class StoreForecastTurnoverService extends BaseService {
             Db.delete(delete, params.toArray());
         }
         Db.batchSave("h_store_forecast_turnover", saveList, saveList.size());
+        schedulingService.paiban(store_id, days[0], usu);
     }
 
 }

@@ -30,7 +30,7 @@ public class SchedulingCtrl extends BaseCtrl {
      */
     private static final String[] timeArr = {"9","10","11","12","13","14","15","16","17","18","19","20","21","22"};
     private static final String[] time4OneHourArr = new String[66];
-//    public static final String[] posts = {"waiter", "passed", "band", "cleanup", "inputorder", "cashier", "preparation_xj", "preparation_lb", "pickle_xj", "pickle_lb", "noodle", "pendulum", "preparation", "fried_noodles", "drink"};
+    //    public static final String[] posts = {"waiter", "passed", "band", "cleanup", "inputorder", "cashier", "preparation_xj", "preparation_lb", "pickle_xj", "pickle_lb", "noodle", "pendulum", "preparation", "fried_noodles", "drink"};
     public static final String[] posts = {"waiter", "passed", "band", "cleanup", "inputorder", "cashier", "preparation_xj", "preparation_lb", "pickle_xj", "pickle_lb", "Noodle", "pendulum", "preparation", "fried_noodles", "drink"};
     static {
         for(int i = 0; i < 66; i++){
@@ -41,18 +41,20 @@ public class SchedulingCtrl extends BaseCtrl {
     private SchedulingService service = enhance(SchedulingService.class);
 
     public void test(){
-        service.paiban("234k5jl234j5lkj24l35j423l5j", "2018-08-06");
+        service.paiban("234k5jl234j5lkj24l35j423l5j", "2018-08-06", new UserSessionUtil(getRequest()));
+        //renderJson("{\"code\":1,\"data\":[{\"id\":\"1\",\"name\":\"张三\",\"color\":\"#FF5722\",\"work\":[{\"pos\":[0,1],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,0],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"2\",\"name\":\"李四\",\"color\":\"#448AFF\",\"work\":[{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,5],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,5],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"3\",\"name\":\"王五\",\"color\":\"#AFB42B\",\"work\":[{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,1],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[2,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,2],\"kind\":\"岗位\",\"salary\":7}]}],\"problemData\":[{\"pos\": [1, 2], \"maxNum\": 6},{\"pos\": [2, 2], \"maxNum\": 4},{\"pos\": [3,5], \"maxNum\": 5}]}");
     }
 
     public void save(){
+        JsonHashMap jhm = new JsonHashMap();
         try {
-            JSONArray array = JSONArray.parseArray(this.getRequestObject());
-            System.out.println(array);
+            JSONObject object = JSONObject.parseObject(this.getRequestObject());
+            // service.update(object);
+            jhm.putMessage("保存成功！");
         } catch (Exception e) {
             e.printStackTrace();
+            jhm.putMessage("保存失败！");
         }
-        JsonHashMap jhm = new JsonHashMap();
-        jhm.putMessage("保存成功！");
         renderJson(jhm);
     }
 
@@ -62,9 +64,46 @@ public class SchedulingCtrl extends BaseCtrl {
 
     public void getStaff(){
         String x = getPara("x");
-        String y = getPara("y");
-        System.out.println("x = " + x + "y = " + y);
-        renderJson("{\"code\":1,\"data\":[{\"id\":\"3\",\"name\":\"王五\",\"color\":\"#f60\",\"salary\":9,\"kind\":\"岗位\"},{\"id\":\"4\",\"name\":\"大明\",\"color\":\"#060\",\"salary\":9,\"kind\":\"岗位\"},{\"id\":\"5\",\"name\":\"明明\",\"color\":\"#f00\",\"salary\":9,\"kind\":\"岗位\"},{\"id\":\"6\",\"name\":\"小明明\",\"color\":\"#f6f\",\"salary\":9,\"kind\":\"岗位\"}]}");
+        int y = NumberUtils.parseInt(getPara("y"), 0);
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        String sql = "select * from h_staff where dept_id=? and kind like ?";
+        List<Record> staffList = Db.find(sql, usu.getUserBean().get("store_id"), "%" + posts[y] + "%");
+        List<Record> data = new ArrayList<>();
+        if(staffList != null && staffList.size() > 0){
+            for(Record r : staffList){
+                Record record = new Record();
+                record.set("id", r.get("id"));
+                record.set("name", r.get("name"));
+                record.set("salary", r.get("hour_wage"));
+                record.set("kind", r.get("kind"));
+                data.add(record);
+            }
+        }
+        JsonHashMap jhm = new JsonHashMap();
+        jhm.put("data", data);
+        renderJson(jhm);
+//        renderJson("{\"code\":1,\"data\":[{\"id\":\"3\",\"name\":\"王五\",\"color\":\"#f60\",\"salary\":9,\"kind\":\"岗位\"},{\"id\":\"4\",\"name\":\"大明\",\"color\":\"#060\",\"salary\":9,\"kind\":\"岗位\"},{\"id\":\"5\",\"name\":\"明明\",\"color\":\"#f00\",\"salary\":9,\"kind\":\"岗位\"},{\"id\":\"6\",\"name\":\"小明明\",\"color\":\"#f6f\",\"salary\":9,\"kind\":\"岗位\"}]}");
+    }
+
+    public void createSchedulingTable() {
+        JsonHashMap jhm = new JsonHashMap();
+        String[] date = getParaValues("date");
+        int day = NumberUtils.parseInt(getPara("day"), 0);
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        String store_id = (String) usu.getUserBean().get("store_id");
+        JSONArray data = service.getPaiban(store_id, nextDay(date[0], day));
+        jhm.put("data", data);
+        String sql = "select * from h_paiban_problem where store_id=? and date=?";
+        List<Record> problemList = Db.find(sql, store_id, nextDay(date[0], day));
+        if(problemList != null && problemList.size() > 0){
+            JSONArray problemData = new JSONArray();
+            for(Record r : problemList){
+                problemData = JSONArray.parseArray(r.get("content"));
+            }
+            jhm.put("problemData", problemData);
+        }
+        renderJson(jhm);
+//        renderJson("{\"code\":1,\"data\":[{\"id\":\"1\",\"name\":\"张三\",\"color\":\"#FF5722\",\"work\":[{\"pos\":[0,1],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,0],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"2\",\"name\":\"李四\",\"color\":\"#448AFF\",\"work\":[{\"pos\":[0,3],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[0,5],\"kind\":\"岗位\",\"salary\":6},{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[1,4],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[3,5],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,6],\"kind\":\"岗位\",\"salary\":7}]},{\"id\":\"3\",\"name\":\"王五\",\"color\":\"#AFB42B\",\"work\":[{\"pos\":[1,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[2,1],\"kind\":\"岗位\",\"salary\":4},{\"pos\":[2,2],\"kind\":\"岗位\",\"salary\":5},{\"pos\":[3,2],\"kind\":\"岗位\",\"salary\":7}]}],\"problemData\":[{\"pos\": [1, 2], \"maxNum\": 6},{\"pos\": [2, 2], \"maxNum\": 4},{\"pos\": [3,5], \"maxNum\": 5}]}");
     }
 
     /**
@@ -78,7 +117,7 @@ public class SchedulingCtrl extends BaseCtrl {
      *  Map<日期, Map<时间段, Map<岗位, Map<color:单元格颜色（红色代码人员不足，需要手动排班），emp:List<Record（name:人名）>>>>>>
      *
      */
-    public void createSchedulingTable() {
+    public void createSchedulingTablesssss() {
         JsonHashMap jhm = new JsonHashMap();
         String[] date = getParaValues("date");
         String startDate = date[0];

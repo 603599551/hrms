@@ -8,6 +8,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
+import paiban.service.SchedulingService;
 import paiban.service.StoreForecastTurnoverService;
 import utils.bean.JsonHashMap;
 
@@ -67,7 +68,7 @@ public class StoreForecastTurnoverCtrl extends BaseCtrl{
                 r.set("scheduling_date", dayArr[j]);
                 saveList.add(r);
             }
-            service.save(saveList, dayArr, store_id);
+            service.save(saveList, dayArr, store_id, usu);
             jhm.put("message", "录入成功！");
         } catch (Exception e) {
             e.printStackTrace();
