@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StaffCtrl extends BaseCtrl {
-
     /**
      * 6.1.	员工列表
      * 名称	员工列表
@@ -93,7 +92,7 @@ public class StaffCtrl extends BaseCtrl {
         String type = getPara("type");
         try {
             String select = "SELECT h_staff.id id, h_store.id store_id, h_store. NAME store_name, h_staff. NAME name, ( CASE h_staff.gender WHEN 1 THEN '男' ELSE '女' END ) gender, h_staff.phone phone, j.job job, REPLACE (k.kind, ',', '/') kind, CONCAT( h_staff.hour_wage, '/', h_staff.month_wage ) wage, w.type type, s.status_text status_text ";
-            StringBuilder sql = new StringBuilder("FROM h_staff, h_store, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff.job AND h_dictionary.parent_id = 200 ) AS job FROM h_staff ) j, ( SELECT group_concat(h. NAME) kind, s.id id FROM h_staff s LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, s.kind) GROUP BY s.id ORDER BY s.id ASC ) k, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff.work_type AND h_dictionary.parent_id = 300 ) AS type FROM h_staff ) w, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff. STATUS AND h_dictionary.parent_id = 500 ) AS status_text, ( SELECT h_dictionary.sort FROM h_dictionary WHERE h_dictionary. VALUE = h_staff. STATUS AND h_dictionary.parent_id = 500 ) AS sort FROM h_staff\n ) s WHERE h_staff.dept_id = h_store.id AND h_staff.id = j.id AND h_staff.id = k.id AND h_staff.id = w.id AND h_staff.id = s.id  ");
+            StringBuilder sql = new StringBuilder("FROM h_staff, h_store, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff.job AND h_dictionary.parent_id = 200 ) AS job FROM h_staff ) j, ( SELECT group_concat(h. NAME) kind, s.id id FROM h_staff s LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, s.kind) and h.parent_id='3000' GROUP BY s.id ORDER BY s.id ASC ) k, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff.work_type AND h_dictionary.parent_id = 300 ) AS type FROM h_staff ) w, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff. STATUS AND h_dictionary.parent_id = 500 ) AS status_text, ( SELECT h_dictionary.sort FROM h_dictionary WHERE h_dictionary. VALUE = h_staff. STATUS AND h_dictionary.parent_id = 500 ) AS sort FROM h_staff\n ) s WHERE h_staff.dept_id = h_store.id AND h_staff.id = j.id AND h_staff.id = k.id AND h_staff.id = w.id AND h_staff.id = s.id  ");
             List<Object> params = new ArrayList<>();
             if (!StringUtils.isEmpty(keyword)) {
                 keyword = "%" + keyword + "%";
@@ -102,26 +101,30 @@ public class StaffCtrl extends BaseCtrl {
                 params.add(keyword);
                 params.add(keyword);
             }
-            if (!StringUtils.isEmpty(gender)) {
+            if (!StringUtils.isEmpty(gender)&&!StringUtils.equals(gender,"-1")) {
                 sql.append(" and h_staff.gender=? ");
                 params.add(gender);
             }
-            if (!StringUtils.isEmpty(deptId)) {
+            if (!StringUtils.isEmpty(deptId)&&!StringUtils.equals(deptId,"-1")) {
                 sql.append(" and h_staff.dept_id=? ");
                 params.add(deptId);
             }
+
             //kind为前台传来的岗位字符串数组
+            //判断kind数组中是否包含-1，即判断用户是否选了"请选择"，用户选择请选择时查所有
             if (kind != null) {
                 for (String k : kind) {
-                    sql.append(" and find_in_set(?,h_staff.kind)");
-                    params.add(k);
+                    if(!StringUtils.equals(k,"-1")){
+                        sql.append(" and find_in_set(?,h_staff.kind)");
+                        params.add(k);
+                    }
                 }
             }
-            if (!StringUtils.isEmpty(job)) {
+            if (!StringUtils.isEmpty(job)&&!StringUtils.equals(job,"-1")) {
                 sql.append(" and h_staff.job=? ");
                 params.add(job);
             }
-            if (!StringUtils.isEmpty(type)) {
+            if (!StringUtils.isEmpty(type)&&!StringUtils.equals(type,"-1")) {
                 sql.append(" and h_staff.work_type=?");
                 params.add(type);
             }
@@ -285,14 +288,14 @@ public class StaffCtrl extends BaseCtrl {
         //时薪、月薪为空时转换成0
         if (StringUtils.isEmpty(monthWage)) {
             monthWage = "0";
-        } else if (monthWage.length() >= 5 || monthWage.contains("-")) {
+        } else if (monthWage.length() >=6 || monthWage.contains("-")) {
             jhm.putCode(0).putMessage("输入月薪过大或月薪为负数！");
             renderJson(jhm);
             return;
         }
         if (StringUtils.isEmpty(hourWage)) {
             hourWage = "0";
-        } else if (hourWage.length() >= 5 || hourWage.contains("-")) {
+        } else if (hourWage.length() >=6 || hourWage.contains("-")) {
             jhm.putCode(0).putMessage("输入时薪过大或时薪为负数！");
             renderJson(jhm);
             return;
@@ -429,7 +432,7 @@ public class StaffCtrl extends BaseCtrl {
             return;
         }
         try {
-            String sql = "SELECT h_staff.id id, h_staff. NAME name, h_staff.gender gender,( CASE h_staff.gender WHEN 1 THEN '男' ELSE '女' END ) gender_text, h_staff.birthday birthday, h_staff.phone phone, h_staff.address address, h_staff.emp_num emp_num, h_staff.hiredate hiredate, h_staff.dept_id dept_id, h_store. NAME dept_text, h_staff.job job, j.job job_text, h_staff.kind kind, k.kind kind_text, h_staff. STATUS status, s.status_text status_text, h_staff.id_num id_num, h_staff.work_type work_type, w.type work_type_text, h_staff. LEVEL level, l. NAME level_text, h_staff.hour_wage hour_wage, h_staff.month_wage month_wage, h_staff.bank bank, h_staff.bank_card_num bank_card_num FROM h_staff, h_store, ( SELECT h_dictionary. NAME job, h_staff.id id FROM h_dictionary, h_staff WHERE h_dictionary. VALUE = h_staff.job ) j, ( SELECT group_concat(h. NAME) kind, s.id id FROM h_staff s LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, s.kind) GROUP BY s.id ORDER BY s.id ASC ) k, ( SELECT h_dictionary. NAME type, h_staff.id id FROM h_dictionary, h_staff WHERE h_dictionary. VALUE = h_staff.work_type ) w, ( SELECT h_dictionary. NAME status_text, h_staff.id id FROM h_dictionary, h_staff WHERE h_dictionary. VALUE = h_staff. STATUS ) s, ( SELECT h_dictionary. NAME NAME, h_staff.id id FROM h_staff LEFT JOIN h_dictionary ON h_staff. LEVEL = h_dictionary. VALUE AND h_dictionary.parent_id = 400 ) l WHERE h_staff.dept_id = h_store.id AND h_staff.id = j.id AND h_staff.id = k.id AND h_staff.id = w.id AND h_staff.id = s.id AND h_staff.id = l.id  and h_staff.id=? ";
+            String sql = "SELECT h_staff.id id, h_staff. NAME name, h_staff.gender gender, ( CASE h_staff.gender WHEN 1 THEN '男' ELSE '女' END ) gender_text, h_staff.birthday birthday, h_staff.phone phone, h_staff.address address, h_staff.emp_num emp_num, h_staff.hiredate hiredate, h_staff.dept_id dept_id, h_store. NAME dept_text, h_staff.job job, j.job job_text, h_staff.kind kind, k.kind kind_text, h_staff. STATUS status, s.status_text status_text, h_staff.id_num id_num, h_staff.work_type work_type, w.type work_type_text, h_staff. LEVEL level, l. NAME level_text, h_staff.hour_wage hour_wage, h_staff.month_wage month_wage, h_staff.bank bank, h_staff.bank_card_num bank_card_num FROM h_staff, h_store, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff.job AND h_dictionary.parent_id = 200 ) AS job FROM h_staff ) j, ( SELECT group_concat(h. NAME) kind, s.id id FROM h_staff s LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, s.kind)and h.parent_id='3000' GROUP BY s.id ORDER BY s.id ASC ) k, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff.work_type AND h_dictionary.parent_id = 300 ) AS type FROM h_staff ) w, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff. STATUS AND h_dictionary.parent_id = 500 ) AS status_text, ( SELECT h_dictionary.sort FROM h_dictionary WHERE h_dictionary. VALUE = h_staff. STATUS AND h_dictionary.parent_id = 500 ) AS sort FROM h_staff ) s, ( SELECT h_staff.id id, ( SELECT h_dictionary. NAME FROM h_dictionary WHERE h_dictionary. VALUE = h_staff. LEVEL AND h_dictionary.parent_id = 400 ) AS NAME FROM h_staff ) l WHERE h_staff.dept_id = h_store.id AND h_staff.id = j.id AND h_staff.id = k.id AND h_staff.id = w.id AND h_staff.id = s.id AND h_staff.id = l.id AND h_staff.id =? ";
             Record record = Db.findFirst(sql, id);
             if (record != null) {
                 //先判断岗位是否为空，不为空将字符串按逗号分隔转成数组
@@ -643,44 +646,41 @@ public class StaffCtrl extends BaseCtrl {
                             }
                         }
                     }
-                    try {
-                        String pinyin = HanyuPinyinHelper.getFirstLettersLo(name);
-                        String modifier_id = usu.getUserId();
-                        String idNum = staff.getStr("id_num").replace(" ", "");
-                        String empNum = staff.getStr("emp_num").replace(" ", "");
-                        staff.set("pinyin", pinyin);
-                        staff.set("kind", new String(kind));
-                        staff.set("phone", phone);
-                        staff.set("emp_num", empNum);
-                        staff.set("id_num", idNum);
-                        staff.set("hour_wage", hourWage);
-                        staff.set("month_wage", monthWage);
-                        staff.set("modifier_id", modifier_id);
-                        String time = DateTool.GetDateTime();
-                        staff.set("modify_time", time);
-                        staff.remove("kind_text");
-                        staff.remove("gender_text");
-                        staff.remove("dept_text");
-                        staff.remove("job_text");
-                        staff.remove("level_text");
-                        staff.remove("work_type_text");
-                        staff.remove("status_text");
-                        boolean flag = Db.update("h_staff", staff);
-                        if (flag) {
-                            //修改成功
-                            jhm.putCode(1).putMessage("修改成功！");
-                        } else {
-                            //修改失败
-                            jhm.putCode(0).putMessage("保存失败！");
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        jhm.putCode(-1).putMessage("服务器发生异常！");
+                    String pinyin = HanyuPinyinHelper.getFirstLettersLo(name);
+                    String modifier_id = usu.getUserId();
+                    String idNum = staff.getStr("id_num").replace(" ", "");
+                    String empNum = staff.getStr("emp_num").replace(" ", "");
+                    staff.set("pinyin", pinyin);
+                    staff.set("kind", new String(kind));
+                    staff.set("phone", phone);
+                    staff.set("emp_num", empNum);
+                    staff.set("id_num", idNum);
+                    staff.set("hour_wage", hourWage);
+                    staff.set("month_wage", monthWage);
+                    staff.set("modifier_id", modifier_id);
+                    String time = DateTool.GetDateTime();
+                    staff.set("modify_time", time);
+                    staff.remove("kind_text");
+                    staff.remove("gender_text");
+                    staff.remove("dept_text");
+                    staff.remove("job_text");
+                    staff.remove("level_text");
+                    staff.remove("work_type_text");
+                    staff.remove("status_text");
+                    boolean flag = Db.update("h_staff", staff);
+                    if (flag) {
+                        //修改成功
+                        jhm.putCode(1).putMessage("修改成功！");
+                    } else {
+                        //修改失败
+                        jhm.putCode(0).putMessage("保存失败！");
                     }
+
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
         renderJson(jhm);
     }

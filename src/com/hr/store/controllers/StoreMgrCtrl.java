@@ -1,21 +1,10 @@
 package com.hr.store.controllers;
 
 import com.common.controllers.BaseCtrl;
-import com.hr.store.service.StoreMgrSrv;
-import com.hr.store.service.StoreService;
-import com.jfinal.plugin.activerecord.Db;
+import com.hr.store.service.StoreMgrService;
 import com.jfinal.plugin.activerecord.Record;
-import com.utils.SelectUtil;
 import com.utils.UserSessionUtil;
-import easy.util.DateTool;
-import easy.util.UUIDTool;
-import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class StoreMgrCtrl extends BaseCtrl {
 
@@ -56,26 +45,16 @@ public class StoreMgrCtrl extends BaseCtrl {
      }
      */
     public void fire(){
-        String staffId=getPara("staff_id");
-        String date=getPara("date");
-        String desc=getPara("desc");
-
-        UserSessionUtil usu=new UserSessionUtil(getRequest());
         JsonHashMap jhm=new JsonHashMap();
-        Map paraMap=new HashMap();
-        paraMap.put("staffId",staffId);
-        paraMap.put("date",date);
-        paraMap.put("desc",desc);
-        paraMap.put("usu",usu);
-
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        Record record = getParaRecord();
         try {
-            StoreMgrSrv sms = enhance(StoreMgrSrv.class);
-            jhm = sms.fire(paraMap);
+            StoreMgrService sms = enhance(StoreMgrService.class);
+            jhm = sms.fire(record, usu);
         }catch (Exception e){
             e.printStackTrace();
-            jhm.putCode(-1).putMessage("对不起，服务器发送错误！");
+            jhm.putCode(-1).putMessage("服务器发生异常！");
         }
-//        renderJson("{\"code\":1,\"message\":\"辞退成功！\"}");
         renderJson(jhm);
     }
 
