@@ -63,7 +63,7 @@ public class SettingCtrl  extends BaseCtrl{
         if(staffList!=null&&staffList.size()>0){
             Record r=staffList.get(0);
             String idDb=r.getStr("id");
-            if(idDb==staffId){
+            if(idDb.equals(staffId)){
                 jhm.putCode(0).putMessage("请输入新的手机号！");
             }else{
                 jhm.putCode(0).putMessage("该手机号已被绑定！");
