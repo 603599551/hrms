@@ -449,7 +449,7 @@ public class SalaryCtrl extends BaseCtrl {
                     workHour+=((float)r.getInt("real_number")*15.0/60.0);
                 }
             }else {
-                jhm.putCode(0).putMessage("工作记录不存在！");
+                jhm.putCode(0).putMessage("工作记录不存在1！");
             }
 
             //应得工资=时薪*应工作的时长
@@ -461,7 +461,7 @@ public class SalaryCtrl extends BaseCtrl {
             String sql3="select * from h_work_time where date=? and staff_id=? order by date ASC";
             List<Record> list1=Db.find(sql3,date,staffId);
             if (list1==null){
-                jhm.putCode(0).putMessage("工作记录不存在！");
+                jhm.putCode(0).putMessage("工作记录不存在2！");
             }
             String sql4="";
             //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
