@@ -1,7 +1,7 @@
 package com.hr.mobile.leave.controllers;
 
 import com.common.controllers.BaseCtrl;
-import com.hr.mobile.leave.services.LeaveSrv;
+import com.hr.mobile.leave.service.LeaveSrv;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
