@@ -27,9 +27,9 @@ public class ResignCtrl extends BaseCtrl {
         //离职原因
         String reason = getPara("reason");
         //测试数据
-//        staffId="8dc14c40a7854f7e8b8f8434223d1b6b";
-//        deptId="4a8d594591ea4c1eb708fcc8a5c67c47";
-//        reason="我是吴亦凡";
+//        staffId="825600fa4ccf432faa3d5f7d66534fd2";
+//        deptId="234k5jl234j5lkj24l35j423l5j";
+//        reason="我是吴亦凡,我要离职";
 
         if (StringUtils.isEmpty(staffId) || StringUtils.isEmpty(deptId)) {
             jhm.putCode(0).putMessage("员工不存在！");
@@ -89,7 +89,7 @@ public class ResignCtrl extends BaseCtrl {
         String staffId = getPara("staff_id");
 
         //测试数据
-//        staffId="2ab92020caa045c39e820e916413ad47";
+//        staffId="60a6f36a65f341c78ee07c9fc250e916";
 
         //id非空验证
         if (StringUtils.isEmpty(staffId)) {
@@ -128,7 +128,7 @@ public class ResignCtrl extends BaseCtrl {
         //离职记录的id
         String id = getPara("id");
         //测试数据
-//        id="c29b4ba7ea7143539fb0e53227bd7708";
+//        id="23bb025f70ec4634a8d92bf21597541f";
         if (StringUtils.isEmpty(id)) {
             jhm.putCode(0).putMessage("记录不存在！");
             renderJson(jhm);
@@ -159,9 +159,9 @@ public class ResignCtrl extends BaseCtrl {
             }
             String sqlStaff="";
             if(StringUtils.equals(isagree,"1")){
-                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, s.job job, s.phone phone, n.create_time time, n.content reason, '不同意' replay FROM h_staff_log s, h_notice n WHERE s.staff_id = n.sender_id AND n.id = ?";
+                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, s.phone phone, n.create_time time, n.content reason, '不同意' replay FROM h_staff_log s, h_notice n WHERE s.staff_id = n.sender_id AND n.id = ?";
             }else if(StringUtils.equals(isagree,"0")){
-                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, s.job job, s.phone phone, n.create_time time, n.content reason, '不同意' replay FROM h_staff s, h_notice n WHERE s.id = n.sender_id AND n.id = ?";
+                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, s.phone phone, n.create_time time, n.content reason, '不同意' replay FROM h_staff s, h_notice n WHERE s.id = n.sender_id AND n.id = ?";
             }
             Record resignRecord = Db.findFirst(sqlStaff, id);
 //            List<Record> returnList = Db.find(sqlReturn,id);
