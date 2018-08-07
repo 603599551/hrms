@@ -9,7 +9,7 @@ public class HomeCtrl extends Controller {
         if(usu.isLogin()){
             redirect("/index.html");
         }else {
-            redirect("/login.html");
+            redirect("/index.html");
         }
     }
 }

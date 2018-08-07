@@ -3,6 +3,7 @@ package com.filter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -10,6 +11,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -47,10 +49,10 @@ public class AccessFilter implements Filter{
 		String domain=UrlKit.getDomain(req);
 		req.setAttribute("domain",domain);
 
-//		boolean isLogin=isLogin(req,resp);//处理自动登录
-//		if(isLogin){
+		boolean isLogin=isLogin(req,resp);//处理自动登录
+		if(isLogin){
 			chain.doFilter(request, response);
-//		}
+		}
 
 
 
@@ -71,7 +73,8 @@ public class AccessFilter implements Filter{
 //		}else
 //		Map adminSession=(Map)req.getSession().getAttribute(KEY.SESSION_ADMIN);
 //		Map userSession=(Map)req.getSession().getAttribute(KEY.SESSION_USER);
-		UserSessionUtil usu=new UserSessionUtil(req);
+    	UserSessionUtil usu=new UserSessionUtil(req);
+
 		if("admin".equals(usu.getUsername())){//访问后台页面
 			return true;
 		}else if(servletPath.startsWith("/user") ){//访问用户登录后才能访问的目录
@@ -103,12 +106,12 @@ public class AccessFilter implements Filter{
 		}else if(servletPath.startsWith("/index") ){//访问用户登录后才能访问的目录
 			if(usu.getUserBean()==null){
 				//System.out.println("--com.club.filter.AccessFilter已经登录，不需要自动登录");
-				try {
-					resp.sendRedirect(UrlKit.getDomain(req)+"/index.html");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return false;
+//				try {
+//					resp.sendRedirect(UrlKit.getDomain(req)+"/index.html");
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+				return true;
 			}else{
 				return true;
 			}
