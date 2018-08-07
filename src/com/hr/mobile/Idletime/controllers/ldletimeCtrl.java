@@ -51,7 +51,7 @@ public class ldletimeCtrl extends BaseCtrl {
             record.set("modify_time", datetime);
             record.set("modifier_id", userId);
             record.set("kind", kind);
-            record.set("content", ContentTransformationUtil.AppToPcXianShi(date));
+            record.set("content", ContentTransformationUtil.AppToPcXianShi(time));
 
             try {
                 boolean flag = Db.save("h_staff_idle_time", record);
@@ -68,6 +68,7 @@ public class ldletimeCtrl extends BaseCtrl {
             recordSelect.set("modify_time", datetime);
             recordSelect.set("modifier_id", userId);
             recordSelect.set("app_content", time);
+            recordSelect.set("content", ContentTransformationUtil.AppToPcXianShi(time));
 
             try{
                 boolean flag = Db.update("h_staff_idle_time", recordSelect);
