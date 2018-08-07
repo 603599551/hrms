@@ -57,7 +57,7 @@ public class SignCtrl extends BaseCtrl {
             //排班情况
             List<Record> recordList = Db.find(selectClock, id, date);
             //存在排班记录
-            if (recordList.size() > 0 && recordList != null) {
+            if (recordList != null && recordList.size() > 0) {
 
                 //提示签退的情况
                 for (int i = 0; i < recordList.size(); ++i) {
@@ -141,7 +141,7 @@ public class SignCtrl extends BaseCtrl {
                             }
                             for (int j = i - 1; j >= 0; --j) {
                                 if (StringUtils.equals(recordList.get(j).getStr("status"), "2") && recordList.get(i - 1).getStr("sign_out") != null) {
-                                    jhm.put("sign_out", recordList.get(i - 1).getStr("sign_out"));
+                                    jhm.put("sign_out", recordList.get(i - 1).getStr("sign_out").substring(0, 5));
                                     isOut = true;
                                 }
                             }
@@ -291,7 +291,7 @@ public class SignCtrl extends BaseCtrl {
             Date signOut = sdfSignTime.parse(dateTime);
             List<Record> clockList = Db.find(selectClock, id, date);
             List<Record> detailList = Db.find(selectDetail, id, date);
-                Record realNum = Db.findFirst(selectRealNum, detailList.get(0).getStr("work_time_id"), date);
+            Record realNum = Db.findFirst(selectRealNum, detailList.get(0).getStr("work_time_id"), date);
 
             //遍历排班情况寻找所处时间段
             for (int i = 0; i < clockList.size(); ++i) {
