@@ -63,11 +63,12 @@ public class ResignSrv extends BaseService {
         boolean flag2 = Db.save("h_notice", recordNotice);
         if(flag1&&flag2) {
 
+            Record staffName = Db.findFirst("select s.name as name from h_staff s where s.id = ?");
             //发推送
             JiguangPush push = new JiguangPush("00e09994649bd900d801f6ad", "5906a375d122d73ee7cffb32");
             String tag = recordId.getStr("id");
             String alias[] = {tag};
-            push.setAlert("您收到了一条离职申请！");
+            push.setAlert("您收到了一条离职申请！(员工： " + staffName.getStr("name")  +")");
             push.setAlias(alias);
             try {
                 push.sendPush();
