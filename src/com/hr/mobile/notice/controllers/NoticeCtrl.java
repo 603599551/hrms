@@ -25,7 +25,7 @@ public class NoticeCtrl extends BaseCtrl{
             //将object转化为int
             int c=NumberUtils.parseInt(cObj,0);
             String leaveSQL2="select * from h_notice where type='leave' and receiver_id=? order by create_time desc limit 0,1";
-            String leaveSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id and h_staff_leave_info.status!='0' order by h_notice.create_time desc limit 0,1";
+            String leaveSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id and h_notice.fid=h_staff_leave_info.id order by h_notice.create_time desc limit 0,1";
             Record leaveR=new Record();
             leaveR.set("type","leaveList");
             leaveR.set("number",c);
@@ -50,7 +50,7 @@ public class NoticeCtrl extends BaseCtrl{
             //resignList
             String resignSQL1="select count(*) as c from h_notice where type='resign'and status=0 and receiver_id=? limit 0,30";
             String resignSQL2="select * from h_notice where type='resign'and receiver_id=? order by create_time desc limit 0,1";
-            String resignSQL3="select h_staff_leave_info.status from h_staff_leave_info,h_notice where h_notice.type='resign'and h_notice.receiver_id=? and h_notice.receiver_id=h_staff_leave_info.staff_id and h_resign.status!='0' order by h_notice.create_time desc limit 0,1";
+            String resignSQL3="select h_resign.status from h_resign,h_notice where h_notice.type='resign'and h_notice.receiver_id=?  and h_notice.receiver_id=h_resign.applicant_id and h_notice.fid=h_resign.id order by h_notice.create_time desc limit 0,1\n";
             Record resignR=new Record();
             resignR.set("type","resignList");
 
@@ -100,7 +100,7 @@ public class NoticeCtrl extends BaseCtrl{
             //请假提醒
             if (type.equals("leaveList")){
                 //根据接收到的staffId和type查询最近30事件的date、states、content
-                String sql1="select h_notice.create_time as date,h_staff_leave_info.status as states,h_staff_leave_info.result as content from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=?  and h_staff_leave_info.status!='0' and h_notice.receiver_id=h_staff_leave_info.staff_id and h_notice.fid=h_staff_leave_info.id order by h_notice.create_time desc limit 0,30";
+                String sql1="select h_notice.create_time as date,h_staff_leave_info.status as states,h_staff_leave_info.result as content from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=?  and h_staff_leave_info.status!='0' and h_notice.receiver_id=h_staff_leave_info.staff_id and h_notice.fid=h_staff_leave_info.id order by h_notice.create_time ASC limit 0,30";
                 list=Db.find(sql1,staffId);
                 if(list!=null&&list.size()>0){
                     for (Record r:list){
@@ -112,7 +112,7 @@ public class NoticeCtrl extends BaseCtrl{
             }//离职提醒
             else if(type.equals("resignList")){
                 //根据接收到的staffId和type查询最近事件的date、states、reason(clothes)、content
-                String sql2="select h_notice.create_time as date,h_resign.reply as content,h_resign.status as states,h_resign.id from h_resign,h_notice where h_notice.receiver_id=? and h_notice.type='resign' and h_notice.receiver_id=h_resign.applicant_id and h_notice.fid=h_resign.id";
+                String sql2="select h_notice.create_time as date,h_resign.reply as content,h_resign.status as states,h_resign.id from h_resign,h_notice where h_notice.receiver_id=? and h_notice.type='resign' and h_notice.receiver_id=h_resign.applicant_id and h_notice.fid=h_resign.id order by h_notice.create_time ASC limit 0,30";
                 String sql3="select name as itemName,status as itemStatus from h_resign_return where resign_id=? ";
                 String resign_id="";
                 String itemName="";
