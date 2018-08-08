@@ -374,8 +374,16 @@ public class SignCtrl extends BaseCtrl {
                     }
                     break;
                 }
-                //下班后签退
+
+
                 if (i < clockList.size() - 1) {
+                    //上班前签退
+                    if(StringUtils.equals(clockList.get(i + 1).getStr("status"),"1") && signOut.getTime() < sdfWorkTime.parse(clockList.get(i + 1).getStr("start_time")).getTime()){
+                        jhm.putCode(2).putMessage("未到上班时间不允许签退！");
+                        break;
+                    }
+
+                    //下班后签退
                     if (!StringUtils.equals(clockList.get(i).getStr("status"), "0") && signOut.getTime() >= sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() && signOut.getTime() <= sdfWorkTime.parse(clockList.get(i + 1).getStr("start_time")).getTime()) {
                         //更改明细表中的状态
                         for (int j = 0; j < detailList.size(); ++j) {
