@@ -310,12 +310,18 @@ public class SchedulingCtrl extends BaseCtrl {
                             if (StringUtils.equals("2",staffList.get(j).getStr("status"))){
                                 record.set("signout",staffList.get(j).getStr("signback").substring(0,5));
                                 break;
+                            }else {
+                                record.set("signin","0");
+                                record.set("signout","0");
                             }
                         }
                         for(int j = i - 1 ; j >= 0 ; --j){
                             if (StringUtils.equals("1",staffList.get(j).getStr("status"))){
                                 record.set("signin",staffList.get(j).getStr("signin").substring(0,5));
                                 break;
+                            }else {
+                                record.set("signin","0");
+                                record.set("signout","0");
                             }
                         }
                     } else {
@@ -332,6 +338,7 @@ public class SchedulingCtrl extends BaseCtrl {
                                 break;
                             }
                         }
+                        record.set("signout","0");
                     } else {
                         record.set("signout","0");
                     }
