@@ -42,8 +42,11 @@ public class StaffSrv extends BaseService {
                 i++;
                 //在h_staff表中添加一条记录
                 String pinyin= HanyuPinyinHelper.getFirstLettersLo(record.getStr("name"));
+                String username=HanyuPinyinHelper.getPinyinString(record.getStr("name"));
                 record.set("id", record.getStr("staff_id"));
                 record.set("pinyin",pinyin);
+                record.set("username",username);
+                record.set("password","123456");
                 record.remove("staff_id");
                 record.remove("operater_id");
                 record.remove("operate_time");

@@ -332,8 +332,12 @@ public class StaffCtrl extends BaseCtrl {
                     String modifierId = usu.getUserId();
                     String idNum = staff.getStr("id_num").replace(" ", "");
                     String empNum = staff.getStr("emp_num").replace(" ", "");
+                    //username 为用户姓名全拼password为123456
+                    String username=HanyuPinyinHelper.getPinyinString(name);
                     staff.set("id", id);
                     staff.set("pinyin", pinyin);
+                    staff.set("username",username);
+                    staff.set("password","123456");
                     staff.set("kind", new String(kind));
                     staff.set("phone", phone);
                     staff.set("emp_num", empNum);
