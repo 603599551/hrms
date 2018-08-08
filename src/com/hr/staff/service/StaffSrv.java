@@ -1,4 +1,4 @@
-package com.hr.staff.controllers.service;
+package com.hr.staff.service;
 
 import com.common.service.BaseService;
 import com.jfinal.aop.Before;
