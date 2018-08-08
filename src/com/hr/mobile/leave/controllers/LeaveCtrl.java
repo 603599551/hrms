@@ -271,14 +271,7 @@ public class LeaveCtrl extends BaseCtrl {
 
     public void list(){
         JsonHashMap jhm = new JsonHashMap();
-        String pageNumStr = getPara("pageNum");
-        String pageSizeStr = getPara("pageSize");
         UserSessionUtil usu = new UserSessionUtil(getRequest());
-
-
-        //为空时赋予默认值
-        int pageNum = NumberUtils.parseInt(pageNumStr, 1);
-        int pageSize = NumberUtils.parseInt(pageSizeStr, 10);
 
         try {
             //未审核
