@@ -44,12 +44,13 @@ public class LeaveSrv {
                 record = new Record();
                 timeArray[0] = (String)jsonArray.getJSONObject(i).get("start");
                 timeArray[1] = (String)jsonArray.getJSONObject(i).get("end");
-                String sql = "select count(*) as c from h_staff_leave where staff_id=? and store_id=? and date=? and leave_start_time=? and leave_end_time=? and status='0'";
-                Record countR = Db.findFirst(sql, userId, usu.getUserBean().getDeptId(), date, timeArray[0], timeArray[1]);
-                if (countR.getInt("c") > 0 ) {
-                    jhm.putCode(0).putMessage("您已请假，请不要重复请假！");
-                    return jhm;
-                }
+//                String sql = "select count(*) as c from h_staff_leave where staff_id=? and store_id=? and date=? and leave_start_time=? and leave_end_time=? and status='0'";
+//                Record countR = Db.findFirst(sql, userId, usu.getUserBean().getDeptId(), date, timeArray[0], timeArray[1]);
+//                if (countR.getInt("c") > 0 ) {
+//                    jhm.putCode(0).putMessage("您已请假，请不要重复请假！");
+//                    return jhm;
+//                }
+
                 //请假分表操作
                 record.set("staff_id", userId);
                 record.set("date",date);
@@ -164,14 +165,6 @@ public class LeaveSrv {
                 leaveRecord.set("result", result);
                 boolean flag = Db.update("h_staff_leave_info", leaveRecord);
                 if(flag){
-//                    String noticeSearch = "select n.title, n.content, n.sender_id, n.receiver_id, n.type, n.fid from h_notice n where fid = ? ";
-//                    Record record = Db.findFirst(noticeSearch, leaveRecord.getStr("id"));
-//                    record.set("id", UUIDTool.getUUID());
-//                    String temp = record.getStr("sender_id");
-//                    record.set("sender_id", record.getStr("receiver_id"));
-//                    record.set("receiver_id", temp);
-//                    record.set("create_time", dateTime);
-//                    record.set("status","0");
                     String leaveInfoSearch = "select i.id as fid, i.staff_id as receiver_id, i.store_mgr_id as sender_id  from h_staff_leave_info i where i.id = ? ";
                     Record record = Db.findFirst(leaveInfoSearch, leaveId);
                     record.set("id", UUIDTool.getUUID());
