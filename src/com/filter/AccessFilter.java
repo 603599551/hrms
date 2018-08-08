@@ -73,6 +73,8 @@ public class AccessFilter implements Filter{
 			return true;
 		}else if(servletPath.startsWith("/index") ){
 			return true;
+		}else if(servletPath.startsWith("/mgr/mobile/") ){
+			return true;
 		}else{
 			if(usu.getUserBean()==null){
 				JsonHashMap jhm = new JsonHashMap();
