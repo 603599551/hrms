@@ -49,7 +49,7 @@ public class SchedulingCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         try {
             JSONObject object = JSONObject.parseObject(this.getRequestObject());
-            // service.update(object);
+//             service.update(object, new UserSessionUtil(getRequest()));
             jhm.putMessage("保存成功！");
         } catch (Exception e) {
             e.printStackTrace();
