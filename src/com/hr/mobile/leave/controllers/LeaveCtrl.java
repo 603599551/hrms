@@ -289,7 +289,7 @@ public class LeaveCtrl extends BaseCtrl {
             jhm.put("reviewList",recordList);
 
             //已审核
-            String sqlReviewed = "SELECT s.pinyin AS pinyin, s. NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.`status` AS status, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id  FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND store_id = ? AND ( i.`status` = '1' OR i.`status` = '2' )";
+            String sqlReviewed = "SELECT s.pinyin AS pinyin, s. NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.`status` AS status, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id  FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND store_id = ? AND ( i.`status` = '1' OR i.`status` = '2' ) ORDER BY i.modify_time desc ";
             List<Record> records = Db.find(sqlReviewed, usu.getUserBean().getDeptId());
             for(int i = 0; i < records.size(); i++){
                 String date = records.get(i).getStr("date");
