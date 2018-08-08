@@ -1,7 +1,7 @@
 package com.hr.mobile.resign.controllers;
 
 import com.common.controllers.BaseCtrl;
-import com.hr.mobile.resign.controllers.service.ResignSrv;
+import com.hr.mobile.resign.service.ResignSrv;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;

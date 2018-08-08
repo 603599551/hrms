@@ -1,4 +1,4 @@
-package com.hr.mobile.resign.controllers.service;
+package com.hr.mobile.resign.service;
 
 import com.common.service.BaseService;
 import com.jfinal.plugin.activerecord.Db;
