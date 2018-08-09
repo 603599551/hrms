@@ -45,7 +45,7 @@ public class SchedulingSrv extends BaseService {
                 jhm.putCode(0).putMessage("您当前没有排班，无法执行减班操作！");
                 return jhm;
             } else {
-                if (recordTime == null || StringUtils.equals(recordTime.getStr("real_number"), "0")) {
+                if (recordTime == null || StringUtils.equals(recordTime.getStr("number"), "0")) {
                     jhm.putCode(0).putMessage("您当前没有排班，无法执行减班操作！");
                     return jhm;
                 } else {
