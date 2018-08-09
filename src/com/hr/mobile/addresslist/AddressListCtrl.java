@@ -130,8 +130,13 @@ public class AddressListCtrl extends BaseCtrl {
                             r.set("job",jobNames);
                         }else{
                             sql6="select h_dictionary.name as name from h_dictionary,h_staff where h_staff.job=h_dictionary.value and h_staff.id=?";
-                            String jobName=Db.findFirst(sql6,r.getStr("id")).getStr("name");
-                            r.set("job",jobName);
+                            Record chineseName=Db.findFirst(sql6,r.getStr("id"));
+                            if (chineseName==null){
+                                jhm.putCode(0).putMessage("找不到中文名！");
+                            }else{
+                                String jobName=chineseName.getStr("name");
+                                r.set("job",jobName);
+                            }
                         }
                     }
                 }
@@ -336,8 +341,13 @@ public class AddressListCtrl extends BaseCtrl {
                             r.set("job",jobNames);
                         }else{
                             sql6="select h_dictionary.name as name from h_dictionary,h_staff where h_staff.job=h_dictionary.value and h_staff.id=?";
-                            String jobName=Db.findFirst(sql6,r.getStr("id")).getStr("name");
-                            r.set("job",jobName);
+                            Record chineseName=Db.findFirst(sql6,r.getStr("id"));
+                            if (chineseName==null){
+                                jhm.putCode(0).putMessage("找不到中文名！");
+                            }else{
+                                String jobName=chineseName.getStr("name");
+                                r.set("job",jobName);
+                            }
                         }
                     }
                 }

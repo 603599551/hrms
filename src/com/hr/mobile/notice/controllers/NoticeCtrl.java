@@ -207,14 +207,14 @@ public class NoticeCtrl extends BaseCtrl{
         String staffId=getPara("staffid");
         try{
             //查询请假消息未读数量
-            String sql="select count(*) as c from h_notice where receiver_id=? and type='leave' and status='0'";
+            String sql="select count(*) as c from h_staff_leave_info where staff_id=? and status='0'";
             //数据类型有可能是int long ....
             Object cObj1=Db.findFirst(sql,staffId).get("c");
             //将Object转为int
             int count1=NumberUtils.parseInt(cObj1,0);
 
             //查询离职消息未读数量
-            String sql2="select count(*) as c from h_notice where receiver_id=? and type='resign' and status='0'";
+            String sql2="select count(*) as c from h_resign where applicant_id=? and status='0'";
             //数据类型有可能是int long ....
             Object cObj2=Db.findFirst(sql2,staffId).get("c");
             //将Object转为int
