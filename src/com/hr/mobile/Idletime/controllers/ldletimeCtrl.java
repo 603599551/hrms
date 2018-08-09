@@ -133,20 +133,24 @@ public class ldletimeCtrl extends BaseCtrl {
             Record statusRecord = Db.findFirst("SELECT time.staff_id as staff_id , time.date as date , time.app_content as app_content FROM h_staff_idle_time time WHERE time.staff_id = ? AND time.date = ? ", id, date);
 //            if (record != null) {
             if (statusRecord != null) {
-                jhm.put("status", "1");
-                jhm.put("staff_id", statusRecord.getStr("staff_id"));
-                jhm.put("date", statusRecord.getStr("date"));
-                jsonArray = JSONArray.fromObject(statusRecord.getStr("app_content"));
-                jhm.put("list", jsonArray);
+                if(statusRecord.getStr("app_content").length() <= 2){
+                    jhm.putCode(0).putMessage("未录入闲时！");
+                }else {
+                    jhm.put("status", "1");
+                    jhm.put("staff_id", statusRecord.getStr("staff_id"));
+                    jhm.put("date", statusRecord.getStr("date"));
+                    jsonArray = JSONArray.fromObject(statusRecord.getStr("app_content"));
+                    jhm.put("list", jsonArray);
+                }
             } else {
-                if (record != null) {
+                if (record != null && record.getStr("app_content").length() > 2) {
                     jhm.put("status", "0");
                     jhm.put("staff_id", record.getStr("staff_id"));
                     jhm.put("date", record.getStr("date"));
                     jsonArray = JSONArray.fromObject(record.getStr("app_content"));
                     jhm.put("list", jsonArray);
                 } else {
-                    jhm.putCode(0).putMessage("未排班！");
+                    jhm.putCode(0).putMessage("未录入闲时！");
                 }
             }
 
