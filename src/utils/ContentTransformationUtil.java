@@ -176,6 +176,9 @@ public class ContentTransformationUtil {
      * @return  app端需要的格式key为"start"和"end"的json数组转成的字符串
      */
     public static String PcToAppXianShi(String pcStr){
+        if(pcStr == null || pcStr.trim().length() == 0){
+            return "";
+        }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         JSONArray jsonArray = new JSONArray();
         String pcContent = "";
