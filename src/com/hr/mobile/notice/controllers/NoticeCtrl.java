@@ -12,6 +12,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * NoticeCtrl class
+ * @author zhanjinqi
+ * @date 2018-08-06
+ */
 public class NoticeCtrl extends BaseCtrl{
 
     public void showType(){
@@ -98,7 +103,7 @@ public class NoticeCtrl extends BaseCtrl{
         List<Record> list;
         try{
             //请假提醒
-            if (type.equals("leaveList")){
+            if ("leaveList".equals(type)){
                 //根据接收到的staffId和type查询最近30事件的date、states、content
                 String sql1="select h_notice.create_time as date,h_staff_leave_info.status as states,h_staff_leave_info.result as content from h_staff_leave_info,h_notice where h_notice.type='leave' and h_notice.receiver_id=?  and h_staff_leave_info.status!='0' and h_notice.receiver_id=h_staff_leave_info.staff_id and h_notice.fid=h_staff_leave_info.id order by h_notice.create_time ASC limit 0,30";
                 list=Db.find(sql1,staffId);
@@ -110,11 +115,11 @@ public class NoticeCtrl extends BaseCtrl{
                 //未读转已读
                 Db.update("update h_notice set status=? where type='leave' and receiver_id=?",1,staffId);
             }//离职提醒
-            else if(type.equals("resignList")){
+            else if("resignList".equals(type)){
                 //根据接收到的staffId和type查询最近事件的date、states、reason(clothes)、content
                 String sql2="select h_notice.create_time as date,h_resign.reply as content,h_resign.status as states,h_resign.id from h_resign,h_notice where h_notice.receiver_id=? and h_notice.type='resign' and h_notice.receiver_id=h_resign.applicant_id and h_notice.fid=h_resign.id order by h_notice.create_time ASC limit 0,30";
                 String sql3="select name as itemName,status as itemStatus from h_resign_return where resign_id=? ";
-                String resign_id="";
+                String resignId="";
                 String itemName="";
                 String itemStatus="";
                 List<Record> list2;
@@ -122,8 +127,8 @@ public class NoticeCtrl extends BaseCtrl{
                 list=Db.find(sql2,staffId);
                 if(list!=null&&list.size()>0){
                     for (Record r:list){
-                        resign_id=r.getStr("id");
-                        list2=Db.find(sql3,resign_id);
+                        resignId=r.getStr("id");
+                        list2=Db.find(sql3,resignId);
                         if(list2!=null&&list2.size()>0){
                             for (Record r2:list2){
                                 itemName=r2.getStr("itemName");
@@ -202,14 +207,14 @@ public class NoticeCtrl extends BaseCtrl{
         String staffId=getPara("staffid");
         try{
             //查询请假消息未读数量
-            String sql="select count(*) as c from h_notice where receiver_id=? and type='leave' and status='0'";
+            String sql="select count(*) as c from h_staff_leave_info where staff_id=? and status='0'";
             //数据类型有可能是int long ....
             Object cObj1=Db.findFirst(sql,staffId).get("c");
             //将Object转为int
             int count1=NumberUtils.parseInt(cObj1,0);
 
             //查询离职消息未读数量
-            String sql2="select count(*) as c from h_notice where receiver_id=? and type='resign' and status='0'";
+            String sql2="select count(*) as c from h_resign where applicant_id=? and status='0'";
             //数据类型有可能是int long ....
             Object cObj2=Db.findFirst(sql2,staffId).get("c");
             //将Object转为int

@@ -6,6 +6,7 @@ import com.jfinal.KEY;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.sun.prism.impl.Disposer;
+import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
@@ -142,6 +143,9 @@ public class LoginCtrl extends BaseCtrl{
                 if(record.getStr("kind") == null){
                     record.set("kind","");
                 }
+                //处理经纬度格式
+                JSONObject  coordinates = JSONObject.fromObject(record.getStr("store_coordinates"));
+                record.set("store_coordinates", coordinates);
                 jhm.put("user_info",record);
                 jhm.put("sessionId",getSession().getId());
                 jhm.putCode(1).putMessage("登录成功！");

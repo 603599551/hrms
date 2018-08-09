@@ -12,6 +12,11 @@ import java.util.Calendar;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * AddressListCtrl class
+ * @author zhanjinqi
+ * @date 2018-08-06
+ */
 public class AddressListCtrl extends BaseCtrl {
     /**
      * @author zhanjinqi
@@ -88,8 +93,10 @@ public class AddressListCtrl extends BaseCtrl {
     public void sortByInitial() {
         JsonHashMap jhm = new JsonHashMap();
         String deptId = getPara("deptid");
-        String job = getPara("job");  //职位
-        String kind = getPara("kind"); //岗位 得到一个
+        //职位
+        String job = getPara("job");
+        //岗位 得到一个
+        String kind = getPara("kind");
         String init;    //首字母
         try {
             String sql="";
@@ -99,7 +106,7 @@ public class AddressListCtrl extends BaseCtrl {
             List<Record> list;
             List<Record> list7;
             //若全部职位参与排序
-            if (job.equals("all")) {
+            if ("all".equals(job)) {
                 sql = "select id,name,pinyin,job,phone,kind from h_staff where dept_id=? order by left(pinyin,1) ASC";
                 list = Db.find(sql, deptId);
                 if (list != null && list.size() > 0) {
@@ -107,7 +114,7 @@ public class AddressListCtrl extends BaseCtrl {
                         init=r.getStr("pinyin").substring(0, 1);
                         r.set("pinyin",init);
                         //若是员工，则显示岗位
-                        if (r.getStr("job") .equals("staff")) {
+                        if ("staff".equals(r.getStr("job"))) {
                             r.set("job", r.getStr("kind"));
                             sql7="select h_dictionary.name as name from h_dictionary,h_staff where find_in_set(h_dictionary.value,h_staff.kind) and h_staff.id=?";
                             list7=Db.find(sql7,r.getStr("id"));
@@ -132,7 +139,7 @@ public class AddressListCtrl extends BaseCtrl {
             //特定职位/岗位排序
             else {
                 //员工职位 返回岗位
-                if (job.equals("staff")) {
+                if ("staff".equals(job)) {
                     sql = "select id,name,pinyin,kind,phone from h_staff where dept_id=? and kind like CONCAT('%',?,'%') order by left(pinyin,1) ASC";
                     list = Db.find(sql, deptId, kind);
                     if (list != null && list.size() > 0){
@@ -212,16 +219,16 @@ public class AddressListCtrl extends BaseCtrl {
         renderJson(jhm);
     }
 
-
-    private static Calendar calendar = Calendar.getInstance();//实例化日历
+    //实例化日历
+    private static Calendar calendar = Calendar.getInstance();
 
     // 获取当月第一天
     public static String getFirstDayOfMonth() {
         String str = "";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         Calendar lastDate = Calendar.getInstance();
-        lastDate.set(Calendar.DATE, 1);// 设为当前月的1号
+        // 设为当前月的1号
+        lastDate.set(Calendar.DATE, 1);
         str = sdf.format(lastDate.getTime());
         return str;
     }
@@ -230,9 +237,9 @@ public class AddressListCtrl extends BaseCtrl {
     public static String getMidDayOfMonth() {
         String str = "";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         Calendar lastDate = Calendar.getInstance();
-        lastDate.set(Calendar.DATE, 15);// 设为当前月的1号
+        // 设为当前月的1号
+        lastDate.set(Calendar.DATE, 15);
         str = sdf.format(lastDate.getTime());
         return str;
     }
@@ -240,7 +247,8 @@ public class AddressListCtrl extends BaseCtrl {
     // 获取当天时间
     public static String getNowTime(String dateformat) {
         Date now = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat(dateformat);// 可以方便地修改日期格式
+        // 可以方便地修改日期格式
+        SimpleDateFormat dateFormat = new SimpleDateFormat(dateformat);
         String hehe = dateFormat.format(now);
         return hehe;
     }
@@ -249,31 +257,44 @@ public class AddressListCtrl extends BaseCtrl {
     public void sortByInitial2() {
         JsonHashMap jhm = new JsonHashMap();
         String deptId = getPara("deptid");
-        String job = getPara("job");  //职位
-        String kind = getPara("kind"); //岗位
-        String init;    //首字母
+        //职位
+        String job = getPara("job");
+        //岗位
+        String kind = getPara("kind");
+        //首字母
+        String init;
 
-        int timesOfLeave;   //请假次数
-        int timesOfLate;   //迟到次数
-        int timesOfEarly;   //早退次数
+        //请假次数
+        int timesOfLeave;
+        //迟到次数
+        int timesOfLate;
+        //早退次数
+        int timesOfEarly;
 
-        int day =calendar.get(Calendar.DAY_OF_MONTH);   //本月的第几天
-        String dateStart="";    //开始日期
-        String dateEnd="";  //结束日期
+        //本月的第几天
+        int day =calendar.get(Calendar.DAY_OF_MONTH);
+        //开始日期
+        String dateStart="";
+        //结束日期
+        String dateEnd="";
         if(day<=15){
             dateStart=AddressListCtrl.getFirstDayOfMonth();
         }else{
             dateStart=AddressListCtrl.getMidDayOfMonth();
         }
-        //dateStart="2018-07-01";
         dateEnd=AddressListCtrl.getNowTime("yyyy-MM-dd");
 
         try {
-            String sql; //查找符合条件的人
-            String sql2;    //查找每个人的请假次数
-            String sql3;    //查找每个人的迟到次数
-            String sql4;    //查找每个人的早退次数
-            String staffId;//人员id
+            //查找符合条件的人
+            String sql;
+            //查找每个人的请假次数
+            String sql2;
+            //查找每个人的迟到次数
+            String sql3;
+            //查找每个人的早退次数
+            String sql4;
+            //人员id
+            String staffId;
             String sql7="";
             String sql6="";
             String jobNames="";
@@ -284,7 +305,7 @@ public class AddressListCtrl extends BaseCtrl {
             sql4="select count(*) from h_staff_clock where store_id=? and staff_id=? and date>=? and date<=? and is_leave_early=2";
 
             //若全部职位参与排序
-            if (job.equals("all")) {
+            if ("all".equals(job)) {
                 sql = "select id,name,pinyin,job,phone,kind from h_staff where dept_id=? order by left(pinyin,1) ASC";
                 list = Db.find(sql, deptId);
                 if (list != null && list.size() > 0) {
@@ -299,7 +320,7 @@ public class AddressListCtrl extends BaseCtrl {
                         init=r.getStr("pinyin").substring(0, 1);
                         r.set("pinyin",init);
                         //若是员工，则显示岗位
-                        if (r.getStr("job") .equals("staff")) {
+                        if ("staff".equals(r.getStr("job"))) {
                             r.set("job", r.getStr("kind"));
                             sql7="select h_dictionary.name as name from h_dictionary,h_staff where find_in_set(h_dictionary.value,h_staff.kind) and h_staff.id=?";
                             list7=Db.find(sql7,r.getStr("id"));
@@ -324,7 +345,7 @@ public class AddressListCtrl extends BaseCtrl {
             //特定职位/岗位排序
             else {
                 //员工职位 返回岗位
-                if (job.equals("staff")) {
+                if ("staff".equals(job)) {
                     sql = "select id,name,pinyin,kind,phone from h_staff where dept_id=? and kind like CONCAT('%',?,'%') order by left(pinyin,1) ASC";
                     list = Db.find(sql, deptId, kind);
                     if (list != null && list.size() > 0){
