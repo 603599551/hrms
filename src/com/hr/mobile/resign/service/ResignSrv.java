@@ -23,38 +23,45 @@ public class ResignSrv extends BaseService {
         String deptId = (String) paraMap.get("deptid");
         String reason =(String)paraMap.get("reason");
 
-
-        //向h_resign日志表插入一条记录
-        String resignId= UUIDTool.getUUID();
-        String createTime= DateTool.GetDateTime();
-        Record resignRecord=new Record();
-        resignRecord.set("id",resignId);
-        resignRecord.set("applicant_id",staffId);//申请人id 传过来的staffid也是当前登录人的id
-        resignRecord.set("apply_time",createTime);//申请日期
-        resignRecord.set("reason",reason);//申请离职原因
-        resignRecord.set("status","0");//0:申请离职，1：同意离职，2：拒绝离职
-        boolean flag1= Db.save("h_resign",resignRecord);
-
-        //向h_notice表插入一条记录
-
         //查询所在门店经理id
         Record recordId=Db.findFirst("select s.id , s.name from h_staff s where s.dept_id=? and s.job='store_manager'",deptId);
         if(recordId==null){
             jhm.putCode(0).putMessage("部门经理不存在！");
             return jhm;
         }
+
+        //向h_resign日志表插入一条记录
+        String resignId= UUIDTool.getUUID();
+        String createTime= DateTool.GetDateTime();
+        Record resignRecord=new Record();
+        resignRecord.set("id",resignId);
+        //申请人id 传过来的staffid也是当前登录人的id
+        resignRecord.set("applicant_id",staffId);
+        //申请日期
+        resignRecord.set("apply_time",createTime);
+        //申请离职原因
+        resignRecord.set("reason",reason);
+        //审核人id
+        resignRecord.set("reviewer_id",recordId.getStr("id"));
+        //0:申请离职，1：同意离职，2：拒绝离职
+        resignRecord.set("status","0");
+        boolean flag1= Db.save("h_resign",resignRecord);
+
+        //向h_notice表插入一条记录
+
+
         String id= UUIDTool.getUUID();
         String title="离职申请";
-        String status="0";//0为未读1为已读
-        String type="resign";//leave是请假，resign是离职
-
+        //0为未读1为已读
+        String status="0";
+        //leave是请假，resign是离职
+        String type="resign";
         Record recordNotice =new Record();
         recordNotice.set("id",id);
         recordNotice.set("title",title);
         recordNotice.set("content",reason);
         recordNotice.set("sender_id",staffId);
         //接收人id填写的是员工所在部门
-
         recordNotice.set("receiver_id",recordId.getStr("id"));
         recordNotice.set("create_time",createTime);
         recordNotice.set("status",status);
