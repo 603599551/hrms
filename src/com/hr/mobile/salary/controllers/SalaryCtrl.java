@@ -9,13 +9,18 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-
+/**
+ * SalaryCtrl class
+ * @author zhanjinqi
+ * @date 2018-08-06
+ */
 public class SalaryCtrl extends BaseCtrl {
 
     // 获取当天时间
     public static String getNowTime(String dateformat) {
         Date now = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat(dateformat);// 可以方便地修改日期格式
+        // 可以方便地修改日期格式
+        SimpleDateFormat dateFormat = new SimpleDateFormat(dateformat);
         String hehe = dateFormat.format(now);
         return hehe;
     }
@@ -26,7 +31,8 @@ public class SalaryCtrl extends BaseCtrl {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         Calendar lastDate = Calendar.getInstance();
-        lastDate.set(Calendar.DATE, 1);// 设为当前月的1号
+        // 设为当前月的1号
+        lastDate.set(Calendar.DATE, 1);
         str = sdf.format(lastDate.getTime());
         return str;
     }
@@ -37,7 +43,8 @@ public class SalaryCtrl extends BaseCtrl {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         Calendar lastDate = Calendar.getInstance();
-        lastDate.set(Calendar.DATE, 16);// 设为当前月的1号
+        // 设为当前月的1号
+        lastDate.set(Calendar.DATE, 16);
         str = sdf.format(lastDate.getTime());
         return str;
     }
@@ -48,9 +55,12 @@ public class SalaryCtrl extends BaseCtrl {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         Calendar lastDate = Calendar.getInstance();
-        lastDate.set(Calendar.DATE, 1);// 设为当前月的1号
-        lastDate.add(Calendar.MONTH, 1);// 加一个月，变为下月的1号
-        lastDate.add(Calendar.DATE, -1);// 减去一天，变为当月最后一天
+        // 设为当前月的1号
+        lastDate.set(Calendar.DATE, 1);
+        // 加一个月，变为下月的1号
+        lastDate.add(Calendar.MONTH, 1);
+        // 减去一天，变为当月最后一天
+        lastDate.add(Calendar.DATE, -1);
 
         str = sdf.format(lastDate.getTime());
         return str;
@@ -229,7 +239,7 @@ public class SalaryCtrl extends BaseCtrl {
                             fRTime=fRStartTime+"-"+fREndTime;
                             finalRecord.set("time",fRTime);
                             finalRecord.set("condition",fRCondition);
-                            if (fRCondition.equals("3")){
+                            if ("3".equals(fRCondition)){
                                 fRChange=count*every15Wage;
                             }else{
                                 fRChange=-(count*every15Wage);
@@ -250,7 +260,7 @@ public class SalaryCtrl extends BaseCtrl {
                             fRTime=fRStartTime+"-"+fREndTime;
                             finalRecord.set("time",fRTime);
                             finalRecord.set("condition",fRCondition);
-                            if (fRCondition.equals("3")){
+                            if ("3".equals(fRCondition)){
                                 fRChange=count*every15Wage;
                             }else{
                                 fRChange=-(count*every15Wage);
@@ -269,8 +279,8 @@ public class SalaryCtrl extends BaseCtrl {
                 }
             }
 
-            //初始化时间格式
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");//20:40
+            //初始化时间格式 20:40
+            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
 
             //查询h_staff_clock表 迟到记录
             String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
@@ -505,7 +515,7 @@ public class SalaryCtrl extends BaseCtrl {
                         fRTime=fRStartTime+"-"+fREndTime;
                         finalRecord.set("time",fRTime);
                         finalRecord.set("condition",fRCondition);
-                        if (fRCondition.equals("3")){
+                        if ("3".equals(fRCondition)){
                             fRChange=count*every15Wage;
                         }else{
                             fRChange=-(count*every15Wage);
@@ -526,7 +536,7 @@ public class SalaryCtrl extends BaseCtrl {
                         fRTime=fRStartTime+"-"+fREndTime;
                         finalRecord.set("time",fRTime);
                         finalRecord.set("condition",fRCondition);
-                        if (fRCondition.equals("3")){
+                        if ("3".equals(fRCondition)){
                             fRChange=count*every15Wage;
                         }else{
                             fRChange=-(count*every15Wage);
@@ -537,8 +547,8 @@ public class SalaryCtrl extends BaseCtrl {
                 }
             }
 
-            //初始化时间格式
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");//20:40
+            //初始化时间格式 20:40
+            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
 
             //查询h_staff_clock表 迟到记录
             String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date=?";
@@ -820,7 +830,7 @@ public class SalaryCtrl extends BaseCtrl {
                             fRTime=fRStartTime+"-"+fREndTime;
                             finalRecord.set("time",fRTime);
                             finalRecord.set("condition",fRCondition);
-                            if (fRCondition.equals("3")){
+                            if ("3".equals(fRCondition)){
                                 fRChange=count*every15Wage;
                             }else{
                                 fRChange=-(count*every15Wage);
@@ -841,7 +851,7 @@ public class SalaryCtrl extends BaseCtrl {
                             fRTime=fRStartTime+"-"+fREndTime;
                             finalRecord.set("time",fRTime);
                             finalRecord.set("condition",fRCondition);
-                            if (fRCondition.equals("3")){
+                            if ("3".equals(fRCondition)){
                                 fRChange=count*every15Wage;
                             }else{
                                 fRChange=-(count*every15Wage);
@@ -860,8 +870,8 @@ public class SalaryCtrl extends BaseCtrl {
                 }
             }
 
-            //初始化时间格式
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");//20:40
+            //初始化时间格式 20:40
+            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
 
             //查询h_staff_clock表 迟到记录
             String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
