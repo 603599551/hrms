@@ -12,6 +12,7 @@ import easy.util.UUIDTool;
 import net.sf.json.JSONArray;
 import utils.bean.JsonHashMap;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -156,6 +157,32 @@ public class LeaveSrv {
             if(countR.getInt("c") > 0){
                 Record leaveRecord = Db.findById("h_staff_leave_info", leaveId);
                 if(StringUtils.equals("0",status)){
+                    //批准请假后更改h_staff_clock、h_work_time、h_work_time_detail三张表，拒绝时不用修改
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+                    //用于记录请了多少个工时
+                    String startTime = leaveRecord.getStr("times").substring(0,5);
+                    String endTime = leaveRecord.getStr("times").substring(6,11);
+                    String staffId = leaveRecord.getStr("staff_id");
+                    String date = leaveRecord.getStr("date");
+
+                    //处理h_work_time_detail表
+                    List<Record> detailList = Db.find("SELECT d.id as id, d.`status` as `status`  FROM h_work_time_detail d WHERE d.staff_id = ? and d.date = ? and d.start_time >= ? and d.end_time <= ?",staffId,date,startTime,endTime);
+                    for(int i = 0 ; i < detailList.size() ; ++i){
+                        detailList.get(i).set("status","5");
+                    }
+                    Db.batchUpdate("h_work_time_detail",detailList,detailList.size());
+
+                    //处理h_staff_clock表
+                    Record clockRecord = Db.findFirst("SELECT  c.id as id , c.is_leave as is_leave FROM h_staff_clock c WHERE c.staff_id = ? and c.date = ? AND c.start_time <= ? and c.end_time >= ?",staffId,date,startTime,endTime);
+                    clockRecord.set("is_leave","1");
+                    Db.update("h_staff_clock",clockRecord);
+
+                    //处理h_work_time表
+                    Record timeRecord = Db.findFirst("SELECT time.id as id , time.number FROM h_work_time time WHERE time.staff_id = ? AND time.date = ?",staffId,date);
+                    timeRecord.set("number",timeRecord.getInt("number") - leaveRecord.getInt("number"));
+                    Db.update("h_work_time",timeRecord);
+
+
                     leaveRecord.set("status", "1");
                 } else {
                     leaveRecord.set("status","2");
@@ -177,6 +204,7 @@ public class LeaveSrv {
 
                     boolean flagN = Db.save("h_notice", record);
                     if(flagN){
+
                         //发推送
                         JiguangPush push = new JiguangPush("6863f15c5be031f95b5de21c", "130e4cbb7f9e821a26158183");
                         String tag = countR.getStr("staff_id");
@@ -198,6 +226,7 @@ public class LeaveSrv {
                     } else {
                         jhm.putCode(0).putMessage("审核失败！");
                     }
+
                 } else {
                     jhm.putCode(0).putMessage("审核失败！");
                 }
