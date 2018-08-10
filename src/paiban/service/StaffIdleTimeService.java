@@ -8,9 +8,11 @@ import com.jfinal.plugin.activerecord.tx.Tx;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
+import net.sf.json.JSONObject;
 import utils.ContentTransformationUtil;
 import utils.bean.JsonHashMap;
 
+import java.text.SimpleDateFormat;
 import java.util.Map;
 
 
@@ -32,9 +34,13 @@ public class StaffIdleTimeService extends BaseService {
             String searchStaff = "select count(*) as c, s.dept_id as store_id, s.kind as kind from h_staff s where s.id = ? ";
             Record record = Db.findFirst(searchStaff, id);
             if (record.getInt("c") > 0) {
+
                 String nowDate = dateTool.GetDateTime();
                 //获取下周星期几对应日期
                 int nowDay = dateTool.getWeekDay(nowDate);
+                if(nowDay == 1){
+                    nowDay = 8;
+                }
                 int next = 9 - nowDay + Integer.parseInt(week);
                 String thatDate = this.nextDay(nowDate, next);
 
