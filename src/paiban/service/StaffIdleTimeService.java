@@ -8,6 +8,7 @@ import com.jfinal.plugin.activerecord.tx.Tx;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
+import utils.ContentTransformationUtil;
 import utils.bean.JsonHashMap;
 
 import java.util.Map;
@@ -61,7 +62,7 @@ public class StaffIdleTimeService extends BaseService {
                 record.set("creater_id", userId);
                 record.set("modifier_id", userId);
                 record.set("content", content);
-                record.set("app_content", PcToAppXianShi(content));
+                record.set("app_content", ContentTransformationUtil.Pc2AppContentEvery15M4Xianshi(content));
 
                 boolean flag = Db.save("h_staff_idle_time", record);
                 if (flag) {

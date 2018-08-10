@@ -155,7 +155,7 @@ public class SchedulingService extends BaseService {
                         staffSave.set("date", date);
                         String json = JSONObject.toJSONString(staffJson);
                         staffSave.set("content", json);
-                        staffSave.set("app_content", ContentTransformationUtil.PcToAppPaiban(json));
+                        staffSave.set("app_content", ContentTransformationUtil.Pc2AppContentEvery15M4Paiban(json));
                         staffSave.set("creater_id", userId);
                         staffSave.set("create_time", saveTime);
                         staffSave.set("modifier_id", userId);
@@ -278,12 +278,20 @@ public class SchedulingService extends BaseService {
                     end_time = end_time.substring(0, end_time.length() - 3);
                     r.set("start_time", start_time);
                     r.set("end_time", end_time);
+                    r.set("status", "0");
+                    r.set("is_late", "0");
+                    r.set("is_leave_early", "0");
+                    r.set("is_leave", "0");
                 }
             }
             Db.batchSave("h_staff_clock", saveList, saveList.size());
         }
     }
-
+/*
+staff_clock里面 status,is_late,is_leave_early 应该有初始值是0
+staff_paiban里面app_content存的是15分钟的时间段   没有秒
+staff_idle_time里面app_content也是15分钟时间段  没有秒
+ */
     /**
      * 排班成日期，时间段，岗位，员工集合的格式
      * @param dateArr
@@ -566,29 +574,29 @@ public class SchedulingService extends BaseService {
         String date = object.getString("date");
         String storeId = object.getString("dept");
         JSONArray workers = object.getJSONArray("workers");
-        Map<String, Integer> numberMap = new HashMap<>();
-
-        if(workers != null && workers.size() > 0){
-            for(int i = 0; i < workers.size(); i++){
-                JSONObject worker = workers.getJSONObject(i);
-                if(worker != null){
-                    JSONArray work = worker.getJSONArray("work");
-                    if(work != null && work.size() > 0){
-                        for(int index = 0; index < work.size(); index++){
-                            JSONObject obj = work.getJSONObject(index);
-                            String time = obj.getJSONArray("pos").getString(0) + "," + obj.getJSONArray("pos").getString(1);
-                            Integer number = numberMap.get(time);
-                            if(number == null){
-                                number = 0;
-                            }
-                            number ++;
-                            numberMap.put(time, number);
-                        }
-                    }
-                }
-            }
-        }
-        List<String> staffIds = new ArrayList<>();
+//        Map<String, Integer> numberMap = new HashMap<>();
+//
+//        if(workers != null && workers.size() > 0){
+//            for(int i = 0; i < workers.size(); i++){
+//                JSONObject worker = workers.getJSONObject(i);
+//                if(worker != null){
+//                    JSONArray work = worker.getJSONArray("work");
+//                    if(work != null && work.size() > 0){
+//                        for(int index = 0; index < work.size(); index++){
+//                            JSONObject obj = work.getJSONObject(index);
+//                            String time = obj.getJSONArray("pos").getString(0) + "," + obj.getJSONArray("pos").getString(1);
+//                            Integer number = numberMap.get(time);
+//                            if(number == null){
+//                                number = 0;
+//                            }
+//                            number ++;
+//                            numberMap.put(time, number);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        List<String> staffIds = new ArrayList<>();
 //        System.out.println(date);
         List<Record> staffPaibanList = update_h_staff_paiban(object, usu);
         update_h_staff_clock(staffPaibanList, usu, date);
@@ -614,7 +622,7 @@ public class SchedulingService extends BaseService {
                 staff_paiban.set("date", date);
                 String json = worker.toJSONString();
                 staff_paiban.set("content", json);
-                staff_paiban.set("app_content", ContentTransformationUtil.PcToAppPaiban(json));
+                staff_paiban.set("app_content", ContentTransformationUtil.Pc2AppContentEvery15M4Paiban(json));
                 staff_paiban.set("creater_id", userId);
                 staff_paiban.set("create_time", saveTime);
                 staff_paiban.set("modifier_id", userId);

@@ -1,7 +1,5 @@
 package utils;
 
-import com.alibaba.fastjson.JSON;
-import com.jfinal.json.Json;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import easy.util.DateTool;
@@ -359,6 +357,74 @@ public class ContentTransformationUtil {
             e.printStackTrace();
         }
         return jsonTime;
+    }
+
+    public static Map<String, String> timePc_App_begin = new HashMap<>();
+    public static Map<String, String> timePc_App_end = new HashMap<>();
+
+    static{
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        try {
+            Date dBegin = sdf.parse("7:30");
+            Date dEnd = sdf.parse("7:45");
+            long one15Time = 1000 * 60 * 15;
+            for(int i = 0; i < 66; i++){
+                String timeBegin = sdf.format(new Date(dBegin.getTime() + i * one15Time));
+                String timeEnd = sdf.format(new Date(dEnd.getTime() + i * one15Time));
+                timePc_App_begin.put(i + "", timeBegin);
+                timePc_App_end.put(i + "", timeEnd);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args){
+        String s = "{\"44\":0,\"45\":0,\"46\":0,\"47\":0,\"48\":0,\"49\":0,\"50\":0,\"51\":0,\"52\":0,\"53\":0,\"10\":0,\"54\":0,\"11\":0,\"55\":0,\"12\":0,\"56\":0,\"13\":0,\"57\":0,\"14\":1,\"58\":0,\"15\":1,\"59\":0,\"16\":1,\"17\":1,\"18\":1,\"19\":1,\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0,\"5\":0,\"6\":0,\"7\":0,\"8\":0,\"9\":0,\"60\":0,\"61\":0,\"62\":0,\"63\":0,\"20\":1,\"64\":0,\"21\":1,\"65\":0,\"22\":1,\"23\":1,\"24\":1,\"25\":1,\"26\":1,\"27\":1,\"28\":1,\"29\":1,\"30\":1,\"31\":0,\"32\":0,\"33\":0,\"34\":0,\"35\":0,\"36\":0,\"37\":0,\"38\":0,\"39\":0,\"40\":0,\"41\":0,\"42\":0,\"43\":0}";
+        s = Pc2AppContentEvery15M4Xianshi(s);
+        System.out.println(s);
+    }
+
+    public static String Pc2AppContentEvery15M4Xianshi(String pcContent){
+        String result = "";
+        if(pcContent == null || pcContent.trim().length() == 0){
+            return "";
+        }
+        JSONObject pc = JSONObject.fromObject(pcContent);
+        List<Map<String, String>> resultMap = new ArrayList<>();
+        for(int i = 0; i < 66; i++){
+            int data = pc.getInt(i + "");
+            if(1 == data){
+                Map<String, String> map = new HashMap<>();
+                map.put("start", timePc_App_begin.get(i + ""));
+                map.put("end", timePc_App_end.get(i + ""));
+                resultMap.add(map);
+            }
+        }
+        result = JSONArray.fromObject(resultMap).toString();
+        return result;
+    }
+
+    public static String Pc2AppContentEvery15M4Paiban(String pcContent){
+        String result = "";
+        if(pcContent == null || pcContent.trim().length() == 0){
+            return "";
+        }
+        JSONObject pc = JSONObject.fromObject(pcContent);
+        JSONArray works = pc.getJSONArray("work");
+        if(works != null && works.size() > 0){
+            List<Map<String, String>> resultMap = new ArrayList<>();
+            for(int i = 0; i < works.size(); i++){
+                JSONObject work = works.getJSONObject(i);
+                String time = work.getJSONArray("pos").getString(0);
+                Map<String, String> map = new HashMap<>();
+                map.put("start", timePc_App_begin.get(time));
+                map.put("end", timePc_App_end.get(time));
+                resultMap.add(map);
+            }
+            result = JSONArray.fromObject(resultMap).toString();
+        }
+        return result;
     }
 
 }
