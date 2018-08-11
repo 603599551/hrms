@@ -75,6 +75,19 @@ public class AccessFilter implements Filter{
 			return true;
 		}else if(servletPath.startsWith("/mobile/") ){
 			return true;
+		}else if(servletPath.startsWith("/mgr/mobile/") ){
+			if(usu.getUserBean()==null){
+				JsonHashMap jhm = new JsonHashMap();
+				jhm.putCode(0).putMessage("登录超时，请重新登录！");
+				try {
+					resp.getWriter().write(JSONObject.toJSONString(jhm));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return false;
+			}else{
+				return true;
+			}
 		}else{
 			if(usu.getUserBean()==null){
 				JsonHashMap jhm = new JsonHashMap();
