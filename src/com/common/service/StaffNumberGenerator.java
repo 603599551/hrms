@@ -6,9 +6,9 @@ import com.jfinal.plugin.activerecord.Record;
 import easy.util.DateTool;
 
 /**
- * 生成订单编号的公共类
+ * 生成员工工号的公共类
  */
-public class OrderNumberGenerator extends BaseCtrl {
+public class StaffNumberGenerator extends BaseCtrl {
     /**
      * 补零长度
      */
@@ -23,21 +23,21 @@ public class OrderNumberGenerator extends BaseCtrl {
      * 生成员工工号
      * @return
      */
-    public static synchronized String getOutWarehouseOrderNumber(){
+    public static synchronized String getStaffOrderNumber(){
         String reStr="";
         String date= DateTool.GetDate();
 
         try {
-            Record r=Db.findFirst("select * from order_number where type=?",TYPE_GH);
+            Record r=Db.findFirst("select * from h_staff_number where type=?",TYPE_GH);
             if(r!=null){//如果有记录就继续判断
                 String dateInR=r.getStr("date");
                 if(date.equals(dateInR)){//如果日期相同
                     int number=r.getInt("number");
                     number++;
                     reStr=getNumber(TYPE_GH,date,LENGTH,number);
-                    Db.update("update order_number set number=? where type=?",number,TYPE_GH);
+                    Db.update("update h_staff_number set number=? where type=?",number,TYPE_GH);
                 }else{//如果数据库中的日期不是当前系统日期
-                    Db.update("update order_number set date=?,number=? where type=?",date,1,TYPE_GH);
+                    Db.update("update h_staff_number set date=?,number=? where type=?",date,1,TYPE_GH);
                     reStr=getNumber(TYPE_GH,date,LENGTH,1);
                 }
             }else{//如果没有记录就添加记录
@@ -46,7 +46,7 @@ public class OrderNumberGenerator extends BaseCtrl {
                 saveR.set("type",TYPE_GH);
                 saveR.set("number",1);
                 saveR.set("remark","员工工号");
-                Db.save("order_number",saveR);
+                Db.save("h_staff_number",saveR);
                 reStr=getNumber(TYPE_GH,date,LENGTH,1);
             }
         } catch (Exception e) {

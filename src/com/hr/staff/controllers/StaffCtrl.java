@@ -1,7 +1,7 @@
 package com.hr.staff.controllers;
 
 import com.common.controllers.BaseCtrl;
-import com.common.service.OrderNumberGenerator;
+import com.common.service.StaffNumberGenerator;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
@@ -335,7 +335,7 @@ public class StaffCtrl extends BaseCtrl {
                     //username 为用户姓名全拼password为123456
                     String username=HanyuPinyinHelper.getPinyinString(name);
                     //自动生成员工工号
-                    String empNum= OrderNumberGenerator.getOutWarehouseOrderNumber();
+                    String empNum= StaffNumberGenerator.getStaffOrderNumber();
                     staff.set("id", id);
                     staff.set("pinyin", pinyin);
                     staff.set("username",username);
