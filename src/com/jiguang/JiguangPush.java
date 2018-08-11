@@ -34,7 +34,7 @@ public class JiguangPush {
         JiguangPush push=new JiguangPush("6863f15c5be031f95b5de21c","130e4cbb7f9e821a26158183");
         push.setAlert("测试");
 //        push.setAndroidTitle("安卓测试");
-        push.setTag("tag1");
+        push.setTag("8");
         try {
             push.sendPush();
         }catch (Exception e){
@@ -85,7 +85,7 @@ public class JiguangPush {
                                 .setTitle(androidTitle)
                                 .addExtras(extras).build())
                         .addPlatformNotification(IosNotification.newBuilder()
-                                .incrBadge(1)
+                                .incrBadge(1).setSound("happy")
                                 .addExtras(extras).build())
                         .build())
                 .build();
