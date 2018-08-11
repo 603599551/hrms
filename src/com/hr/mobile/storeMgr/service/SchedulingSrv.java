@@ -62,8 +62,8 @@ public class SchedulingSrv extends BaseService {
                         Db.update("h_work_time_detail", record);
 
                         //判断员工是否签退如果签退就减工时，否则不减工时
-                        String sqlTime="select c.sign_back_time time from h_staff_clock c where c.start_time < ? AND c.end_time > ? limit 1";
-                        Record recordWorktime=Db.findFirst(sqlTime,endTime,startTime);
+                        String sqlTime="select c.sign_back_time time from h_staff_clock c where c.staff_id=? and c.date=? and c.start_time <= ? AND c.end_time >= ?";
+                        Record recordWorktime=Db.findFirst(sqlTime,staffId,date,endTime,startTime);
                         //签退
                         if(!StringUtils.isEmpty(recordWorktime.getStr("time"))){
                             realNumber = recordTime.getInt("real_number") - 1;
