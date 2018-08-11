@@ -140,7 +140,7 @@ public class SchedulingService extends BaseService {
                             int[] pos = {toInt(r.get("time")), postsMap.get(r.getStr("kind"))};
                             objMap.put("pos", pos);
                             objMap.put("kind", r.get("kind"));
-                            objMap.put("salary", staff.get("salary"));
+                            objMap.put("salary", (staff.getDouble("salary") / 4) + "");
                             work.add(objMap);
                         }
                         Map<String, Object> staffJson = new HashMap<>();
@@ -242,7 +242,7 @@ public class SchedulingService extends BaseService {
                 String appContent = r.getStr("app_content");
                 String pcContent = r.getStr("content");
                 if(appContent != null && appContent.trim().length() > 0){
-                    JSONArray appContentArr = JSONArray.parseArray(appContent);
+                    JSONArray appContentArr = JSONArray.parseArray(ContentTransformationUtil.DispersedTime2ContinuousTime4String(appContent));
                     JSONObject pcContentObj = JSONObject.parseObject(pcContent);
                     String kind = pcContentObj.getJSONArray("work").getJSONObject(0).getString("kind");
                     String salary = pcContentObj.getJSONArray("work").getJSONObject(0).getString("salary");
@@ -272,12 +272,12 @@ public class SchedulingService extends BaseService {
             Db.delete(delete, usu.getUserBean().get("store_id"), dateArr[0], dateArr[dateArr.length - 1]);
             if(saveList != null && saveList.size() > 0){
                 for(Record r : saveList){
-                    String start_time = r.getStr("start_time");
-                    String end_time = r.getStr("end_time");
-                    start_time = start_time.substring(0, start_time.length() - 3);
-                    end_time = end_time.substring(0, end_time.length() - 3);
-                    r.set("start_time", start_time);
-                    r.set("end_time", end_time);
+//                    String start_time = r.getStr("start_time");
+//                    String end_time = r.getStr("end_time");
+//                    start_time = start_time.substring(0, start_time.length() - 3);
+//                    end_time = end_time.substring(0, end_time.length() - 3);
+//                    r.set("start_time", start_time);
+//                    r.set("end_time", end_time);PcToAppPaiban
                     r.set("status", "0");
                     r.set("is_late", "0");
                     r.set("is_leave_early", "0");

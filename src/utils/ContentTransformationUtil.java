@@ -380,9 +380,84 @@ public class ContentTransformationUtil {
     }
 
     public static void main(String[] args){
-        String s = "{\"44\":0,\"45\":0,\"46\":0,\"47\":0,\"48\":0,\"49\":0,\"50\":0,\"51\":0,\"52\":0,\"53\":0,\"10\":0,\"54\":0,\"11\":0,\"55\":0,\"12\":0,\"56\":0,\"13\":0,\"57\":0,\"14\":1,\"58\":0,\"15\":1,\"59\":0,\"16\":1,\"17\":1,\"18\":1,\"19\":1,\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0,\"5\":0,\"6\":0,\"7\":0,\"8\":0,\"9\":0,\"60\":0,\"61\":0,\"62\":0,\"63\":0,\"20\":1,\"64\":0,\"21\":1,\"65\":0,\"22\":1,\"23\":1,\"24\":1,\"25\":1,\"26\":1,\"27\":1,\"28\":1,\"29\":1,\"30\":1,\"31\":0,\"32\":0,\"33\":0,\"34\":0,\"35\":0,\"36\":0,\"37\":0,\"38\":0,\"39\":0,\"40\":0,\"41\":0,\"42\":0,\"43\":0}";
-        s = Pc2AppContentEvery15M4Xianshi(s);
+        String s = "[{\"start\":\"11:00\",\"end\":\"11:15\"},{\"start\":\"11:15\",\"end\":\"11:30\"},{\"start\":\"11:30\",\"end\":\"11:45\"},{\"start\":\"11:45\",\"end\":\"12:00\"},{\"start\":\"12:00\",\"end\":\"12:15\"},{\"start\":\"12:15\",\"end\":\"12:30\"},{\"start\":\"12:30\",\"end\":\"12:45\"},{\"start\":\"12:45\",\"end\":\"13:00\"},{\"start\":\"13:00\",\"end\":\"13:15\"},{\"start\":\"13:15\",\"end\":\"13:30\"},{\"start\":\"13:30\",\"end\":\"13:45\"},{\"start\":\"13:45\",\"end\":\"14:00\"},{\"start\":\"18:30\",\"end\":\"18:45\"},{\"start\":\"18:45\",\"end\":\"19:00\"},{\"start\":\"19:45\",\"end\":\"20:00\"},{\"start\":\"20:00\",\"end\":\"20:15\"},{\"start\":\"20:15\",\"end\":\"20:30\"},{\"start\":\"20:30\",\"end\":\"20:45\"},{\"start\":\"20:45\",\"end\":\"21:00\"}]";
+        s = DispersedTime2ContinuousTime4String(s);
         System.out.println(s);
+    }
+
+    /**
+     * 将分散的时间转化成连续的时间段
+     * 8:00~8:15,8:15~8:30
+     * 8:00~8:30
+     * @return
+     */
+    public static String DispersedTime2ContinuousTime4String(String appContentArrStr){
+        if(appContentArrStr == null || appContentArrStr.trim().length() == 0){
+            return "";
+        }
+        JSONArray appContentArr = JSONArray.fromObject(appContentArrStr);
+        return DispersedTime2ContinuousTime4JSONArray(appContentArr);
+    }
+
+    /**
+     * 将分散的时间转化成连续的时间段
+     * 8:00~8:15,8:15~8:30
+     * 8:00~8:30
+     * @return
+     */
+    public static String DispersedTime2ContinuousTime4JSONArray(JSONArray appContentArr){
+        if(appContentArr == null || appContentArr.size() == 0){
+            return "";
+        }
+        String result = "";
+        List<JSONObject> appContentList = new ArrayList<>();
+        if(appContentArr != null && appContentArr.size() > 0){
+            for(int i = 0; i < appContentArr.size(); i++){
+                appContentList.add(appContentArr.getJSONObject(i));
+            }
+        }
+        Collections.sort(appContentList, new Comparator<JSONObject>() {
+            @Override
+            public int compare(JSONObject o1, JSONObject o2) {
+                String o1Time = o1.getString("start");
+                String o2Time = o2.getString("start");
+                return o1Time.compareTo(o2Time);
+            }
+        });
+        List<Map<String, String>> resultMapList = new ArrayList<>();
+        if(appContentList != null){
+            if(appContentList.size() > 1){
+                for(int i = 0; i < appContentList.size(); i++){
+                    JSONObject objFir = appContentList.get(i);
+                    String startTimeFir = objFir.getString("start");
+                    String endTimeFir = objFir.getString("end");
+                    Map<String, String> map = new HashMap<>();
+                    if(resultMapList.size() > 0){
+                        map = resultMapList.get(resultMapList.size() - 1);
+                        if(map.get("end").equals(startTimeFir)){
+                            map.put("end", endTimeFir);
+                            continue;
+                        }else{
+                            Map<String, String> mapNext = new HashMap<>();
+                            mapNext.put("start", startTimeFir);
+                            mapNext.put("end", endTimeFir);
+                            resultMapList.add(mapNext);
+                        }
+                    }else{
+                        map.put("start", startTimeFir);
+                        map.put("end", endTimeFir);
+                        resultMapList.add(map);
+                    }
+                }
+            }else if(appContentList.size() == 1){
+                Map<String, String> map = new HashMap<>();
+                map.put("start", appContentList.get(0).getString("start"));
+                map.put("end", appContentList.get(0).getString("end"));
+                resultMapList.add(map);
+            }
+            result = JSONArray.fromObject(resultMapList).toString();
+        }
+        return result;
     }
 
     public static String Pc2AppContentEvery15M4Xianshi(String pcContent){
