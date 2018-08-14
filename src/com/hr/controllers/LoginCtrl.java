@@ -63,7 +63,7 @@ public class LoginCtrl extends BaseCtrl {
                 jhm.put("data", user);
                 jhm.put("sessionId",getSession().getId());
                 jhm.putMessage("登录成功！");
-                this.setCookie("Admin-Token", ub.getRealName(), 60 * 60 * 24 * 3);
+                this.setCookie("Admin-Token", String2Unicode(ub.getRealName()), 60 * 60 * 24 * 3);
             } else {
                 jhm.putCode(-1);
                 jhm.putMessage("用户名或密码错误！");
@@ -75,5 +75,14 @@ public class LoginCtrl extends BaseCtrl {
         renderJson(jhm);
     }
 
-
+    private String String2Unicode(String string) {
+        StringBuffer unicode = new StringBuffer();
+        for (int i = 0; i < string.length(); i++) {
+            // 取出每一个字符
+            char c = string.charAt(i);
+            // 转换为unicode
+            unicode.append("\\u" + Integer.toHexString(c));
+        }
+        return unicode.toString();
+    }
 }

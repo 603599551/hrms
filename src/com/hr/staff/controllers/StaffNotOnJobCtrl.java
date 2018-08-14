@@ -1,7 +1,7 @@
 package com.hr.staff.controllers;
 
 import com.common.controllers.BaseCtrl;
-import com.hr.staff.controllers.service.StaffSrv;
+import com.hr.staff.service.StaffSrv;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;

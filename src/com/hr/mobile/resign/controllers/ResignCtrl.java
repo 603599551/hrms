@@ -1,15 +1,14 @@
 package com.hr.mobile.resign.controllers;
 
 import com.common.controllers.BaseCtrl;
-import com.hr.mobile.resign.controllers.service.ResignSrv;
+import com.hr.mobile.resign.service.ResignSrv;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 public class ResignCtrl extends BaseCtrl {
 
@@ -27,9 +26,9 @@ public class ResignCtrl extends BaseCtrl {
         //离职原因
         String reason = getPara("reason");
         //测试数据
-//        staffId="825600fa4ccf432faa3d5f7d66534fd2";
-//        deptId="234k5jl234j5lkj24l35j423l5j";
-//        reason="我是吴亦凡,我要离职";
+//        staffId="37ddeef038c141e9adeb1a687cf60560";
+//        deptId="c95a33cf41a9433d9dbca1ba84603358";
+//        reason="777,我要离职";
 
         if (StringUtils.isEmpty(staffId) || StringUtils.isEmpty(deptId)) {
             jhm.putCode(0).putMessage("员工不存在！");
@@ -89,7 +88,7 @@ public class ResignCtrl extends BaseCtrl {
         String staffId = getPara("staff_id");
 
         //测试数据
-//        staffId="60a6f36a65f341c78ee07c9fc250e916";
+//        staffId="5694e4571961404e863aa43fede9923c";
 
         //id非空验证
         if (StringUtils.isEmpty(staffId)) {
@@ -99,13 +98,20 @@ public class ResignCtrl extends BaseCtrl {
         }
         try {
             //参数为店长id
-            String sql = "SELECT n.id id, upper(LEFT (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, n.create_time time, n.content reason, ( CASE r. STATUS WHEN '0' THEN '0' ELSE '1' END ) ishandle, ( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree, ( SELECT count(*) FROM h_notice, h_resign WHERE h_notice.fid = h_resign.id AND h_notice.receiver_id = ? AND h_notice.type = 'resign' AND h_resign. STATUS = '0' ) untreated FROM h_staff s, h_notice n, h_resign r WHERE s.id = n.sender_id AND n.fid = r.id AND n.receiver_id = ? AND n.type = 'resign'order by n.create_time";
+            String sql = "SELECT n.id id, upper(LEFT (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, n.create_time time, n.content reason, ( CASE r. STATUS WHEN '0' THEN '0' ELSE '1' END ) ishandle, ( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree, ( SELECT count(*) FROM h_notice, h_resign WHERE h_notice.fid = h_resign.id AND h_notice.receiver_id = ? AND h_notice.type = 'resign' AND h_resign. STATUS = '0' ) untreated,(case r.review_time when null then '0' else r.review_time end) sortTime  FROM h_staff s, h_notice n, h_resign r WHERE s.id = n.sender_id AND n.fid = r.id AND n.receiver_id = ? AND n.type = 'resign'order by (case r.status when '0' then n.create_time else r.review_time end) desc";
             List<Record> applyList = Db.find(sql, staffId,staffId);
-            String sqlAgree="SELECT n.id id, upper(LEFT (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, n.create_time time, n.content reason, ( CASE r. STATUS WHEN '0' THEN '0' ELSE '1' END ) ishandle, ( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree, ( SELECT count(*) FROM h_notice, h_resign WHERE h_notice.fid = h_resign.id AND h_notice.receiver_id = ? AND h_notice.type = 'resign' AND h_resign. STATUS = '0' ) untreated FROM h_staff_log s, h_notice n, h_resign r WHERE s.staff_id = n.sender_id AND n.fid = r.id AND n.receiver_id = ? AND n.type = 'resign' order by n.create_time";
+            String sqlAgree="SELECT n.id id, upper(LEFT (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, n.create_time time, n.content reason, ( CASE r. STATUS WHEN '0' THEN '0' ELSE '1' END ) ishandle, ( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree, ( SELECT count(*) FROM h_notice, h_resign WHERE h_notice.fid = h_resign.id AND h_notice.receiver_id = ? AND h_notice.type = 'resign' AND h_resign. STATUS = '0' ) untreated,r.review_time sortTime  FROM h_staff_log s, h_notice n, h_resign r WHERE s.staff_id = n.sender_id AND n.fid = r.id AND n.receiver_id = ? AND n.type = 'resign' and r.status='1' order by r.review_time desc";
             List<Record> agreeList = Db.find(sqlAgree, staffId,staffId);
             if (applyList != null && applyList.size() > 0) {
                 if(agreeList != null && agreeList.size() > 0){
                     applyList.addAll(agreeList);
+                    //已处理的申请列表要按处理时间排序
+                    Collections.sort(applyList,new Comparator<Record>() {
+                        @Override
+                        public int compare(Record r1, Record r2) {
+                            return r2.getStr("sortTime").compareTo(r1.getStr("sortTime"));
+                        }
+                    });
                 }
                 jhm.put("list", applyList);
             } else if(agreeList != null && agreeList.size() > 0){
@@ -197,10 +203,10 @@ public class ResignCtrl extends BaseCtrl {
         String item = getPara("item");//物品归还情况
         String noticeId =getPara("id");//离职记录id
         //测试数据
-//        status="0";
-//        reply="我是吴亦凡";
+//        status="1";
+//        reply="777";
 //        item="[{\"value\":\"work_clothes\",\"status\":\"0\"},{\"value\":\"chest_card\",\"status\":\"1\"}]";
-//        noticeId="c29b4ba7ea7143539fb0e53227bd7708";
+//        noticeId="5091a63322e0403d894650632bce5b3e";
         if (StringUtils.isEmpty(noticeId)) {
             jhm.putCode(0).putMessage("该条记录不存在！");
             renderJson(jhm);

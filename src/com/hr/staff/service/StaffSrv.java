@@ -1,4 +1,4 @@
-package com.hr.staff.controllers.service;
+package com.hr.staff.service;
 
 import com.common.service.BaseService;
 import com.jfinal.aop.Before;
@@ -42,8 +42,15 @@ public class StaffSrv extends BaseService {
                 i++;
                 //在h_staff表中添加一条记录
                 String pinyin= HanyuPinyinHelper.getFirstLettersLo(record.getStr("name"));
+                String username=HanyuPinyinHelper.getPinyinString(record.getStr("name"));
+                String date=DateTool.GetDateTime();
                 record.set("id", record.getStr("staff_id"));
                 record.set("pinyin",pinyin);
+                record.set("username",username);
+                record.set("password","123456");
+                record.set("status","on");
+                record.set("create_time",date);
+                record.set("modify_time",date);
                 record.remove("staff_id");
                 record.remove("operater_id");
                 record.remove("operate_time");

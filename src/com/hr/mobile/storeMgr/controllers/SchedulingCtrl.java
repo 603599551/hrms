@@ -120,7 +120,7 @@ public class SchedulingCtrl extends BaseCtrl {
         String startTime = (String) timeObject.get("start");
         String endTime = (String) timeObject.get("end");
         try {
-            String sql = "SELECT s.id staff_id, upper(LEFT(s.pinyin, 1)) intial, s. NAME name, ( SELECT d. NAME FROM h_dictionary d WHERE d. VALUE = s.job ) job, s.phone phone, ( SELECT CASE c.is_leave WHEN '1' THEN '2' ELSE ( CASE c. STATUS WHEN '2' THEN ( CASE c.is_leave_early WHEN '2' THEN '4' ELSE ( CASE c.is_late WHEN '2' THEN '0' ELSE '1' END ) END ) WHEN '1' THEN ( CASE c.is_late WHEN '2' THEN '0' ELSE '1' END ) WHEN '0' THEN '3' END ) END FROM h_staff_clock c WHERE c.date = ? AND c.staff_id = s.id AND c.start_time < ? AND c.end_time > ? ) 'condition', ( SELECT CASE c. STATUS WHEN '0' THEN '0' ELSE '1' END FROM h_staff_clock c WHERE c.date =? AND c.staff_id = s.id AND c.start_time < ? AND c.end_time > ? ) arrive FROM h_staff s WHERE s.id IN ( SELECT d.staff_id FROM h_work_time_detail d WHERE d.date = ? AND d.start_time >= ? AND d.end_time <= ? )";
+            String sql = "SELECT s.id staff_id, upper(LEFT(s.pinyin, 1)) intial, s. NAME name, ( SELECT d. NAME FROM h_dictionary d WHERE d. VALUE = s.job ) job, s.phone phone, ( SELECT CASE c.is_leave WHEN '1' THEN '2' ELSE ( CASE c. STATUS WHEN '2' THEN ( CASE c.is_leave_early WHEN '2' THEN '4' ELSE ( CASE c.is_late WHEN '2' THEN '0' ELSE '1' END ) END ) WHEN '1' THEN ( CASE c.is_late WHEN '2' THEN '0' ELSE '1' END ) WHEN '0' THEN '3' END ) END FROM h_staff_clock c WHERE c.date = ? AND c.staff_id = s.id AND c.start_time < ? AND c.end_time > ? limit 1)  'condition', ( SELECT CASE c. STATUS WHEN '0' THEN '0' ELSE '1' END FROM h_staff_clock c WHERE c.date =? AND c.staff_id = s.id AND c.start_time < ? AND c.end_time > ? limit 1) arrive FROM h_staff s WHERE s.id IN ( SELECT d.staff_id FROM h_work_time_detail d WHERE d.date = ? AND d.start_time >= ? AND d.end_time <= ? )";
             List<Record> list = Db.find(sql, date,endTime,startTime,date,endTime,startTime,date,startTime, endTime);
             if (list != null && list.size() > 0) {
 //                String due = list.size() + "";
@@ -310,12 +310,18 @@ public class SchedulingCtrl extends BaseCtrl {
                             if (StringUtils.equals("2",staffList.get(j).getStr("status"))){
                                 record.set("signout",staffList.get(j).getStr("signback").substring(0,5));
                                 break;
+                            }else {
+                                record.set("signin","0");
+                                record.set("signout","0");
                             }
                         }
                         for(int j = i - 1 ; j >= 0 ; --j){
                             if (StringUtils.equals("1",staffList.get(j).getStr("status"))){
                                 record.set("signin",staffList.get(j).getStr("signin").substring(0,5));
                                 break;
+                            }else {
+                                record.set("signin","0");
+                                record.set("signout","0");
                             }
                         }
                     } else {
@@ -332,6 +338,7 @@ public class SchedulingCtrl extends BaseCtrl {
                                 break;
                             }
                         }
+                        record.set("signout","0");
                     } else {
                         record.set("signout","0");
                     }

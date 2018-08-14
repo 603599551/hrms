@@ -8,6 +8,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
 import easy.util.UUIDTool;
 import paiban.service.VariableTimeGuideService;
+import utils.ContentTransformationUtil;
 import utils.bean.JsonHashMap;
 
 import java.util.ArrayList;
@@ -97,6 +98,29 @@ public class VariableTimeGuideCtrl extends BaseCtrl {
         }
         //renderJson("{\"code\":1,\"data\":[[{\"input\":\"0-500\"},{\"input\":\"0-26\"},{\"input\":\"1-3\"},{\"input\":\"3\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"0-500\"},{\"input\":\"0-26\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"0-500\"},{\"input\":\"0-26\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}]]}");
         renderJson(jhm);
+    }
+
+    public void test(){
+        String storeId = "234k5jl234j5lkj24l35j423l5j";
+        String date = "2018-08-12";
+        String d = "2018-08-19";
+        String sql = "select * from h_staff_idle_time where store_id=? and date=?";
+        List<Record> updateList = Db.find(sql, storeId, date);
+        List<Record> saveList = new ArrayList<>();
+        if(updateList != null && updateList.size() > 0){
+            for(Record r : updateList){
+                Record record = new Record();
+                record.setColumns(r);
+                record.set("id", UUIDTool.getUUID());
+                record.set("date", d);
+                record.set("app_content", ContentTransformationUtil.Pc2AppContentEvery15M4Xianshi(record.getStr("content")));
+                saveList.add(record);
+
+                r.set("app_content", ContentTransformationUtil.Pc2AppContentEvery15M4Xianshi(r.getStr("content")));
+            }
+        }
+        Db.batchSave("h_staff_idle_time", saveList, saveList.size());
+        Db.batchUpdate("h_staff_idle_time", updateList, updateList.size());
     }
 
 }

@@ -1,7 +1,5 @@
 package utils;
 
-import com.alibaba.fastjson.JSON;
-import com.jfinal.json.Json;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import easy.util.DateTool;
@@ -176,6 +174,9 @@ public class ContentTransformationUtil {
      * @return  app端需要的格式key为"start"和"end"的json数组转成的字符串
      */
     public static String PcToAppXianShi(String pcStr){
+        if(pcStr == null || pcStr.trim().length() == 0){
+            return "";
+        }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         JSONArray jsonArray = new JSONArray();
         String pcContent = "";
@@ -356,6 +357,149 @@ public class ContentTransformationUtil {
             e.printStackTrace();
         }
         return jsonTime;
+    }
+
+    public static Map<String, String> timePc_App_begin = new HashMap<>();
+    public static Map<String, String> timePc_App_end = new HashMap<>();
+
+    static{
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        try {
+            Date dBegin = sdf.parse("7:30");
+            Date dEnd = sdf.parse("7:45");
+            long one15Time = 1000 * 60 * 15;
+            for(int i = 0; i < 66; i++){
+                String timeBegin = sdf.format(new Date(dBegin.getTime() + i * one15Time));
+                String timeEnd = sdf.format(new Date(dEnd.getTime() + i * one15Time));
+                timePc_App_begin.put(i + "", timeBegin);
+                timePc_App_end.put(i + "", timeEnd);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args){
+        String s = "[{\"start\":\"11:00\",\"end\":\"11:15\"},{\"start\":\"11:15\",\"end\":\"11:30\"},{\"start\":\"11:30\",\"end\":\"11:45\"},{\"start\":\"11:45\",\"end\":\"12:00\"},{\"start\":\"12:00\",\"end\":\"12:15\"},{\"start\":\"12:15\",\"end\":\"12:30\"},{\"start\":\"12:30\",\"end\":\"12:45\"},{\"start\":\"12:45\",\"end\":\"13:00\"},{\"start\":\"13:00\",\"end\":\"13:15\"},{\"start\":\"13:15\",\"end\":\"13:30\"},{\"start\":\"13:30\",\"end\":\"13:45\"},{\"start\":\"13:45\",\"end\":\"14:00\"},{\"start\":\"18:30\",\"end\":\"18:45\"},{\"start\":\"18:45\",\"end\":\"19:00\"},{\"start\":\"19:45\",\"end\":\"20:00\"},{\"start\":\"20:00\",\"end\":\"20:15\"},{\"start\":\"20:15\",\"end\":\"20:30\"},{\"start\":\"20:30\",\"end\":\"20:45\"},{\"start\":\"20:45\",\"end\":\"21:00\"}]";
+        s = DispersedTime2ContinuousTime4String(s);
+        System.out.println(s);
+    }
+
+    /**
+     * 将分散的时间转化成连续的时间段
+     * 8:00~8:15,8:15~8:30
+     * 8:00~8:30
+     * @return
+     */
+    public static String DispersedTime2ContinuousTime4String(String appContentArrStr){
+        if(appContentArrStr == null || appContentArrStr.trim().length() == 0){
+            return "";
+        }
+        JSONArray appContentArr = JSONArray.fromObject(appContentArrStr);
+        return DispersedTime2ContinuousTime4JSONArray(appContentArr);
+    }
+
+    /**
+     * 将分散的时间转化成连续的时间段
+     * 8:00~8:15,8:15~8:30
+     * 8:00~8:30
+     * @return
+     */
+    public static String DispersedTime2ContinuousTime4JSONArray(JSONArray appContentArr){
+        if(appContentArr == null || appContentArr.size() == 0){
+            return "";
+        }
+        String result = "";
+        List<JSONObject> appContentList = new ArrayList<>();
+        if(appContentArr != null && appContentArr.size() > 0){
+            for(int i = 0; i < appContentArr.size(); i++){
+                appContentList.add(appContentArr.getJSONObject(i));
+            }
+        }
+        Collections.sort(appContentList, new Comparator<JSONObject>() {
+            @Override
+            public int compare(JSONObject o1, JSONObject o2) {
+                String o1Time = o1.getString("start");
+                String o2Time = o2.getString("start");
+                return o1Time.compareTo(o2Time);
+            }
+        });
+        List<Map<String, String>> resultMapList = new ArrayList<>();
+        if(appContentList != null){
+            if(appContentList.size() > 1){
+                for(int i = 0; i < appContentList.size(); i++){
+                    JSONObject objFir = appContentList.get(i);
+                    String startTimeFir = objFir.getString("start");
+                    String endTimeFir = objFir.getString("end");
+                    Map<String, String> map = new HashMap<>();
+                    if(resultMapList.size() > 0){
+                        map = resultMapList.get(resultMapList.size() - 1);
+                        if(map.get("end").equals(startTimeFir)){
+                            map.put("end", endTimeFir);
+                            continue;
+                        }else{
+                            Map<String, String> mapNext = new HashMap<>();
+                            mapNext.put("start", startTimeFir);
+                            mapNext.put("end", endTimeFir);
+                            resultMapList.add(mapNext);
+                        }
+                    }else{
+                        map.put("start", startTimeFir);
+                        map.put("end", endTimeFir);
+                        resultMapList.add(map);
+                    }
+                }
+            }else if(appContentList.size() == 1){
+                Map<String, String> map = new HashMap<>();
+                map.put("start", appContentList.get(0).getString("start"));
+                map.put("end", appContentList.get(0).getString("end"));
+                resultMapList.add(map);
+            }
+            result = JSONArray.fromObject(resultMapList).toString();
+        }
+        return result;
+    }
+
+    public static String Pc2AppContentEvery15M4Xianshi(String pcContent){
+        String result = "";
+        if(pcContent == null || pcContent.trim().length() == 0){
+            return "";
+        }
+        JSONObject pc = JSONObject.fromObject(pcContent);
+        List<Map<String, String>> resultMap = new ArrayList<>();
+        for(int i = 0; i < 66; i++){
+            int data = pc.getInt(i + "");
+            if(1 == data){
+                Map<String, String> map = new HashMap<>();
+                map.put("start", timePc_App_begin.get(i + ""));
+                map.put("end", timePc_App_end.get(i + ""));
+                resultMap.add(map);
+            }
+        }
+        result = JSONArray.fromObject(resultMap).toString();
+        return result;
+    }
+
+    public static String Pc2AppContentEvery15M4Paiban(String pcContent){
+        String result = "";
+        if(pcContent == null || pcContent.trim().length() == 0){
+            return "";
+        }
+        JSONObject pc = JSONObject.fromObject(pcContent);
+        JSONArray works = pc.getJSONArray("work");
+        if(works != null && works.size() > 0){
+            List<Map<String, String>> resultMap = new ArrayList<>();
+            for(int i = 0; i < works.size(); i++){
+                JSONObject work = works.getJSONObject(i);
+                String time = work.getJSONArray("pos").getString(0);
+                Map<String, String> map = new HashMap<>();
+                map.put("start", timePc_App_begin.get(time));
+                map.put("end", timePc_App_end.get(time));
+                resultMap.add(map);
+            }
+            result = JSONArray.fromObject(resultMap).toString();
+        }
+        return result;
     }
 
 }

@@ -16,7 +16,7 @@ import utils.bean.JsonHashMap;
 import java.util.Map;
 
 public class SchedulingSrv extends BaseService {
-    /*
+    /**
       增加事务
        */
     @Before(Tx.class)
@@ -45,19 +45,30 @@ public class SchedulingSrv extends BaseService {
                 jhm.putCode(0).putMessage("您当前没有排班，无法执行减班操作！");
                 return jhm;
             } else {
-                if (recordTime == null || StringUtils.equals(recordTime.getStr("real_number"), "0")) {
+                if (recordTime == null || StringUtils.equals(recordTime.getStr("number"), "0")) {
                     jhm.putCode(0).putMessage("您当前没有排班，无法执行减班操作！");
                     return jhm;
                 } else {
+                    int realNumber=recordTime.getInt("real_number");
                     if(StringUtils.equals(record.getStr("status"),"3")){
                         //先h_work_time_detail中删除
-                      boolean b=  Db.deleteById("h_work_time_detail",record.getStr("id"));
-                      b=false;
+                        Db.deleteById("h_work_time_detail",record.getStr("id"));
+                        //加班再减班一定减工时
+                        realNumber = (int)(recordTime.getInt("real_number") - 1);
+
                     }else{
+
                         record.set("status", "2");
                         Db.update("h_work_time_detail", record);
+
+                        //判断员工是否签退如果签退就减工时，否则不减工时
+                        String sqlTime="select c.sign_back_time time from h_staff_clock c where c.staff_id=? and c.date=? and c.start_time <= ? AND c.end_time >= ?";
+                        Record recordWorktime=Db.findFirst(sqlTime,staffId,date,endTime,startTime);
+                        //签退
+                        if(!StringUtils.isEmpty(recordWorktime.getStr("time"))){
+                            realNumber = recordTime.getInt("real_number") - 1;
+                        }
                     }
-                    String realNumber = (int)(recordTime.getInt("real_number") - 1) + "";
                     recordTime.set("real_number", realNumber);
                     Db.update("h_work_time", recordTime);
 //                    可以减班，update h_work_time_detail表status为2 update h_work_time表real_num减一

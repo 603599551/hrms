@@ -1,6 +1,7 @@
 package com.hr.staff.controllers;
 
 import com.common.controllers.BaseCtrl;
+import com.common.service.StaffNumberGenerator;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
@@ -270,14 +271,14 @@ public class StaffCtrl extends BaseCtrl {
         }
         String monthWage = getPara("month_wage");
         String hourWage = getPara("hour_wage");
-        if (workType.equals("part_time")) {
+        if (StringUtils.equals(workType,"part_time")) {
             //当工作类型是兼职时，员工时薪不允许为空
             if (StringUtils.isEmpty(hourWage)) {
                 jhm.putCode(0).putMessage("请输入员工时薪！");
                 renderJson(jhm);
                 return;
             }
-        } else if (workType.equals("full_time")) {
+        } else if (StringUtils.equals(workType,"full_time")) {
             //当工作类型是全职时，员工月薪不允许为空
             if (StringUtils.isEmpty(monthWage)) {
                 jhm.putCode(0).putMessage("请输入员工月薪！");
@@ -331,9 +332,14 @@ public class StaffCtrl extends BaseCtrl {
                     String createrId = usu.getUserId();
                     String modifierId = usu.getUserId();
                     String idNum = staff.getStr("id_num").replace(" ", "");
-                    String empNum = staff.getStr("emp_num").replace(" ", "");
+                    //username 为用户姓名全拼password为123456
+                    String username=HanyuPinyinHelper.getPinyinString(name);
+                    //自动生成员工工号
+                    String empNum= StaffNumberGenerator.getStaffOrderNumber();
                     staff.set("id", id);
                     staff.set("pinyin", pinyin);
+                    staff.set("username",username);
+                    staff.set("password","123456");
                     staff.set("kind", new String(kind));
                     staff.set("phone", phone);
                     staff.set("emp_num", empNum);
@@ -425,7 +431,8 @@ public class StaffCtrl extends BaseCtrl {
     public void showById() {
         //renderJson("{\"code\":1,\"data\":{\"id\":\"员工id\",\"name\":\"鹿晗\",\"gender\":\"1\",\"gender_text\":\"男\",\"birthday\":\"1990-03-29\",\"phone\":\"138888888\",\"address\":\"北京王府井1号\",\"emp_num\":\"123\",\"hiredate\":\"2018-06-29\",\"dept_id\":\"234k5jl234j5lkj24l35j423l5j\",\"dept_text\":\"长大店\",\"job\":\"staff\",\"kind\":[\"cashier\",\"passed\"],\"status\":\"on\",\"job_text\":\"员工\",\"kind_text\":\"收银员，传菜员\",\"status_text\":\"在职\",\"id_num\":\"身份证号\",\"work_type\":\"full_time\",\"level\":\"二星训练员\",\"work_type_text\":\"全职\",\"level_text\":\"二星训练员\",\"hour_wage\":\"16\",\"month_wage\":\"3000\",\"bank\":\"工商银行\",\"bank_card_num\":\"20023987413\"}}");
         JsonHashMap jhm = new JsonHashMap();
-        String id = getPara("id");//获取当前员工id
+        //获取当前员工id
+        String id = getPara("id");
         if (StringUtils.isEmpty(id)) {
             jhm.putCode(0).putMessage("查看失败！");
             renderJson(jhm);
@@ -647,7 +654,7 @@ public class StaffCtrl extends BaseCtrl {
                         }
                     }
                     String pinyin = HanyuPinyinHelper.getFirstLettersLo(name);
-                    String modifier_id = usu.getUserId();
+                    String modifierId = usu.getUserId();
                     String idNum = staff.getStr("id_num").replace(" ", "");
                     String empNum = staff.getStr("emp_num").replace(" ", "");
                     staff.set("pinyin", pinyin);
@@ -657,7 +664,7 @@ public class StaffCtrl extends BaseCtrl {
                     staff.set("id_num", idNum);
                     staff.set("hour_wage", hourWage);
                     staff.set("month_wage", monthWage);
-                    staff.set("modifier_id", modifier_id);
+                    staff.set("modifier_id", modifierId);
                     String time = DateTool.GetDateTime();
                     staff.set("modify_time", time);
                     staff.remove("kind_text");

@@ -98,7 +98,7 @@ public class SchedulingCtrl extends BaseCtrl {
                     if (leaveTime.size() > 0 && leaveTime != null) {
                         String app_content = timeRecord.getStr("app_content");
                         //是否存在排班信息
-                        if (app_content != null) {
+                        if (app_content != null && app_content.trim().length() > 0) {
                             JSONArray jsonArray = JSONArray.fromObject(app_content);
                             for (int i = 0; i < jsonArray.size(); ++i) {
                                 //找请假表
@@ -114,12 +114,12 @@ public class SchedulingCtrl extends BaseCtrl {
                             }
                             jhm.put("list", jsonArray);
                         } else {
-                            jhm.put("list", "");
+                            jhm.putCode(2).putMessage("未排班！");
                         }
                     } else {
                         //不存在请假信息
                         String app_content = timeRecord.getStr("app_content");
-                        if (app_content != null) {
+                        if (app_content != null && app_content.trim().length() > 0) {
                             //是否存在排班信息
                             JSONArray jsonArray = JSONArray.fromObject(app_content);
                             for (int i = 0; i < jsonArray.size(); ++i) {
@@ -129,7 +129,7 @@ public class SchedulingCtrl extends BaseCtrl {
                             }
                             jhm.put("list", jsonArray);
                         } else {
-                            jhm.put("list", "");
+                            jhm.putCode(2).putMessage("未排班！");
                         }
                     }
                     //存在请假信息

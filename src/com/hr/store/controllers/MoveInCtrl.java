@@ -191,7 +191,7 @@ id	string		是	调入记录的id
 				String selectStaff = " SELECT (SELECT d.name FROM h_dictionary d WHERE d.parent_id = 200 AND d.id = staff.job) as job, staff. NAME AS name, staff.hour_wage AS money, staff.phone AS phone, ( CASE staff.gender WHEN '1' THEN '男' ELSE '女' END ) AS gender, ( SELECT d. NAME FROM h_dictionary d WHERE d. VALUE = staff.work_type AND d.parent_id = 300 ) AS work_type, ( SELECT group_concat(h. NAME) kind FROM h_move_staff s LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, s.kind) WHERE s.id = staff.id GROUP BY s.id ORDER BY s.id ASC ) AS kind FROM h_move_info info, h_move_staff staff WHERE info.id = staff.move_info_id AND staff.move_info_id = ? ";
 				List<Record> recordList = Db.find(selectStaff,id);
 				//按要求格式丢进去
-				recordList.get(0).getStr("kind").replace(",","、");
+				recordList.get(0).getStr("kind");
 				record.set("staffList",recordList);
 				jhm.put("data",record);
 			} else {

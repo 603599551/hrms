@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.alibaba.fastjson.JSON;
 
+import com.alibaba.fastjson.JSONObject;
 import com.utils.UserSessionUtil;
 import easy.web.UrlKit;
 import utils.bean.JsonHashMap;
@@ -49,7 +50,7 @@ public class AccessFilter implements Filter{
 		String domain=UrlKit.getDomain(req);
 		req.setAttribute("domain",domain);
 
-		boolean isLogin=isLogin(req,resp);//处理自动登录
+		boolean isLogin=isLong4Hrms(req,resp);//处理自动登录
 		if(isLogin){
 			chain.doFilter(request, response);
 		}
@@ -59,6 +60,49 @@ public class AccessFilter implements Filter{
 
 	}
 
+	private static final String STATIC_RESOURCES = "/static/";
+
+	private boolean isLong4Hrms(HttpServletRequest req,HttpServletResponse resp){
+		String servletPath = req.getServletPath().toLowerCase();
+		UserSessionUtil usu = new UserSessionUtil(req);
+		if("admin".equals(usu.getUsername())){//访问后台页面
+			return true;
+		}else if(servletPath.startsWith(STATIC_RESOURCES) ){
+			return true;
+		}else if(servletPath.startsWith("/login") ){
+			return true;
+		}else if(servletPath.startsWith("/index") ){
+			return true;
+		}else if(servletPath.startsWith("/mobile/") ){
+			return true;
+		}else if(servletPath.startsWith("/mgr/mobile/") ){
+			if(usu.getUserBean()==null){
+				JsonHashMap jhm = new JsonHashMap();
+				jhm.putCode(0).putMessage("登录超时，请重新登录！");
+				try {
+					resp.getWriter().write(JSONObject.toJSONString(jhm));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return false;
+			}else{
+				return true;
+			}
+		}else{
+			if(usu.getUserBean()==null){
+				JsonHashMap jhm = new JsonHashMap();
+            	jhm.put("code", "nosid");
+				try {
+					resp.getWriter().write(JSONObject.toJSONString(jhm));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return false;
+			}else{
+				return true;
+			}
+		}
+	}
 
 	/**
 	 * 当访问html、jsp时，读取cookie，自动登录

@@ -12,7 +12,7 @@ import java.util.List;
 
 public class SignCtrl extends BaseCtrl {
 
-    /*
+    /**
       根据人员id、日期查看签到签退时间
    */
     public void showDetailByStaffIdAndDate() {
@@ -51,9 +51,9 @@ public class SignCtrl extends BaseCtrl {
         SimpleDateFormat sdfWorkTime = new SimpleDateFormat("HH:mm");
         try {
             //当前时间
-            Date DateTime = sdfWorkTime.parse(time);
+            Date dateTime = sdfWorkTime.parse(time);
             //上班结束时间
-            Date DateEndTime;
+            Date dateEndTime;
             //排班情况
             List<Record> recordList = Db.find(selectClock, id, date);
             //存在排班记录
@@ -81,7 +81,7 @@ public class SignCtrl extends BaseCtrl {
                     }
 
                     //虽然已经签退  但在工作时间内
-                    if (sdfWorkTime.parse(recordList.get(i).getStr("start")).before(DateTime) && sdfWorkTime.parse(recordList.get(i).getStr("end")).after(DateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "2")) {
+                    if (sdfWorkTime.parse(recordList.get(i).getStr("start")).before(dateTime) && sdfWorkTime.parse(recordList.get(i).getStr("end")).after(dateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "2")) {
                         Record recordTime = Db.findFirst(selectNum, id, date);
                         if (recordTime != null && recordTime.getInt("num") != 0) {
                             jhm.put("all_time", recordTime.getInt("num") * 15.00 / 60);
@@ -101,7 +101,7 @@ public class SignCtrl extends BaseCtrl {
                     //在两个工作时间之间  但是上一班在工作时间内签到了未签退  依然提示签退
                     if (i < recordList.size() - 1) {
                         //是否在两个班之间的休息时间内并且签退过
-                        if (sdfWorkTime.parse(recordList.get(i).getStr("end")).before(DateTime) && sdfWorkTime.parse(recordList.get(i + 1).getStr("start")).after(DateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "1")) {
+                        if (sdfWorkTime.parse(recordList.get(i).getStr("end")).before(dateTime) && sdfWorkTime.parse(recordList.get(i + 1).getStr("start")).after(dateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "1")) {
                             Record recordTime = Db.findFirst(selectNum, id, date);
                             if (recordTime != null && recordTime.getInt("num") != 0) {
                                 jhm.put("all_time", recordTime.getInt("num") * 15.00 / 60);
@@ -123,8 +123,8 @@ public class SignCtrl extends BaseCtrl {
                 //显示签到的情况
                 //结束时间晚于当前时间，并且该时间段没有签到签退记录
                 for (int i = 0; i < recordList.size(); ++i) {
-                    DateEndTime = sdfWorkTime.parse(recordList.get(i).getStr("end"));
-                    if (DateEndTime.after(DateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "0")) {
+                    dateEndTime = sdfWorkTime.parse(recordList.get(i).getStr("end"));
+                    if (dateEndTime.after(dateTime) && StringUtils.equals(recordList.get(i).getStr("status"), "0")) {
                         if (i == 0) {
                             jhm.put("all_time", "0.00");
                             jhm.put("status", "0");
@@ -145,7 +145,6 @@ public class SignCtrl extends BaseCtrl {
                                     isOut = true;
                                 }
                             }
-                            jhm.put("all_time", recordTime.getInt("num") * 15.00 / 60);
                             if (!isOut) {
                                 jhm.put("sign_in", "--:--");
                             }
@@ -166,7 +165,7 @@ public class SignCtrl extends BaseCtrl {
     }
 
 
-    /*
+    /**
         签到
      */
     public void in() {
@@ -238,6 +237,11 @@ public class SignCtrl extends BaseCtrl {
                     }
                     break;
                 }
+
+                //是最后一班并且没有签到过
+                if(i == clockList.size() - 1 && StringUtils.equals(clockList.get(i).getStr("status"),"0")){
+                    jhm.putCode(2).putMessage("今天已经没有班了，不需签到！");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -246,7 +250,7 @@ public class SignCtrl extends BaseCtrl {
         renderJson(jhm);
     }
 
-    /*
+    /**
            签退
      */
 
@@ -374,8 +378,16 @@ public class SignCtrl extends BaseCtrl {
                     }
                     break;
                 }
-                //下班后签退
+
+
                 if (i < clockList.size() - 1) {
+                    //上班前签退
+                    if (StringUtils.equals(clockList.get(i + 1).getStr("status"), "1") && signOut.getTime() < sdfWorkTime.parse(clockList.get(i + 1).getStr("start_time")).getTime()) {
+                        jhm.putCode(2).putMessage("未到上班时间不允许签退！");
+                        break;
+                    }
+
+                    //下班后签退
                     if (!StringUtils.equals(clockList.get(i).getStr("status"), "0") && signOut.getTime() >= sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() && signOut.getTime() <= sdfWorkTime.parse(clockList.get(i + 1).getStr("start_time")).getTime()) {
                         //更改明细表中的状态
                         for (int j = 0; j < detailList.size(); ++j) {
