@@ -3,6 +3,7 @@ package com.hr.mobile.scheduling.controllers;
 import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import com.sun.org.apache.regexp.internal.RE;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
@@ -78,9 +79,9 @@ public class SchedulingCtrl extends BaseCtrl {
             return;
         }
 
-        String select = "SELECT  p.app_content FROM h_staff_paiban p WHERE p.staff_id = ? and p.date = ?";
+        String select = "SELECT  p.content , p.app_content FROM h_staff_paiban p WHERE p.staff_id = ? and p.date = ?";
         String selectLeave = "SELECT DISTINCT l.leave_start_time as start FROM h_staff_leave l WHERE  (SELECT i.status FROM h_staff_leave_info i WHERE i.id = l.leave_info_id) = '1' AND l.staff_id = ?  AND l.date = ?";
-        String params[] = {id, date};
+        String[] params = {id, date};
         String selectStaff = "SELECT count(*) c FROM h_staff s WHERE s.id = ? ";
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 
@@ -95,11 +96,17 @@ public class SchedulingCtrl extends BaseCtrl {
                 List<Record> leaveTime = Db.find(selectLeave, params);
 
                 if (timeRecord != null) {
-                    if (leaveTime.size() > 0 && leaveTime != null) {
-                        String app_content = timeRecord.getStr("app_content");
+                    //玄学职位
+                    String content = timeRecord.getStr("content");
+                    String[] jobStr = content.split(",");
+                    String job = jobStr[3].substring(17,jobStr[3].length() - 1);
+                    Record jobName = Db.findFirst("SELECT d.`name` as name FROM h_dictionary d WHERE d.`value` = ? AND d.parent_id = 3000",job);
+                    jhm.put("job", jobName.getStr("name"));
+                    if ( leaveTime != null && leaveTime.size() > 0 ) {
+                        String appContent = timeRecord.getStr("app_content");
                         //是否存在排班信息
-                        if (app_content != null && app_content.trim().length() > 0) {
-                            JSONArray jsonArray = JSONArray.fromObject(app_content);
+                        if (appContent != null && appContent.trim().length() > 0) {
+                            JSONArray jsonArray = JSONArray.fromObject(appContent);
                             for (int i = 0; i < jsonArray.size(); ++i) {
                                 //找请假表
                                 JSONObject jsonObj = jsonArray.getJSONObject(i);
@@ -118,10 +125,10 @@ public class SchedulingCtrl extends BaseCtrl {
                         }
                     } else {
                         //不存在请假信息
-                        String app_content = timeRecord.getStr("app_content");
-                        if (app_content != null && app_content.trim().length() > 0) {
+                        String appContent = timeRecord.getStr("app_content");
+                        if (appContent != null && appContent.trim().length() > 0) {
                             //是否存在排班信息
-                            JSONArray jsonArray = JSONArray.fromObject(app_content);
+                            JSONArray jsonArray = JSONArray.fromObject(appContent);
                             for (int i = 0; i < jsonArray.size(); ++i) {
                                 //找请假表
                                 JSONObject jsonObj = jsonArray.getJSONObject(i);
