@@ -744,12 +744,17 @@ public class SalaryCtrl extends BaseCtrl {
             String initial="";
             //员工职位
             String job="";
+            //员工岗位
+            String kindEnglish="";
+            String kindChinese="";
             //员工电话
             String phone="";
             //员工工号
             String number="";
             if(staff==null){
                 jhm.putCode(0).putMessage("用户不存在！");
+                renderJson(jhm);
+                return;
             }else{
                 hourWage=staff.getFloat("hour_wage");
                 every15Wage=hourWage/4;
@@ -758,6 +763,20 @@ public class SalaryCtrl extends BaseCtrl {
                 job=staff.getStr("job");
                 phone=staff.getStr("phone");
                 number=staff.getStr("emp_num");
+                kindEnglish=staff.getStr("kind");
+                String sql7="select h_dictionary.name as name from h_dictionary,h_staff where find_in_set(h_dictionary.value,h_staff.kind) and h_staff.id=?";
+                List<Record> list7=Db.find(sql7,staffId);
+                if (list7 != null && list7.size() > 0){
+                    for (Record r7:list7){
+                        if (r7==list7.get(0)){
+                            kindChinese=r7.getStr("name");
+                        }else{
+                            kindChinese+=","+r7.getStr("name");
+                        }
+                    }
+                }
+
+
             }
 
 
@@ -961,6 +980,8 @@ public class SalaryCtrl extends BaseCtrl {
             jhm.put("name",name);
             jhm.put("firstName",initial);
             jhm.put("job",job);
+            jhm.put("kindChinese",kindChinese);
+            jhm.put("kindEnglish",kindEnglish);
             jhm.put("phone",phone);
             jhm.put("number",number);
             jhm.put("month",monthIsSecondHalf);

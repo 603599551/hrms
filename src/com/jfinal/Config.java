@@ -125,6 +125,8 @@ public class Config extends JFinalConfig {
 		//员工端工资
 		routes.add("/mgr/mobile/salary", com.hr.mobile.salary.controllers.SalaryCtrl.class);
 
+		//经理端考核
+		routes.add("/mgr/mobile/examine", com.hr.mobile.examine.ExamineCtrl.class);
     }
 
 	@Override

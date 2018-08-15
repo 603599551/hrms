@@ -1,7 +1,6 @@
 package com.hr.notice.controllers;
 
 import com.common.controllers.BaseCtrl;
-import utils.bean.JsonHashMap;
 
 public class NoticeCtrl extends BaseCtrl {
 
@@ -249,7 +248,4 @@ public class NoticeCtrl extends BaseCtrl {
     public void showStaffFireById(){
         renderJson("{\"code\":1,\"data\":{\"date\":\"2018-06-29\",\"name\":\"小强\",\"user\":\"刘强东\",\"from_store\":\"4a8d594591ea4c1eb708fcc8a5c67c47\",\"type\":\"3\",\"type_text\":\"\",\"id\":\"该记录id\",\"remark\":\"世界那么大，我想去看看！\"}}");
     }
-
 }
-
-
