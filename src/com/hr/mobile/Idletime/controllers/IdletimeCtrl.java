@@ -17,19 +17,17 @@ import java.util.Calendar;
 import java.util.Date;
 
 
-public class ldletimeCtrl extends BaseCtrl {
-    /*
-        添加闲时
-         */
+public class IdletimeCtrl extends BaseCtrl {
+    /**
+     添加闲时
+     */
     public void add() {
         JsonHashMap jhm = new JsonHashMap();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
         String userId = usu.getUserId();
 
         Record staffRecord = Db.findFirst("select * from h_staff where id = ?", userId);
-//        String deptId = staffRecord.getStr("username");
 
-        //为空判断
         if (staffRecord == null) {
             jhm.putCode(0).putMessage("找不到该员工！");
             renderJson(jhm);
@@ -55,7 +53,7 @@ public class ldletimeCtrl extends BaseCtrl {
             record.set("modify_time", datetime);
             record.set("modifier_id", userId);
             record.set("kind", kind);
-            record.set("content", AppToPcIdleTime(time));
+            record.set("content", appToPcIdleTime(time));
 
             try {
                 boolean flag = Db.save("h_staff_idle_time", record);
@@ -72,7 +70,7 @@ public class ldletimeCtrl extends BaseCtrl {
             recordSelect.set("modify_time", datetime);
             recordSelect.set("modifier_id", userId);
             recordSelect.set("app_content", time);
-            recordSelect.set("content", AppToPcIdleTime(time));
+            recordSelect.set("content", appToPcIdleTime(time));
 
             try {
                 boolean flag = Db.update("h_staff_idle_time", recordSelect);
@@ -93,7 +91,6 @@ public class ldletimeCtrl extends BaseCtrl {
 
     public void showDetailByStaffIdAndDate() {
         JsonHashMap jhm = new JsonHashMap();
-        JSONArray jsonArray = new JSONArray();
 
         String id = getPara("id");
         if (StringUtils.isEmpty(id)) {
@@ -125,13 +122,10 @@ public class ldletimeCtrl extends BaseCtrl {
             calendar.setTime(nowDate);
             calendar.add(Calendar.DAY_OF_MONTH, -7);
 
-            String temp = sdf.format(calendar.getTime());
 
-            //寻找七天之前的闲时
-            Record record = Db.findFirst(sql, id, sdf.format(calendar.getTime()));
+
             //寻找当天闲时  用于判断状态值
             Record statusRecord = Db.findFirst("SELECT time.staff_id as staff_id , time.date as date , time.app_content as app_content FROM h_staff_idle_time time WHERE time.staff_id = ? AND time.date = ? ", id, date);
-//            if (record != null) {
             if (statusRecord != null) {
                 if(statusRecord.getStr("app_content").length() <= 2){
                     jhm.putCode(0).putMessage("未录入闲时！");
@@ -139,24 +133,23 @@ public class ldletimeCtrl extends BaseCtrl {
                     jhm.put("status", "1");
                     jhm.put("staff_id", statusRecord.getStr("staff_id"));
                     jhm.put("date", statusRecord.getStr("date"));
-                    jsonArray = JSONArray.fromObject(statusRecord.getStr("app_content"));
+                    JSONArray jsonArray = JSONArray.fromObject(statusRecord.getStr("app_content"));
                     jhm.put("list", jsonArray);
                 }
             } else {
+                //寻找七天之前的闲时
+                Record record = Db.findFirst(sql, id, sdf.format(calendar.getTime()));
                 if (record != null && record.getStr("app_content").length() > 2) {
                     jhm.put("status", "0");
                     jhm.put("staff_id", record.getStr("staff_id"));
                     jhm.put("date", record.getStr("date"));
-                    jsonArray = JSONArray.fromObject(record.getStr("app_content"));
+                    JSONArray jsonArray = JSONArray.fromObject(record.getStr("app_content"));
                     jhm.put("list", jsonArray);
                 } else {
                     jhm.putCode(0).putMessage("未录入闲时！");
                 }
             }
 
-//            } else {
-//                jhm.putCode(0).putMessage("未排班！");
-//            }
         } catch (Exception e) {
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");
@@ -168,7 +161,6 @@ public class ldletimeCtrl extends BaseCtrl {
     public void delete() {
         JsonHashMap jhm = new JsonHashMap();
         JSONArray listArray = new JSONArray();
-        JSONArray delArray = new JSONArray();
 
 
         String deltime = getPara("deltime");
@@ -207,8 +199,6 @@ public class ldletimeCtrl extends BaseCtrl {
             calendar.setTime(nowDate);
             calendar.add(Calendar.DAY_OF_MONTH, -7);
 
-            String temp = sdf.format(calendar.getTime());
-
             Record record = Db.findFirst(sql, id, date);
             //获取七天前的排班
             Record beforeRecord = Db.findFirst("SELECT time.store_id , time.staff_id , time.content , time.app_content , time.creater_id,time.create_time,time.kind  FROM h_staff_idle_time time WHERE time.staff_id = ? AND time.date = ?", id, sdf.format(calendar.getTime()));
@@ -217,7 +207,7 @@ public class ldletimeCtrl extends BaseCtrl {
             if (record != null) {
                 //删除时间
                 if (record.getStr("app_content") != null) {
-                    delArray = JSONArray.fromObject(deltime);
+                    JSONArray delArray = JSONArray.fromObject(deltime);
                     listArray = JSONArray.fromObject(record.getStr("app_content"));
                     for (int i = delArray.size() - 1; i >= 0; --i) {
                         JSONObject defJson = delArray.getJSONObject(i);
@@ -230,9 +220,9 @@ public class ldletimeCtrl extends BaseCtrl {
                             }
                         }
                     }
-                    content = AppToPcIdleTime(listArray.toString());
+                    content = appToPcIdleTime(listArray.toString());
                 } else {
-                    content = AppToPcIdleTime("");
+                    content = appToPcIdleTime("");
                 }
             } else {
                 beforeRecord.set("id", UUIDTool.getUUID());
@@ -254,7 +244,7 @@ public class ldletimeCtrl extends BaseCtrl {
                 record.set("modify_time", DateTool.GetDateTime());
                 record.set("modifier_id", id);
                 if (record.getStr("app_content") != null) {
-                    delArray = JSONArray.fromObject(deltime);
+                    JSONArray delArray = JSONArray.fromObject(deltime);
                     listArray = JSONArray.fromObject(record.getStr("app_content"));
                     for (int i = delArray.size() - 1; i >= 0; --i) {
                         JSONObject defJson = delArray.getJSONObject(i);
@@ -267,9 +257,9 @@ public class ldletimeCtrl extends BaseCtrl {
                             }
                         }
                     }
-                    content = AppToPcIdleTime(listArray.toString());
+                    content = appToPcIdleTime(listArray.toString());
                 } else {
-                    content = AppToPcIdleTime("");
+                    content = appToPcIdleTime("");
                 }
             }
 
@@ -292,23 +282,25 @@ public class ldletimeCtrl extends BaseCtrl {
     }
 
 
-    /*
-        没有秒的时间格式转换
+    /**
+     没有秒的时间格式转换
      */
-    public static String AppToPcIdleTime(String appStr) {
+    public static String appToPcIdleTime(String appStr) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
-        JSONArray jsonArray = new JSONArray();
         JSONObject jsonSave = new JSONObject();
         String appContent = "";
 
         try {
-            jsonArray = JSONArray.fromObject(appStr);
-            Date initTime = simpleDateFormat.parse("07:30");        //最早上班时间
-            Long initMilliSecond = initTime.getTime();                     //最早上班时间的毫秒数
-            int standardTime = 15 * 60 * 1000;                             //每15分钟的毫秒数
-            String startTime = "";                         //连续时间段中开始的时间
+            JSONArray jsonArray = JSONArray.fromObject(appStr);
+            //最早上班时间
+            Date initTime = simpleDateFormat.parse("07:30");
+            //最早上班时间的毫秒数
+            Long initMilliSecond = initTime.getTime();
+            //每15分钟的毫秒数
+            int standardTime = 15 * 60 * 1000;
+            //连续时间段中开始的时间
+            String startTime = "";
             Long startMilliSecond;
-            Date transDate = new Date();
 
             int[] key = new int[66];
             for (int i : key) {
@@ -322,7 +314,7 @@ public class ldletimeCtrl extends BaseCtrl {
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 startTime = jsonObject.getString("start");
-                transDate = simpleDateFormat.parse(startTime);
+                Date transDate = simpleDateFormat.parse(startTime);
                 startMilliSecond = transDate.getTime();
                 jsonSave.put(String.valueOf((startMilliSecond - initMilliSecond) / standardTime), "1");
             }
