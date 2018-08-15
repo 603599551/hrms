@@ -112,22 +112,19 @@ public class Config extends JFinalConfig {
         //经理端离职审核
         routes.add("/mgr/mobile/resign", com.hr.mobile.resign.controllers.ResignCtrl.class);
         //员工离职申请
-//        routes.add("/mgr/mobile/setting", com.hr.mobile.setting.controllers.SettingCtrl.class);
+        routes.add("/mgr/mobile/setting", com.hr.mobile.setting.controllers.SettingCtrl.class);
 		//店长端排班情况配置
 		routes.add("/mgr/mobile/storeMgr/scheduling", com.hr.mobile.storeMgr.controllers.SchedulingCtrl.class);
-
-        //		routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl1.class);
         routes.add("mgr/mobile/sign",com.hr.mobile.sign.controllers.SignCtrl.class);
-
-		//设置- 修改手机号 密码
-		routes.add("/mgr/mobile/setting", SettingCtrl.class);
-
 		//员工端工资
 		routes.add("/mgr/mobile/salary", com.hr.mobile.salary.controllers.SalaryCtrl.class);
 
 		//经理端考核
 		routes.add("/mgr/mobile/examine", com.hr.mobile.examine.ExamineCtrl.class);
-    }
+		//员工端培训
+		routes.add("mgr/mobile/train", com.hr.mobile.train.controllers.TrainCtrl.class);
+
+	}
 
 	@Override
 	public void configEngine(Engine engine) {
