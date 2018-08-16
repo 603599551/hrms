@@ -177,10 +177,11 @@ public class LeaveSrv {
                     clockRecord.set("is_leave","1");
                     Db.update("h_staff_clock",clockRecord);
 
-                    //处理h_work_time表
-                    Record timeRecord = Db.findFirst("SELECT time.id as id , time.number FROM h_work_time time WHERE time.staff_id = ? AND time.date = ?",staffId,date);
-                    timeRecord.set("number",timeRecord.getInt("number") - leaveRecord.getInt("number"));
-                    Db.update("h_work_time",timeRecord);
+
+//                    //处理h_work_time表
+//                    Record timeRecord = Db.findFirst("SELECT time.id as id , time.number FROM h_work_time time WHERE time.staff_id = ? AND time.date = ?",staffId,date);
+//                    timeRecord.set("number",timeRecord.getInt("number") - leaveRecord.getInt("number"));
+//                    Db.update("h_work_time",timeRecord);
 
 
                     leaveRecord.set("status", "1");
