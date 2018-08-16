@@ -78,7 +78,7 @@ type	string		是	调出类型。接口获取
 
 		//sql语句
 		String select = "SELECT ( SELECT h. NAME FROM h_dictionary h WHERE h.parent_id = 700 AND h.VALUE = info.type ) AS type, info.date AS date, info.id AS id, ( SELECT s. NAME FROM h_store s WHERE s.id = info.to_dept ) AS in_store_name, ( SELECT s. NAME FROM h_store s WHERE s.id = info.from_dept ) AS out_store_name, staff. NAME AS name, staff.staff_id AS staff_id ";
-    	StringBuilder sql = new StringBuilder(" FROM h_move_info info, h_move_staff staff, h_staff s WHERE staff.move_info_id = info.id AND s.id = staff.staff_id");
+    	StringBuilder sql = new StringBuilder(" FROM h_move_info info, h_move_staff staff, h_staff s WHERE info.status = '3' AND staff.move_info_id = info.id AND s.id = staff.staff_id");
 
 		String outStoreId = getPara("out_store_id");
 		String inStoreId = getPara("in_store_id");
@@ -114,6 +114,9 @@ type	string		是	调出类型。接口获取
 			params.add(keyWord);
 			params.add(keyWord);
 		}
+
+		//增加排序
+		sql.append(" order by info.date desc");
 
 		try{
 			Page<Record> page = Db.paginate(pageNum,pageSize,select,sql.toString(),params.toArray());
