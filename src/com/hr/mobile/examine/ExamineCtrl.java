@@ -72,7 +72,7 @@ public class ExamineCtrl extends BaseCtrl{
             String sql1="SELECT id,staff_id,kind_id as job,result as status FROM h_exam WHERE examiner_id=? AND result!='0' ORDER BY create_time ASC";
             List<Record> list=Db.find(sql1,staffId);
             //步骤2：遍历步骤1所得的staff_id 查h_staff表 得到①员工姓名name ②员工姓名首字母firstname ③员工电话phone
-            if (list!=null&list.size()>0){
+            if (list!=null&&list.size()>0){
                 for (Record r:list){
                     Record r2=Db.findFirst(unSQL2,r.getStr("staff_id"));
                     if (r2!=null){
@@ -178,8 +178,28 @@ public class ExamineCtrl extends BaseCtrl{
             }else {
                 //更新exam表中的status
                 Db.update("UPDATE h_exam SET result=?  WHERE id=?",status,id);
+                //更新staff_train表的status
+                String sql5="UPDATE h_staff_train SET status=? WHERE staff_id=? AND type_2=?";
+                //通过考核id查询staffid和typeid
+                String sql6="SELECT staff_id,type_id FROM h_exam WHERE id=?";
+                Record r6=Db.findFirst(sql6,id);
+                if (r6==null){
+                    jhm.putCode(0).putMessage("无该考核记录！");
+                    renderJson(jhm);
+                    return;
+                }
+                String staffId=r6.getStr("staff_id");
+                String typeId=r6.getStr("type_id");
+                if ("2".equals(status)){
+                    //通过考核
+                    Db.update(sql5,"1",staffId,typeId);
+                    jhm.putCode(1).putMessage("考核通过！");
+                }else if ("1".equals(status)){
+                    //未通过考核
+                    Db.update(sql5,"0",staffId,typeId);
+                    jhm.putCode(1).putMessage("考核未通过");
+                }
             }
-
 
             //遍历jsonArray，通过考核id（exam_id）更新exam_question表的数据
             for (int i=0;i<jsonArray.size();i++){

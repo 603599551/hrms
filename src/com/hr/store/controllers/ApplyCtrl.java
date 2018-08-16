@@ -9,7 +9,22 @@ import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
+import java.util.List;
+
 public class ApplyCtrl extends BaseCtrl {
+
+    /**
+     * 申请调入状态 状态值->中文
+     */
+    public String translate(String str){
+        String sql="SELECT name FROM h_dictionary WHERE parent_id='5000' AND value=?";
+        Record r=Db.findFirst(sql,str);
+        if (r!=null){
+            return r.getStr("name");
+        }else {
+            return null;
+        }
+    }
 
     /**
      9.1.	申请调入员工列表
@@ -48,8 +63,60 @@ public class ApplyCtrl extends BaseCtrl {
      "message": "服务器发生异常！"
      }
 */
+    @Override
     public void list(){
-        renderJson("{\"code\":1,\"data\":[{\"work_date\":\"上岗日期\",\"type_text\":\"\",\"from_store_name\":\"店名\",\"id\":\"该记录id\",\"status_text\":\"未读\",\"store_color\":\"#b7a6d4\",\"status\":\"0\"}]}");
+        JsonHashMap jhm=new JsonHashMap();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+
+        try{
+            //当前登录人id
+            String userId=usu.getUserId();
+            if (StringUtils.isEmpty(userId)){
+                jhm.putCode(0).putMessage("userId为空！");
+                renderJson(jhm);
+                return;
+            }
+
+            //通过userId查询其门店id
+            String sql1="SELECT dept_id AS deptId FROM h_staff WHERE id=?";
+            Record r1=Db.findFirst(sql1,userId);
+            if (r1==null){
+                jhm.putCode(0).putMessage("当前登录人的门店id为空！");
+                renderJson(jhm);
+                return;
+            }
+            String deptId=r1.getStr("deptId");
+
+            String sql2="SELECT work_date,type AS type_text,from_dept AS from_store_name,id,status AS status_text  FROM h_apply_move WHERE to_dept=?";
+            List<Record> list2=Db.find(sql2,deptId);
+
+            //通过门店id查询store_color
+            String sql3="SELECT store_color FROM h_store WHERE id=?";
+            Record r3=Db.findFirst(sql3,deptId);
+            if (r3==null){
+                jhm.putCode(0).putMessage("store_color为空！");
+                renderJson(jhm);
+                return;
+            }
+            String storeColor=r3.getStr("store_color");
+
+            if (list2!=null&&list2.size()>0){
+                for (Record r2:list2){
+                    //数字->中文
+                    String status=r2.getStr("status_text");
+                    r2.set("status",status);
+                    r2.set("status_text",translate(status));
+                    r2.set("store_color",storeColor);
+                }
+            }
+            jhm.putCode(1);
+            jhm.put("data",list2);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+
+        renderJson(jhm);
     }
     /**
      9.2.	申请调入
@@ -91,24 +158,28 @@ public class ApplyCtrl extends BaseCtrl {
     public void moveIn(){
         JsonHashMap jhm = new JsonHashMap();
 
-        String workDate = getPara("work_date");
+        //上岗日期word_date
+            String workDate = getPara("work_date");
         if(StringUtils.isEmpty(workDate)){
             jhm.putCode(0).putMessage("上岗时间不能为空！");
             renderJson(jhm);
             return;
         }
+        //调动类别id type
         String type = getPara("type");
         if(StringUtils.isEmpty(type) || StringUtils.equals(type , "-1")){
             jhm.putCode(0).putMessage("调动类型不能为空！");
             renderJson(jhm);
             return;
         }
+        //来源门店id from_dept
         String fromStore = getPara("from_store");
         if(StringUtils.isEmpty(fromStore) || StringUtils.equals(fromStore , "-1") ){
             jhm.putCode(0).putMessage("来源部门不能为空！");
             renderJson(jhm);
             return;
         }
+        //说明 reason
         String desc = getPara("desc");
         if(StringUtils.isEmpty(desc)){
             jhm.putCode(0).putMessage("说明不能为空！");
@@ -116,7 +187,7 @@ public class ApplyCtrl extends BaseCtrl {
             return;
         }
 
-        String infoId = UUIDTool.getUUID();
+        String applymoveId = UUIDTool.getUUID();
         String noticeId = UUIDTool.getUUID();
         String createTime = DateTool.GetDateTime();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
@@ -129,9 +200,15 @@ public class ApplyCtrl extends BaseCtrl {
 
             //获取目标门店店长Id
             Record recordFromDeptId = Db.findFirst("SELECT (SELECT staff.id FROM h_staff staff WHERE staff.job = 'store_manager' AND staff.dept_id = store.id) id FROM  h_store store WHERE store.id = ?",fromStore);
+            if (recordFromDeptId==null){
+                jhm.putCode(0).putMessage("来源门店店长id为空！");
+                renderJson(jhm);
+                return;
+            }
+            String reviewerId=recordFromDeptId.getStr("id");
 
-            //info相关信息存入info表
-            recordInfo.set("id", infoId);
+            //info相关信息存入apply_move表
+            recordInfo.set("id", applymoveId);
             recordInfo.set("from_dept", fromStore);
             recordInfo.set("reason", desc);
             recordInfo.set("status", "0");
@@ -139,17 +216,22 @@ public class ApplyCtrl extends BaseCtrl {
             recordInfo.set("type", type);
             recordInfo.set("creater_id", createrId);
             recordInfo.set("create_time", createTime);
+            recordInfo.set("reason", desc);
+            recordInfo.set("reviewer_id", reviewerId);
+            recordInfo.set("review_time", null);
+            recordInfo.set("review_result", null);
             boolean flagInfo = Db.save("h_apply_move",recordInfo);
 
             //notice相关信息存入noitce表
             recordNotice.set("id",noticeId);
-            recordNotice.set("content","申请调入内容");
+            recordNotice.set("title","申请调入内容");
+            recordNotice.set("content",desc);
             recordNotice.set("sender_id",createrId);
-            recordNotice.set("receiver_id",recordFromDeptId.getStr("id"));
+            recordNotice.set("receiver_id",reviewerId);
             recordNotice.set("create_time",createTime);
             recordNotice.set("status","0");
-            recordNotice.set("type","1");
-            recordNotice.set("fid",infoId);
+            recordNotice.set("type","apply_movein");
+            recordNotice.set("fid",applymoveId);
             boolean flagNotice = Db.save("h_notice",recordNotice);
 
             if(flagInfo && flagNotice){
@@ -161,8 +243,6 @@ public class ApplyCtrl extends BaseCtrl {
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");
         }
-
-
         renderJson(jhm);
     }
     /**
@@ -206,8 +286,30 @@ public class ApplyCtrl extends BaseCtrl {
      "message": "服务器发生异常！"
      }
 */
+    @Override
     public void showById(){
-        renderJson("{\"code\":1,\"data\":{\"work_date\":\"上岗日期\",\"type_text\":\"\",\"from_store_name\":\"店名\",\"id\":\"该记录id\",\"status_text\":\"未读\"}}");
+        JsonHashMap jhm=new JsonHashMap();
+
+        try{
+            String id=getPara("id");
+            String sql="SELECT work_date,type AS type_text,from_dept AS from_store_name,id,status AS status_text FROM h_apply_move WHERE id=?";
+            Record r=Db.findFirst(sql,id);
+            if (r==null){
+                jhm.putCode(0).putMessage("此记录不存在！");
+                renderJson(jhm);
+                return;
+            }
+            String status=r.getStr("status_text");
+            r.set("status_text",translate(status));
+
+            jhm.putCode(1);
+            jhm.put("data",r);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+
+        renderJson(jhm);
     }
     /**
      9.4.	撤销申请
@@ -245,7 +347,34 @@ public class ApplyCtrl extends BaseCtrl {
      }
      */
     public void cancelById(){
-        renderJson("{\"code\":1,\"message\":\"撤销成功！\"}");
+        JsonHashMap jhm=new JsonHashMap();
+
+        try{
+            String id=getPara("id");
+            String sql="SELECT status FROM h_apply_move WHERE id=?";
+            Record r=Db.findFirst(sql,id);
+            if (r==null){
+                jhm.putCode(0).putMessage("此记录不存在！");
+                renderJson(jhm);
+                return;
+            }
+            String status=r.getStr("status");
+            if (status.equals("0")){
+                Db.update("UPDATE h_apply_move SET status='1' WHERE id=?",id);
+                jhm.putCode(1).putMessage("撤销成功！");
+                renderJson(jhm);
+                return;
+            }else {
+                jhm.putCode(0).putMessage("撤销失败！");
+                renderJson(jhm);
+                return;
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+        renderJson(jhm);
     }
     /**
      4.4.	处理申请

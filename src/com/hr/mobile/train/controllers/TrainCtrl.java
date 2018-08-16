@@ -16,6 +16,18 @@ import java.util.Map;
 
 public class TrainCtrl extends BaseCtrl{
     /**
+     * 岗位名字中文转英文
+     */
+    public String translate(String str){
+        String sql="SELECT value FROM h_dictionary WHERE name=?";
+        Record r=Db.findFirst(sql,str);
+        if (r==null){
+            return null;
+        }
+        return r.getStr("value");
+    }
+
+    /**
      * 员工查看一级培训列表
      名称	查看一级培训列表
      描述	根据员工id查询一级培训列表
@@ -69,17 +81,36 @@ public class TrainCtrl extends BaseCtrl{
         }
 
         try {
-            String staffSearch = "select count(*) as c from h_staff s where s.id = ? ";
+            String staffSearch = "SELECT * FROM h_staff WHERE id=?";
             Record countR = Db.findFirst(staffSearch, staff_id);
-            if(countR.getInt("c") != 0){
+            if(countR!=null){
+                //返回一级列表 type_1!!!!
                 if(StringUtils.isEmpty(train_id)){
-                    String trainSearch = "SELECT t.id AS train_id, t.name AS name, ( SELECT count(*) FROM h_staff_train s WHERE (s.type_2 = null OR ISNULL(type_2)) AND s.type_1 = t.id AND s.staff_id = ? ) AS status FROM h_train_type t WHERE t.parent_id = '-1'";
+                    String trainSearch = "SELECT type.id AS train_id ,type.name AS name,train.status AS status FROM h_train_type type,h_staff_train train\n" +
+                            "WHERE type.parent_id='-1' AND (train.type_2='' OR ISNULL(train.type_2)) AND train.type_1=type.id \n" +
+                            "AND train.staff_id=?";
                     List<Record> typeList = Db.find(trainSearch, staff_id);
                     jhm.putCode(1);
                     jhm.put("list",typeList);
                 } else {
-                    String trainSearch = "SELECT t.id AS train_id, t.name AS name, ( SELECT count(*) FROM h_staff_train s WHERE s.type_2 = t.id AND s.staff_id = ? ) AS status FROM h_train_type t WHERE t.parent_id = ? ";
-                    List<Record> typeList = Db.find(trainSearch, staff_id, train_id);
+                    //返回单个一级列表下所有的二级列表 type_2
+                    String trainSearch = "SELECT type.id AS train_id ,type.name AS name,train.status AS status FROM h_train_type type,h_staff_train train\n" +
+                            "WHERE type.parent_id=? AND train.staff_id=? AND train.type_2=type.id ";
+                    List<Record> typeList = Db.find(trainSearch, train_id, staff_id);
+                    int count=0;
+                    if (typeList!=null&&typeList.size()>0){
+                        for (Record r:typeList){
+                            String status=r.getStr("status");
+                            if (!status.equals("1")){
+                                break;
+                            }
+                            count++;
+                            //说明二级列表都已通过 则一级列表状态为已通过
+                            if (count==typeList.size()){
+                                Db.update("UPDATE h_staff_train SET status='1' WHERE staff_id=? AND type_1=? AND (type_2=''OR ISNULL(type_2))",staff_id,train_id);
+                            }
+                        }
+                    }
                     jhm.putCode(1);
                     jhm.put("list",typeList);
                 }
@@ -151,6 +182,11 @@ public class TrainCtrl extends BaseCtrl{
             if(countR.getInt("c") != 0){
                 String sql = "select a.content as content from h_train_article a where a.type_2 = ? ";
                 Record record = Db.findFirst(sql, type_id);
+                if (record==null){
+                    jhm.putCode(0).putMessage("培训详情为空！");
+                    renderJson(jhm);
+                    return;
+                }
                 jhm.putCode(1);
                 jhm.put("content", record.getStr("content"));
             } else {
@@ -277,14 +313,55 @@ public class TrainCtrl extends BaseCtrl{
         }
 
         try {
-            String staffSearch = "select count(*) as c, (SELECT id from h_staff where dept_id = s.dept_id AND job = 'store_manager')as examiner_id from h_staff s where s.id = ?";
-            Record countR = Db.findFirst(staffSearch, staff_id);
-            if(countR.getInt("c") != 0){
-                Record record = new Record();
-
-            } else {
-                jhm.putCode(0).putMessage("员工不存在！");
+            String id=UUIDTool.getUUID();
+            String createTime=DateTool.GetDateTime();
+            //查询staff表得 入职日期hiredate 店铺id dept_id
+            String sql1="SELECT hiredate,dept_id FROM h_staff WHERE id=?";
+            Record r1=Db.findFirst(sql1,staff_id);
+            if (r1==null){
+                jhm.putCode(0).putMessage("查询不到入职日期和门店id！");
+                renderJson(jhm);
+                return;
             }
+            String hiredate=r1.getStr("hiredate");
+            String deptId=r1.getStr("dept_id");
+            String sql2="SELECT id FROM h_staff WHERE dept_id=? AND job='store_manager'";
+            Record r2=Db.findFirst(sql2,deptId);
+            if (r2==null){
+                jhm.putCode(0).putMessage("查询不到店长id！");
+                renderJson(jhm);
+                return;
+            }
+            String examinerId=r2.getStr("id");
+
+            //根据二级培训id 查train_type表的id得到name中文
+            String sql3="SELECT name FROM h_train_type WHERE id=?";
+            Record r3=Db.findFirst(sql3,type_id);
+            if (r3==null){
+                jhm.putCode(0).putMessage("查询不到二级分类名称！");
+                renderJson(jhm);
+                return;
+            }
+            String chineseName=r3.getStr("name");
+            String englishName=translate(chineseName);
+
+            Record record=new Record();
+            record.set("id",id);
+            record.set("staff_id",staff_id);
+            record.set("create_time",createTime);
+            record.set("hiredate",hiredate);
+            record.set("kind_id",englishName);
+            record.set("examiner_id",examinerId);
+            record.set("result","0");
+            record.set("type_id",type_id);
+
+            boolean flag=Db.save("h_exam",record);
+            if (flag){
+                jhm.putCode(1).putMessage("提交成功！");
+            }else {
+                jhm.putCode(0).putMessage("提交失败！");
+            }
+            Db.update("UPDATE h_staff_train SET status=? WHERE staff_id=? AND type_2=?","3",staff_id,type_id);
         } catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");

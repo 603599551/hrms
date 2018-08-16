@@ -205,25 +205,56 @@ public class NoticeCtrl extends BaseCtrl{
     public void showNRMessageNum(){
         JsonHashMap jhm=new JsonHashMap();
         String staffId=getPara("staffid");
+        if (staffId==null){
+            jhm.putMessage("经理id为空");
+            renderJson(jhm);
+            return;
+        }
+
         try{
-            //查询请假消息未读数量
+            //查询请假消息未处理数量
             String sql="select count(*) as c from h_staff_leave_info where store_mgr_id=? and status='0'";
             //数据类型有可能是int long ....
             Object cObj1=Db.findFirst(sql,staffId).get("c");
             //将Object转为int
             int count1=NumberUtils.parseInt(cObj1,0);
 
-            //查询离职消息未读数量
+            //查询离职消息未处理数量
             String sql2="select count(*) as c from h_resign where reviewer_id=? and status='0'";
             //数据类型有可能是int long ....
             Object cObj2=Db.findFirst(sql2,staffId).get("c");
             //将Object转为int
             int count2=NumberUtils.parseInt(cObj2,0);
 
+            //查询考核消息未处理数量
+            String sql3="SELECT count(*) AS c FROM h_exam WHERE examiner_id=? AND result='0'";
+            //数据类型有可能是int long ....
+            Object cObj3=Db.findFirst(sql3,staffId).get("c");
+            //将Object转为int
+            int count3=NumberUtils.parseInt(cObj3,0);
+
+            //根据经理id查询门店id
+            String sql4="SELECT dept_id FROM h_staff WHERE id=?";
+            Record r4=Db.findFirst(sql4,staffId);
+            if (r4==null){
+                jhm.putMessage("该经理没有门店id");
+                renderJson(jhm);
+                return;
+            }
+            String storeId=r4.getStr("dept_id");
+            //查询签到消息未处理数量
+            String sql5="SELECT count(*) AS c FROM h_staff_clock WHERE store_id=? AND is_deal='0' AND status='1'";
+            //数据类型有可能是int long ....
+            Object cObj5=Db.findFirst(sql5,storeId).get("c");
+            //将Object转为int
+            int count5=NumberUtils.parseInt(cObj5,0);
+
             jhm.putCode(1);
-            jhm.put("check",null);
+            jhm.put("check",count3);
             jhm.put("leave",count1);
             jhm.put("quit",count2);
+            jhm.put("sign",count5);
+
         }catch (Exception e){
             jhm.putCode(-1);
             jhm.putMessage("服务器发生异常！");
