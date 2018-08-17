@@ -69,34 +69,6 @@ public class TrainService extends BaseService {
                     if (!parentId.equals(typeParentId)){
                         Db.update("UPDATE h_staff_train SET status=? WHERE staff_id=? AND type_2=?","1",staff_id,type_id);
                         jhm.putCode(1).putMessage("培训完成！");
-//                        String searchType = "select t.parent_id as type_1 from h_train_type t where t.id = ? ";
-//                        Record record = Db.findFirst(searchType, type_id);
-//                        record.set("id", UUIDTool.getUUID());
-//                        record.set("type_2", type_id);
-//                        record.set("create_time", date);
-//                        record.set("status", "1");
-//                        record.set("staff_id", staff_id);
-//                        String sql = "SELECT c.count as allCount, s.count as staffCount from (SELECT count(*)as count from h_train_type  where parent_id= ? )c,(SELECT count(*) as count from h_staff_train where type_1 = ? AND staff_id = ? )s";
-//                        Record countNumber = Db.findFirst(sql, record.getStr("type_1"), record.getStr("type_1"), staff_id);
-//                        if(countNumber.getInt("allCount")==(countNumber.getInt("staffCount")+1)){
-//                            countNumber.set("type_1",record.getStr("type_1"));
-//                            countNumber.set("id", UUIDTool.getUUID());
-//                            countNumber.set("staff_id", staff_id);
-//                            countNumber.set("status", "1");
-//                            countNumber.set("create_time", date);
-//                            countNumber.remove("allCount");
-//                            countNumber.remove("staffCount");
-//                            boolean flag1 = Db.save("h_staff_train", countNumber);
-//                            if(!flag1){
-//                                jhm.putCode(0).putMessage("一级分类进度更新失败！");
-//                            }
-//                        }
-//                        boolean flag2 = Db.save("h_staff_train", record);
-//                        if(flag2){
-//                            jhm.putCode(1).putMessage("培训完成！");
-//                        } else {
-//                            jhm.putCode(0).putMessage("培训完成失败！");
-//                        }
                     }else {
                         //岗位培训
                         //根据train_type的二级培训id查找name
@@ -115,26 +87,10 @@ public class TrainService extends BaseService {
                         Record result=Db.findFirst(sql4,staff_id,englishName);
                         String sql5="UPDATE h_staff_train SET status=? WHERE staff_id=? AND type_2=?";
                         //若不存在考核记录说明未申请考核
-                        if (result==null){
+                        if (result==null||"1".equals(result.getStr("result"))){
                             Db.update(sql5,"2",staff_id,type_id);
                             jhm.putCode(1).putMessage("请申请考核！");
                             return jhm;
-                        }else {
-                            String status=result.getStr("result");
-
-                            //审核中
-                            if ("0".equals(status)){
-                                Db.update(sql5,"3",staff_id,type_id);
-                                jhm.putCode(1).putMessage("考核中！");
-                            }else if ("2".equals(status)){
-                                //通过考核
-                                Db.update(sql5,"1",staff_id,type_id);
-                                jhm.putCode(1).putMessage("考核通过！");
-                            }else if ("1".equals(status)){
-                                //未通过考核
-                                Db.update(sql5,"0",staff_id,type_id);
-                                jhm.putCode(1).putMessage("考核未通过");
-                            }
                         }
                     }
 

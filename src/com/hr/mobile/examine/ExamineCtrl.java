@@ -49,7 +49,7 @@ public class ExamineCtrl extends BaseCtrl{
 
             //查找未处理记录untreated
             //步骤1：从 h_exam表中获取该经理未审核的人的 ①考核id ②员工id ③岗位名（单个）
-            String unSQL1="SELECT id,staff_id,kind_id as job FROM h_exam WHERE examiner_id=? AND result='0' ORDER BY create_time ASC";
+            String unSQL1="SELECT id,staff_id,kind_id as job FROM h_exam WHERE examiner_id=? AND result='0' ORDER BY create_time DESC";
             List<Record> unList=Db.find(unSQL1,staffId);
             //步骤2：遍历步骤1所得的staff_id 查h_staff表 得到①员工姓名name ②员工姓名首字母firstname ③员工电话phone
             String unSQL2="SELECT name,left(pinyin,1) as firstname,phone FROM h_staff WHERE id=?";
@@ -69,7 +69,7 @@ public class ExamineCtrl extends BaseCtrl{
 
             //查找已处理记录pocessed
             //步骤1：从 h_exam表中获取该经理已审核的人的 ①考核id ②员工id ③岗位名（单个）④通过状态
-            String sql1="SELECT id,staff_id,kind_id as job,result as status FROM h_exam WHERE examiner_id=? AND result!='0' ORDER BY create_time ASC";
+            String sql1="SELECT id,staff_id,kind_id as job,result as status FROM h_exam WHERE examiner_id=? AND result!='0' ORDER BY create_time DESC";
             List<Record> list=Db.find(sql1,staffId);
             //步骤2：遍历步骤1所得的staff_id 查h_staff表 得到①员工姓名name ②员工姓名首字母firstname ③员工电话phone
             if (list!=null&&list.size()>0){
@@ -108,15 +108,21 @@ public class ExamineCtrl extends BaseCtrl{
             //考核id
             String id=getPara("id");
 
-            //步骤1：通过考核id查询question_type表的exam_id  ->主键id 分类名称name
-            String sql1="SELECT id as typeId,name as title FROM h_question_type WHERE exam_id=?";
-            List<Record> list1=Db.find(sql1,id);
+            //步骤0：通过考核id查exam表的kind_id
+            String sql0="SELECT kind_id FROM h_exam WHERE id=?";
+            Record r0=Db.findFirst(sql0,id);
+            if (r0==null){
+                jhm.putCode(0).putMessage("exam表的kind_id为空！");
+                renderJson(jhm);
+                return;
+            }
+            String kindId=r0.getStr("kind_id");
+            String job=translate(kindId);
+            //步骤1：通过exam表的kind_id查询question_type表的kind_id ->主键id 分类名称name
+            String sql1="SELECT id as typeId,name as title FROM h_question_type WHERE kind_id=?";
+            List<Record> list1=Db.find(sql1,kindId);
             //步骤2：通过步骤1得到的主键id查question表的type_id  -> 题目title 题目内容content
             String sql2="SELECT id as question_id,title as question,content FROM h_question WHERE type_id=?";
-            //步骤3：通过考核id查询exam表的考核职业kind_id ---"job"
-            String sql3="SELECT kind_id FROM h_exam WHERE id=?";
-            Record r3=Db.findFirst(sql3,id);
-            String job=translate(r3.getStr("kind_id"));
             //步骤4：创建一个新list ----detail
             List<Record> finalList=new ArrayList<>();
 
