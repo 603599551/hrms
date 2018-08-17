@@ -77,15 +77,12 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/moveIn", MoveInCtrl.class);
 		routes.add("/mgr/apply", ApplyCtrl.class);
 		routes.add("/mgr/performance", PerformanceCtrl.class);
-
 		//培训
 		routes.add("/mgr/train/type", TypeCtrl.class);
 		routes.add("/mgr/train/article", ArticleCtrl.class);
-
 		routes.add("/mgr/question", QuestionCtrl.class);
 		routes.add("/mgr/exam", ExamCtrl.class);
-
-		routes.add("/mgr/NoticeCtrl", com.hr.notice.controllers.NoticeCtrl.class);
+		routes.add("/mgr/notice", com.hr.notice.controllers.NoticeCtrl.class);
 
 		//测试排班
 		routes.add("/mgr/storeForecastTurnoverCtrl", StoreForecastTurnoverCtrl.class);
@@ -96,15 +93,12 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/workTimeCtrl", WorkTimeCtrl.class);
 		//工资详情
 		routes.add("/mgr/workTimeDetailCtrl", WorkTimeDetailCtrl.class);
-
 		//通讯录
 		routes.add("/mgr/mobile/addresslist", AddressListCtrl.class);
-
 		//员工端消息回显
 		routes.add("/mgr/mobile/notice", com.hr.mobile.notice.controllers.NoticeCtrl.class);
         //app端
         routes.add("/mgr/mobile/leave", LeaveCtrl.class);
-
         //测试mobile
         routes.add("/mgr/mobile/scheduling",com.hr.mobile.scheduling.controllers.SchedulingCtrl.class);
         routes.add("/mobile/login", com.hr.mobile.LoginCtrl.class);
