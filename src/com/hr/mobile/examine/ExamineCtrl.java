@@ -206,15 +206,6 @@ public class ExamineCtrl extends BaseCtrl{
                 }else if ("1".equals(status)){
                     //未通过考核
                     Db.update(sql5,"0",staffId,typeId);
-                    for (int i=0;i<jsonArray.size();i++){
-                        JSONObject jsonObject=jsonArray.getJSONObject(i);
-                        if (jsonObject.size()!=0){
-                            String questionId=jsonObject.getString("question_id");
-                            Record qr=Db.findFirst("SELECT title FROM h_question WHERE id=?",questionId);
-                            String qTitle=qr.getStr("title");
-                            questions.add(qTitle);
-                        }
-                    }
                 }
 
                 //遍历jsonArray，通过考核id（exam_id）更新exam_question表的数据
@@ -231,6 +222,22 @@ public class ExamineCtrl extends BaseCtrl{
                         Db.save("h_exam_question",r);
                     }
                 }
+
+                if ("1".equals(status)){
+                    for (int i=0;i<jsonArray.size();i++){
+                        JSONObject jsonObject=jsonArray.getJSONObject(i);
+                        if (jsonObject.size()!=0){
+                            String questionId=jsonObject.getString("question_id");
+                            Record qr=Db.findFirst("SELECT h_question.title FROM h_question,h_exam_question WHERE h_question.id=? AND h_exam_question.exam_id=? AND h_exam_question.question_id=h_question.id AND h_exam_question.result='0'",questionId,id);
+                            if (qr==null){
+                                continue;
+                            }
+                            String qTitle=qr.getStr("title");
+                            questions.add(qTitle);
+                        }
+                    }
+                }
+
 
                 //向notice表存信息 发往员工端
                 Record notice=new Record();
