@@ -69,7 +69,7 @@ public class ExamineCtrl extends BaseCtrl{
 
             //查找已处理记录pocessed
             //步骤1：从 h_exam表中获取该经理已审核的人的 ①考核id ②员工id ③岗位名（单个）④通过状态
-            String sql1="SELECT id,staff_id,kind_id as job,result as status FROM h_exam WHERE examiner_id=? AND result!='0' ORDER BY create_time DESC";
+            String sql1="SELECT id,staff_id,kind_id as job,result as status FROM h_exam WHERE examiner_id=? AND result!='0' ORDER BY review_time DESC";
             List<Record> list=Db.find(sql1,staffId);
             //步骤2：遍历步骤1所得的staff_id 查h_staff表 得到①员工姓名name ②员工姓名首字母firstname ③员工电话phone
             if (list!=null&&list.size()>0){
@@ -157,6 +157,9 @@ public class ExamineCtrl extends BaseCtrl{
         JsonHashMap jhm=new JsonHashMap();
 
         try{
+            UserSessionUtil usu = new UserSessionUtil(getRequest());
+            String senderId = usu.getUserId();
+            String createTime = DateTool.GetDateTime();
             //考核id
             String id=getPara("id");
             if (id==null){
@@ -196,32 +199,63 @@ public class ExamineCtrl extends BaseCtrl{
                 }
                 String staffId=r6.getStr("staff_id");
                 String typeId=r6.getStr("type_id");
+                List<String> questions=new ArrayList<>();
                 if ("2".equals(status)){
                     //通过考核
                     Db.update(sql5,"1",staffId,typeId);
-                    jhm.putCode(1).putMessage("考核通过！");
                 }else if ("1".equals(status)){
                     //未通过考核
                     Db.update(sql5,"0",staffId,typeId);
-                    jhm.putCode(1).putMessage("考核未通过");
+                    for (int i=0;i<jsonArray.size();i++){
+                        JSONObject jsonObject=jsonArray.getJSONObject(i);
+                        if (jsonObject.size()!=0){
+                            String questionId=jsonObject.getString("question_id");
+                            Record qr=Db.findFirst("SELECT title FROM h_question WHERE id=?",questionId);
+                            String qTitle=qr.getStr("title");
+                            questions.add(qTitle);
+                        }
+                    }
                 }
+
+                //遍历jsonArray，通过考核id（exam_id）更新exam_question表的数据
+                for (int i=0;i<jsonArray.size();i++){
+                    JSONObject jsonObject=jsonArray.getJSONObject(i);
+                    if (jsonObject.size()!=0){
+                        String questionId=jsonObject.getString("question_id");
+                        String result=jsonObject.getString("status");
+                        Record r=new Record();
+                        r.set("id",UUIDTool.getUUID());
+                        r.set("question_id",questionId);
+                        r.set("exam_id",id);
+                        r.set("result",result);
+                        Db.save("h_exam_question",r);
+                    }
+                }
+
+                //向notice表存信息 发往员工端
+                Record notice=new Record();
+                notice.set("id",UUIDTool.getUUID());
+                notice.set("title","岗位考核情况");
+                if ("2".equals(status)){
+                    notice.set("content","考核已通过！");
+                }else {
+                    String s=String.join(",", questions);
+                    notice.set("content",s);
+                }
+                notice.set("sender_id",senderId);
+                notice.set("receiver_id",staffId);
+                notice.set("create_time",createTime);
+                notice.set("status","0");
+                notice.set("type","check");
+                notice.set("fid",id);
+                Db.save("h_notice",notice);
+
+                Db.update("UPDATE h_exam SET review_time=? WHERE id=?",createTime,id);
+
+                jhm.putCode(1).putMessage("提交成功！");
             }
 
-            //遍历jsonArray，通过考核id（exam_id）更新exam_question表的数据
-            for (int i=0;i<jsonArray.size();i++){
-                JSONObject jsonObject=jsonArray.getJSONObject(i);
-                if (jsonObject.size()!=0){
-                    String questionId=jsonObject.getString("question_id");
-                    String result=jsonObject.getString("status");
-                    Record r=new Record();
-                    r.set("id",UUIDTool.getUUID());
-                    r.set("question_id",questionId);
-                    r.set("exam_id",id);
-                    r.set("result",result);
-                    Db.save("h_exam_question",r);
-                }
-            }
-            jhm.putCode(1).putMessage("提交成功！");
+
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");
@@ -244,17 +278,23 @@ public class ExamineCtrl extends BaseCtrl{
                 jhm.putCode(0).putMessage("考核id为空！");
             }
 
-            //步骤1：通过考核id查询question_type表的exam_id  ->主键id 分类名称name
-            String sql1="SELECT id as typeId,name as title FROM h_question_type WHERE exam_id=?";
-            List<Record> list1=Db.find(sql1,id);
+            //步骤0：通过考核id查exam表的kind_id
+            String sql0="SELECT kind_id FROM h_exam WHERE id=?";
+            Record r0=Db.findFirst(sql0,id);
+            if (r0==null){
+                jhm.putCode(0).putMessage("exam表的kind_id为空！");
+                renderJson(jhm);
+                return;
+            }
+            String kindId=r0.getStr("kind_id");
+            String job=translate(kindId);
+            //步骤1：通过exam表的kind_id查询question_type表的kind_id ->主键id 分类名称name
+            String sql1="SELECT id as typeId,name as title FROM h_question_type WHERE kind_id=?";
+            List<Record> list1=Db.find(sql1,kindId);
             //步骤2：通过步骤1得到的主键id查question表的type_id  -> 题目title 题目内容content
             String sql2="SELECT id as question_id,title as question,content FROM h_question WHERE type_id=?";
             //步骤3：根据考核id和步骤2得到的question_id查询exam_question表得到 result
             String sql33="SELECT result FROM h_exam_question WHERE exam_id=? AND question_id=?";
-            //步骤4：通过考核id查询exam表的考核职业kind_id ---"job"
-            String sql3="SELECT kind_id FROM h_exam WHERE id=?";
-            Record r3=Db.findFirst(sql3,id);
-            String job=translate(r3.getStr("kind_id"));
             //步骤5：创建一个新list ----detail
             List<Record> finalList=new ArrayList<>();
 

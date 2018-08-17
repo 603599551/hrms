@@ -8,7 +8,9 @@ import easy.util.NumberUtils;
 import easy.util.StringUtils;
 import utils.bean.JsonHashMap;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -45,7 +47,7 @@ public class NoticeCtrl extends BaseCtrl{
             }
 
             Record statusRecord=Db.findFirst(leaveSQL3,staffId);
-            if(statusRecord == null ){
+            if(statusRecord == null){
                 leaveR.set("states",null);
             }else{
                 String states=statusRecord.getStr("status");
@@ -82,9 +84,39 @@ public class NoticeCtrl extends BaseCtrl{
                 resignR.set("states",states2);
             }
 
+            //examList
+            String examSQL1="select count(*) as c from h_notice where type='check' and status='0' and receiver_id=? limit 0,30";
+            Record examR=new Record();
+            examR.set("type","examList");
+            //数据类型有可能是int long 等等
+            Object ccObj=Db.findFirst(examSQL1,staffId).get("c");
+            //将object转化为int
+            int counte=NumberUtils.parseInt(ccObj,0);
+            examR.set("number",counte);
+
+            String examSQL2="select * from h_notice where type='check'and receiver_id=? order by create_time desc limit 0,1";
+            //数据有可能为空
+            Record date2e=Db.findFirst(examSQL2,staffId);
+            if(date2e==null){
+                examR.set("date",null);
+            }else{
+                String date3=date2e.getStr("create_time");
+                examR.set("date",date3);
+            }
+
+            String examSQL3="select h_exam.result from h_exam,h_notice where h_notice.type='check'and h_notice.receiver_id=?  and h_notice.receiver_id=h_exam.staff_id and h_notice.fid=h_exam.id order by h_notice.create_time desc limit 0,1";
+            Record status3=Db.findFirst(examSQL3,staffId);
+            if(status3==null){
+                examR.set("states",null);
+            }else{
+                String states3=status3.getStr("result");
+                examR.set("states",states3);
+            }
+
             List<Record> list=new ArrayList<>();
             list.add(leaveR);
             list.add(resignR);
+            list.add(examR);
 
             jhm.putCode(1);
             jhm.put("data",list);
@@ -142,6 +174,13 @@ public class NoticeCtrl extends BaseCtrl{
                 }
                 //未读转已读
                 Db.update("update h_notice set status=? where type='resign' and receiver_id=?",1,staffId);
+            }//考核提醒
+            else if("examList".equals(type)){
+                String sql4="SELECT h_notice.create_time AS date,h_notice.content AS content,h_exam.result AS states FROM h_notice,h_exam\n" +
+                        "WHERE h_notice.receiver_id=? AND h_notice.type='check' AND h_notice.fid=h_exam.id order by h_notice.create_time ASC limit 0,30";
+                list=Db.find(sql4,staffId);
+                //未读转已读
+                Db.update("update h_notice set status=? where type='check' and receiver_id=?",1,staffId);
             }else{
                 list=null;
             }
@@ -242,10 +281,13 @@ public class NoticeCtrl extends BaseCtrl{
                 return;
             }
             String storeId=r4.getStr("dept_id");
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");// 可以方便地修改日期格式
+            String hehe = dateFormat.format(new Date());
             //查询签到消息未处理数量
-            String sql5="SELECT count(*) AS c FROM h_staff_clock WHERE store_id=? AND is_deal='0' AND status='1'";
+            String sql5="SELECT count(*) AS c FROM h_staff_clock WHERE store_id=? AND is_deal='0' AND status='1' AND date=?";
             //数据类型有可能是int long ....
-            Object cObj5=Db.findFirst(sql5,storeId).get("c");
+            Object cObj5=Db.findFirst(sql5,storeId,hehe).get("c");
             //将Object转为int
             int count5=NumberUtils.parseInt(cObj5,0);
 
