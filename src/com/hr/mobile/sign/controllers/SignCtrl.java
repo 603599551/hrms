@@ -13,8 +13,8 @@ import java.util.List;
 public class SignCtrl extends BaseCtrl {
 
     /**
-      根据人员id、日期查看签到签退时间
-   */
+     * 根据人员id、日期查看签到签退时间
+     */
     public void showDetailByStaffIdAndDate() {
         JsonHashMap jhm = new JsonHashMap();
 
@@ -166,7 +166,7 @@ public class SignCtrl extends BaseCtrl {
 
 
     /**
-        签到
+     * 签到
      */
     public void in() {
         JsonHashMap jhm = new JsonHashMap();
@@ -239,7 +239,7 @@ public class SignCtrl extends BaseCtrl {
                 }
 
                 //是最后一班并且没有签到过
-                if(i == clockList.size() - 1 && StringUtils.equals(clockList.get(i).getStr("status"),"0")){
+                if (i == clockList.size() - 1 && StringUtils.equals(clockList.get(i).getStr("status"), "0")) {
                     jhm.putCode(2).putMessage("今天已经没有班了，不需签到！");
                 }
             }
@@ -251,7 +251,7 @@ public class SignCtrl extends BaseCtrl {
     }
 
     /**
-           签退
+     * 签退
      */
 
     public void out() {
@@ -303,8 +303,8 @@ public class SignCtrl extends BaseCtrl {
                 if (!StringUtils.equals(clockList.get(i).getStr("status"), "0") && (sdfWorkTime.parse(clockList.get(i).getStr("start_time")).getTime() <= signOut.getTime()) && sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() >= signOut.getTime()) {
                     //更改明细表中的状态
                     for (int j = 0; j < detailList.size(); ++j) {
-                        //只操作状态为0的数据
-                        if (!StringUtils.equals(detailList.get(j).getStr("status"), "0")) {
+                        //只操作状态为0和5的数据
+                        if (!(StringUtils.equals(detailList.get(j).getStr("status"), "0") || StringUtils.equals(detailList.get(j).getStr("status"), "5"))) {
                             //当前工作时间段的结束时间早于签退时间  标记为正常上班
                         } else if (signOut.getTime() <= sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() && sdfWorkTime.parse(detailList.get(j).getStr("end_time")).getTime() <= (signOut.getTime())) {
                             detailList.get(j).remove("status");
@@ -342,8 +342,8 @@ public class SignCtrl extends BaseCtrl {
                         if (StringUtils.equals(clockList.get(k).getStr("status"), "1")) {
                             //更改明细表中的状态
                             for (int j = 0; j < detailList.size(); ++j) {
-                                //只操作状态为0的数据
-                                if (!StringUtils.equals(detailList.get(j).getStr("status"), "0")) {
+                                //只操作状态为0和5的数据
+                                if (!(StringUtils.equals(detailList.get(j).getStr("status"), "0") || StringUtils.equals(detailList.get(j).getStr("status"), "5"))) {
                                     //当前工作时间段的结束时间早于签退时间  标记为正常上班
                                 } else if (sdfWorkTime.parse(detailList.get(j).getStr("end_time")).getTime() <= sdfWorkTime.parse(clockList.get(k).getStr("end_time")).getTime()) {
                                     detailList.get(j).remove("status");
@@ -391,8 +391,8 @@ public class SignCtrl extends BaseCtrl {
                     if (!StringUtils.equals(clockList.get(i).getStr("status"), "0") && signOut.getTime() >= sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime() && signOut.getTime() <= sdfWorkTime.parse(clockList.get(i + 1).getStr("start_time")).getTime()) {
                         //更改明细表中的状态
                         for (int j = 0; j < detailList.size(); ++j) {
-                            //只操作状态为0的数据
-                            if (!StringUtils.equals(detailList.get(j).getStr("status"), "0")) {
+                            //只操作状态为0和5的数据
+                            if (!(StringUtils.equals(detailList.get(j).getStr("status"), "0") || StringUtils.equals(detailList.get(j).getStr("status"), "5"))) {
                                 //当前工作时间段的结束时间早于签退时间  标记为正常上班
                             } else if (signOut.getTime() >= sdfWorkTime.parse(detailList.get(j).getStr("end_time")).getTime()) {
                                 detailList.get(j).remove("status");
@@ -427,8 +427,8 @@ public class SignCtrl extends BaseCtrl {
                 } else if (!StringUtils.equals(clockList.get(i).getStr("status"), "0")) {
                     //更改明细表中的状态
                     for (int j = 0; j < detailList.size(); ++j) {
-                        //只操作状态为0的数据
-                        if (!StringUtils.equals(detailList.get(j).getStr("status"), "0")) {
+                        //只操作状态为0和5的数据
+                        if (!(StringUtils.equals(detailList.get(j).getStr("status"), "0") || StringUtils.equals(detailList.get(j).getStr("status"), "5"))) {
                             //当前工作时间段的结束时间早于签退时间  标记为正常上班
                         } else if (signOut.getTime() >= sdfWorkTime.parse(clockList.get(i).getStr("end_time")).getTime()) {
                             detailList.get(j).remove("status");
@@ -467,5 +467,4 @@ public class SignCtrl extends BaseCtrl {
         }
         renderJson(jhm);
     }
-
 }
