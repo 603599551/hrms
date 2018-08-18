@@ -77,7 +77,8 @@ public class QuestionCtrl extends BaseCtrl {
                 sql += " and (title like ? ) ";
                 params.add(keyword);
             }
-            sql += " order by h_question.create_time desc,id";
+            //按考题最后修改日期倒序排序，即最新修改的考题在最前面
+            sql += " order by h_question.modify_time desc,id";
             Page<Record> page = Db.paginate(pageNum, pageSize, select, sql, params.toArray());
             jhm.put("data", page);
         } catch (Exception e) {
@@ -128,6 +129,32 @@ public class QuestionCtrl extends BaseCtrl {
         Record question = this.getParaRecord();
         String title = question.getStr("title").trim();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
+
+
+        /**
+         * 前台页面需要修改的
+         */
+        String typeId=getPara("type_id");
+        String kindId=getPara("kind_id");
+
+        //添加的测试假数据
+        typeId="666";
+        kindId="666";
+
+        if(StringUtils.isEmpty(typeId)){
+            jhm.putCode(0).putMessage("请选择考题类别！");
+            renderJson(jhm);
+            return;
+        }
+        if(StringUtils.isEmpty(kindId)){
+            jhm.putCode(0).putMessage("请选择岗位类别！");
+            renderJson(jhm);
+            return;
+        }
+
+
+
+
         //考题标题不允许为空也不允许为空格
         if (StringUtils.isEmpty(title) || StringUtils.isBlank(title)) {
             jhm.putCode(0).putMessage("请填写考题标题！");
@@ -144,6 +171,12 @@ public class QuestionCtrl extends BaseCtrl {
 //              String pinyin = HanyuPinyinHelper.getFirstLettersLo(title);
                 question.set("id", UUIDTool.getUUID());//获取主键（UUID）的通用方法
 //              question.set("pinyin", pinyin);
+
+                //前台需要修改增加的参数
+                question.set("type_id",typeId);
+                question.set("kind_id",kindId);
+
+
                 question.set("creater_id", usu.getUserId());
                 question.set("modifier_id", usu.getUserId());
                 String time = DateTool.GetDateTime();
