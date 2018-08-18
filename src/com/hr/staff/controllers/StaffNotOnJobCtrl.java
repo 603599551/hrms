@@ -133,10 +133,6 @@ public class StaffNotOnJobCtrl extends BaseCtrl {
                 sql.append(" and h_staff_log.work_type=?");
                 params.add(type);
             }
-//            if(!StringUtils.isEmpty(status)){
-//                sql.append(" and h_staff_log.status=?");
-//                params.add(status);
-//            }
             //按照不在职状态，员工id排序
             sql.append(" order by s.sort,h_staff_log.staff_id");
             Page<Record> page = Db.paginate(pageNum, pageSize, select, new String(sql), params.toArray());
@@ -167,7 +163,7 @@ public class StaffNotOnJobCtrl extends BaseCtrl {
      * 成功	{
      * "code": 1,
      * "data": {
-     * "id": "员工id",                          //应该是h_staff_log表的id？？？
+     * "id": "员工id",                          //应该是h_staff_log表的id
      * "name": "鹿晗",
      * "gender": "0",//0：女，1：男
      * "birthday": "1990-03-29",
@@ -208,7 +204,8 @@ public class StaffNotOnJobCtrl extends BaseCtrl {
     public void showById() {
 //        renderJson("{\"code\":1,\"data\":{\"id\":\"员工id\",\"name\":\"鹿晗\",\"gender\":\"1\",\"gender_text\":\"女\",\"birthday\":\"1990-03-29\",\"phone\":\"138888888\",\"address\":\"北京王府井1号\",\"emp_num\":\"123\",\"hiredate\":\"2018-06-29\",\"dept_text\":\"面对面（长大店）\",\"dept_id\":\"234k5jl234j5lkj24l35j423l5j\",\"job\":\"trainer\",\"job_text\":\"员工\",\"kind\":[\"passed\",\"band\"],\"kind_text\":\"传菜员/带位员\",\"status\":\"on_loan\",\"status_text\":\"在职\",\"id_num\":\"身份证号\",\"work_type\":\"full_time\",\"work_type_text\":\"全职\",\"level\":\"2\",\"level_text\":\"二星训练员\",\"hour_wage\":\"16\",\"month_wage\":\"3000\",\"bank\":\"工商银行\",\"bank_card_num\":\"20023987413\",\"desc\":\"不在职原因\",\"modifier_id\":\"操作人\"}}");
         JsonHashMap jhm = new JsonHashMap();
-        String id = getPara("id");//获取当前员工所在h_staff_id表的id
+        //获取当前员工所在h_staff_id表的id
+        String id = getPara("id");
         if (StringUtils.isEmpty(id)) {
             jhm.putCode(0).putMessage("查看失败！");
             renderJson(jhm);

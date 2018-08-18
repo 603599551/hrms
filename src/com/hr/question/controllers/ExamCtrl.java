@@ -78,12 +78,12 @@ public class ExamCtrl extends BaseCtrl {
         String date = getPara("date");
 
         try {
-            String select = "select e.id id, s.name name,e.create_time datetime,e.hiredate hiredate,(SELECT group_concat(h. NAME) kind FROM h_exam ee LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, ee.kind_id) and h.parent_id='3000' GROUP BY ee.id ORDER BY ee.id ASC ) kind,(select s.name from h_staff s where s.id=e.examiner_id) examiner,(case result when '1' then 'success' else 'warnning' end)result_color,(case result when'1'then'通过'else'未通过' end)result_text,result result ";
-            StringBuilder sql = new StringBuilder("from h_exam e,h_staff s  where s.id=e.staff_id ");
+            String select = "select e.id id, hs.name name,e.create_time datetime,e.hiredate hiredate,(SELECT group_concat(h. NAME) kind FROM h_exam ee LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, ee.kind_id)where h.parent_id = '3000' and ee.id=e.id GROUP BY ee.id ORDER BY ee.id ASC ) kind,(select s.name from h_staff s where s.id=e.examiner_id) examiner,(case result when '1' then 'success' else 'warnning' end)result_color,(case result when'1'then'通过'else'未通过' end)result_text,result result ";
+            StringBuilder sql = new StringBuilder("from h_exam e,h_staff hs  where hs.id=e.staff_id ");
             List<Object> params = new ArrayList<>();
             if (!StringUtils.isEmpty(name)) {
                 name = "%" + name + "%";
-                sql.append(" and s.name like ? ");
+                sql.append(" and hs.name like ? ");
                 params.add(name);
             }
             if (!StringUtils.isEmpty(date)) {
