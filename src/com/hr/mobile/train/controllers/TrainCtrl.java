@@ -86,28 +86,62 @@ public class TrainCtrl extends BaseCtrl{
             if(countR!=null){
                 //返回一级列表 type_1!!!!
                 if(StringUtils.isEmpty(train_id)){
-                    String trainSearch = "SELECT type.id AS train_id ,type.name AS name,train.status AS status FROM h_train_type type,h_staff_train train\n" +
-                            "WHERE type.parent_id='-1' AND (train.type_2='' OR ISNULL(train.type_2)) AND train.type_1=type.id \n" +
-                            "AND train.staff_id=?";
-                    List<Record> typeList = Db.find(trainSearch, staff_id);
+                    String listSearch="SELECT type.id AS train_id ,type.name AS name  FROM h_train_type type WHERE type.parent_id='-1'";
+                    List<Record> typeList = Db.find(listSearch);
+                    if(typeList!=null&&typeList.size()>0){
+                        for (Record r:typeList){
+                            String type_1=r.getStr("train_id");
+                            Record statusR=Db.findFirst("SELECT status FROM h_staff_train WHERE type_1=? AND staff_id=? AND (ISNULL(type_2)OR type_2='')",type_1,staff_id);
+                            if (statusR==null){
+                                r.set("status","0");
+                            }else{
+                                r.set("status",statusR.getStr("status"));
+                            }
+                        }
+                    }
                     jhm.putCode(1);
                     jhm.put("list",typeList);
                 } else {
                     //返回单个一级列表下所有的二级列表 type_2
-                    String trainSearch = "SELECT type.id AS train_id ,type.name AS name,train.status AS status FROM h_train_type type,h_staff_train train\n" +
-                            "WHERE type.parent_id=? AND train.staff_id=? AND train.type_2=type.id ";
-                    List<Record> typeList = Db.find(trainSearch, train_id, staff_id);
+                    String listSearch="SELECT id AS train_id ,parent_id AS type_1 ,name  FROM h_train_type WHERE parent_id=?";
+                    List<Record> typeList = Db.find(listSearch, train_id);
+
                     int count=0;
                     if (typeList!=null&&typeList.size()>0){
                         for (Record r:typeList){
+                            String type_1=r.getStr("type_1");
+                            String type_2=r.getStr("train_id");
+                            String status="";
+                            Record statusR=Db.findFirst("SELECT status FROM h_staff_train WHERE type_1=? AND staff_id=? AND type_2=?",type_1,staff_id,type_2);
+                            if (statusR==null){
+                                r.set("status","0");
+                            }else{
+                                status=statusR.getStr("status");
+                                r.set("status",status);
+                            }
+                        }
+                        for (Record r:typeList){
                             String status=r.getStr("status");
+                            String type_1=r.getStr("type_1");
                             if (!status.equals("1")){
                                 break;
                             }
                             count++;
                             //说明二级列表都已通过 则一级列表状态为已通过
                             if (count==typeList.size()){
-                                Db.update("UPDATE h_staff_train SET status='1' WHERE staff_id=? AND type_1=? AND (type_2=''OR ISNULL(type_2))",staff_id,train_id);
+                                Record finished=Db.findFirst("SELECT status FROM h_staff_train WHERE type_1=? AND staff_id=? AND (ISNULL(type_2)OR type_2='')",type_1,staff_id);
+                                if (finished==null){
+                                    Record newR=new Record();
+                                    newR.set("id",UUIDTool.getUUID());
+                                    newR.set("staff_id",staff_id);
+                                    newR.set("type_1",type_1);
+                                    newR.set("type_2",null);
+                                    newR.set("status","1");
+                                    newR.set("create_time",DateTool.GetDateTime());
+                                    Db.save("h_staff_train",newR);
+                                }else {
+                                    break;
+                                }
                             }
                         }
                     }

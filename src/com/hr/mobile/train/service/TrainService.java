@@ -38,16 +38,6 @@ public class TrainService extends BaseService {
             String search = "select count(*) as c from h_staff where id = ? ";
             Record countR = Db.findFirst(search, staff_id);
             if(countR.getInt("c") != 0){
-                String repeatSearch = "select status from h_staff_train where staff_id = ? and type_2 = ? ";
-                Record repeatR = Db.findFirst(repeatSearch, staff_id, type_id);
-                if (repeatR==null){
-                    jhm.putCode(0).putMessage("培训记录为空！");
-                    return jhm;
-                }
-
-                if(repeatR.getStr("status").equals("1")){
-                    jhm.putCode(1).putMessage("培训已完成！");
-                } else {
                     //查train_type表找到name为“岗位培训”对应的id
                     String sql1="SELECT id FROM h_train_type WHERE name='岗位培训'";
                     Record r1=Db.findFirst(sql1);
@@ -65,9 +55,17 @@ public class TrainService extends BaseService {
                         return jhm;
                     }
                     String typeParentId=r2.getStr("parent_id");
+
+                    Record newR=new Record();
+                    newR.set("id",UUIDTool.getUUID());
+                    newR.set("staff_id",staff_id);
+                    newR.set("type_1",typeParentId);
+                    newR.set("type_2",type_id);
+                    newR.set("create_time",DateTool.GetDateTime());
                     //非岗位培训
                     if (!parentId.equals(typeParentId)){
-                        Db.update("UPDATE h_staff_train SET status=? WHERE staff_id=? AND type_2=?","1",staff_id,type_id);
+                        newR.set("status","1");
+                        Db.save("h_staff_train",newR);
                         jhm.putCode(1).putMessage("培训完成！");
                     }else {
                         //岗位培训
@@ -85,16 +83,19 @@ public class TrainService extends BaseService {
                         //根据train_type的name和staffId 查询h_exam表的staff_id和kind_id
                         String sql4="SELECT result FROM h_exam WHERE staff_id=? AND kind_id=?";
                         Record result=Db.findFirst(sql4,staff_id,englishName);
-                        String sql5="UPDATE h_staff_train SET status=? WHERE staff_id=? AND type_2=?";
                         //若不存在考核记录说明未申请考核
                         if (result==null||"1".equals(result.getStr("result"))){
-                            Db.update(sql5,"2",staff_id,type_id);
+                            Record find=Db.findFirst("SELECT * FROM h_staff_train WHERE type_2=? AND staff_id=? ",type_id,staff_id);
+                            if (find==null){
+                                newR.set("status","2");
+                                Db.save("h_staff_train",newR);
+                            }else{
+                                Db.update("UPDATE h_staff_train SET status='2' WHERE type_2=? AND staff_id=? ",type_id,staff_id);
+                            }
                             jhm.putCode(1).putMessage("请申请考核！");
                             return jhm;
                         }
                     }
-
-                }
             } else {
                 jhm.putCode(0).putMessage("员工不存在！");
             }
