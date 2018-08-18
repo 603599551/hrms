@@ -350,8 +350,10 @@ public class ArticleCtrl extends BaseCtrl {
         try {
             Record r = Db.findById("h_train_article",record.getStr("id"));
             if(r != null){
+                Record nameR=Db.findFirst("SELECT name FROM h_staff WHERE id=?",r.getStr("creater_id"));
+                r.set("author",nameR.getStr("name"));
                 r.remove("creater_id");
-                r.remove("create_time");
+                //r.remove("create_time");
                 r.remove("modifier_id");
                 r.remove("modify_time");
                 r.remove("type_1");
