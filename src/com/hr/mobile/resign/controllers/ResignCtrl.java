@@ -151,9 +151,9 @@ public class ResignCtrl extends BaseCtrl {
             }
             String sqlStaff="";
             if(StringUtils.equals(isagree,"1")){
-                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, s.phone phone, n.create_time time, n.content reason, '不同意' replay FROM h_staff_log s, h_notice n WHERE s.staff_id = n.sender_id AND n.id = ?";
+                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, s.phone phone, n.create_time time, n.content reason, r.reply replay FROM h_staff_log s, h_notice n,h_resign r WHERE s.staff_id = n.sender_id and n.fid=r.id AND n.id = ?";
             }else if(StringUtils.equals(isagree,"0")){
-                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, s.phone phone, n.create_time time, n.content reason, '不同意' replay FROM h_staff s, h_notice n WHERE s.id = n.sender_id AND n.id = ?";
+                sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, s.phone phone, n.create_time time, n.content reason, r.reply replay FROM h_staff s, h_notice n ,h_resign r WHERE s.id = n.sender_id AND n.fid=r.id and n.id = ?";
             }
             Record resignRecord = Db.findFirst(sqlStaff, id);
             if (resignRecord == null) {
