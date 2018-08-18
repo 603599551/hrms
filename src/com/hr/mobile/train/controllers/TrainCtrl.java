@@ -180,7 +180,7 @@ public class TrainCtrl extends BaseCtrl{
             String search = "select count(*) as c from h_staff s where s.id = ? ";
             Record countR = Db.findFirst(search, staff_id);
             if(countR.getInt("c") != 0){
-                String sql = "select a.content as content from h_train_article a where a.type_2 = ? ";
+                String sql = "select a.content as content,video from h_train_article a where a.type_2 = ? ";
                 Record record = Db.findFirst(sql, type_id);
                 if (record==null){
                     jhm.putCode(0).putMessage("培训详情为空！");
@@ -189,6 +189,7 @@ public class TrainCtrl extends BaseCtrl{
                 }
                 jhm.putCode(1);
                 jhm.put("content", record.getStr("content"));
+                jhm.put("video", record.getStr("video"));
             } else {
                 jhm.putCode(0).putMessage("员工不存在！");
             }

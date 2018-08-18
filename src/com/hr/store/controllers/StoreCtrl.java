@@ -195,9 +195,10 @@ public class StoreCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        String sql = "select * from h_store where name=?";
+        String sql = "select * from h_store where name=? AND id!=? ";
         String name = store.getStr("name");
-        List<Record> storeList = Db.find(sql, name);
+        String id= store.getStr("id");
+        List<Record> storeList = Db.find(sql, name,id);
         if(storeList != null && storeList.size() > 0){
             jhm.putCode(0);
             jhm.putMessage("门店名称重复！");
@@ -207,6 +208,7 @@ public class StoreCtrl extends BaseCtrl {
                 store.set("modifier_id", usu.getUserId());
                 store.set("modify_time", time);
                 store.remove("city_text");
+                store.remove("status_text");
                 Db.update("h_store", store);
                 jhm.putMessage("门店修改成功！");
             } catch (Exception e){
