@@ -8,7 +8,6 @@ import com.jfinal.plugin.activerecord.tx.Tx;
 import com.utils.UserSessionUtil;
 import easy.util.UUIDTool;
 import utils.bean.JsonHashMap;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +23,6 @@ public class StoreMgrService extends BaseService {
         List<Record> staffLogList=new ArrayList<>(staffId.length);
         //删除时只传入一个员工id
         Object[][] deleteDataArray=new Object[staffId.length][1];
-//        List<Record> staffList=new ArrayList<>(staffId.length);
         int i=0;
         for (String sId : staffId) {
                 r.set("staff_id", sId);
@@ -32,7 +30,8 @@ public class StoreMgrService extends BaseService {
                 Record record = Db.findFirst(sql, sId);
                 if (record == null) {
                     jhm.putCode(0).putMessage("此员工不存在！");
-                    return jhm;//有一条操作失败就回滚
+                    //有一条操作失败就回滚
+                    return jhm;
                 } else {
                     deleteDataArray[i][0]=sId;
                     i++;

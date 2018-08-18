@@ -7,7 +7,6 @@ import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
-
 import java.util.*;
 
 public class ResignCtrl extends BaseCtrl {
@@ -25,11 +24,6 @@ public class ResignCtrl extends BaseCtrl {
         String deptId = getPara("deptid");
         //离职原因
         String reason = getPara("reason");
-        //测试数据
-//        staffId="37ddeef038c141e9adeb1a687cf60560";
-//        deptId="c95a33cf41a9433d9dbca1ba84603358";
-//        reason="777,我要离职";
-
         if (StringUtils.isEmpty(staffId) || StringUtils.isEmpty(deptId)) {
             jhm.putCode(0).putMessage("员工不存在！");
             renderJson(jhm);
@@ -60,8 +54,7 @@ public class ResignCtrl extends BaseCtrl {
         }
         try {
             //检查是否已经提交过离职申请
-            //h_notice表type为resign是离职
-            //h_resign表status0申请离职
+            //h_notice表type为resign是离职,h_resign表status0申请离职
             String sql = "select count(*) c from h_notice n,h_resign r where n.sender_id=r.applicant_id and n.sender_id=? and n.type='resign' and r.status='0'";
             Record record = Db.findFirst(sql, staffId);
             if (record.getInt("c") != 0) {
@@ -86,10 +79,6 @@ public class ResignCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         //获取经理id
         String staffId = getPara("staff_id");
-
-        //测试数据
-//        staffId="5694e4571961404e863aa43fede9923c";
-
         //id非空验证
         if (StringUtils.isEmpty(staffId)) {
             jhm.putCode(0).putMessage("经理不存在！");
@@ -133,15 +122,12 @@ public class ResignCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         //离职记录的id
         String id = getPara("id");
-        //测试数据
-//        id="23bb025f70ec4634a8d92bf21597541f";
         if (StringUtils.isEmpty(id)) {
             jhm.putCode(0).putMessage("记录不存在！");
             renderJson(jhm);
             return;
         }
         try {
-
             //未处理的离职申请，item查询字典值表
             //处理过的离职申请，item查询h_resign_return表
             String sqlHandle ="select (case r.status when '0' then '0' else '1' end) ishandle,( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree from h_notice n,h_resign r where n.fid=r.id and n.id=?";
@@ -170,7 +156,6 @@ public class ResignCtrl extends BaseCtrl {
                 sqlStaff = "SELECT upper(left (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, s.phone phone, n.create_time time, n.content reason, '不同意' replay FROM h_staff s, h_notice n WHERE s.id = n.sender_id AND n.id = ?";
             }
             Record resignRecord = Db.findFirst(sqlStaff, id);
-//            List<Record> returnList = Db.find(sqlReturn,id);
             if (resignRecord == null) {
                 jhm.putCode(0).putMessage("记录不存在！");
                 renderJson(jhm);
@@ -182,7 +167,8 @@ public class ResignCtrl extends BaseCtrl {
             //经查看通知后还要把通知状态改为已读
             Record noticeRecord = new Record();
             noticeRecord.set("id", id);
-            noticeRecord.set("status", "1");//1已读
+            //1已读
+            noticeRecord.set("status", "1");
             Db.update("h_notice", noticeRecord);
 
         } catch (Exception e) {
@@ -198,15 +184,14 @@ public class ResignCtrl extends BaseCtrl {
     public void review() {
         JsonHashMap jhm = new JsonHashMap();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
-        String status = getPara("status");//0拒绝1同意
-        String reply = getPara("reply");//拒绝时必须填写
-        String item = getPara("item");//物品归还情况
-        String noticeId =getPara("id");//离职记录id
-        //测试数据
-//        status="1";
-//        reply="777";
-//        item="[{\"value\":\"work_clothes\",\"status\":\"0\"},{\"value\":\"chest_card\",\"status\":\"1\"}]";
-//        noticeId="5091a63322e0403d894650632bce5b3e";
+        //0拒绝1同意
+        String status = getPara("status");
+        //拒绝时必须填写
+        String reply = getPara("reply");
+        //物品归还情况
+        String item = getPara("item");
+        //离职记录id
+        String noticeId =getPara("id");
         if (StringUtils.isEmpty(noticeId)) {
             jhm.putCode(0).putMessage("该条记录不存在！");
             renderJson(jhm);
