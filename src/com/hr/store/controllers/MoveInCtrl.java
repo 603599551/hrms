@@ -4,7 +4,9 @@ import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
+import easy.util.DateTool;
 import easy.util.NumberUtils;
+import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
@@ -208,5 +210,122 @@ id	string		是	调入记录的id
     	renderJson(jhm);
 //        renderJson("{\"code\":1,\"data\":{\"out_store_name\":\"面对面（长大店）\",\"staffList\":[{\"name\":\"鹿晗\",\"gender\":\"男\",\"phone\":\"13888888888\",\"job\":\"员工\",\"kind\":\"收银员/传菜员\",\"money\":\"20\",\"work_type\":\"全职\"}],\"date\":\"2018-06-23\",\"type\":\"调入\",\"id\":\"id\",\"desc\":\"最近腰腿没有劲，打算去锻炼锻炼\"}}");
     }
+
+	/**
+	 * 4.6 调入店员
+	 * 名称 店长接收调入（借调入）店员
+	 * 描述 店长调入或者拒绝调入店员，要给来源门店发确认接收的通知
+	 		并要修改调出表的状态（status）
+	 		并且将该条通知的状态设置为已办理
+	   验证 此记录是否存在
+	   权限 店长可见
+	   URL http://localhost:8081/mgr/moveIn/in
+	   请求方式 get
+	   请求参数类型 key=value
+	 参数名	类型	最大长度	允许空	描述
+	 id		string		否	调出记录的id（注意是调出记录的id）
+	 desc	string		是	说明
+	 status	string		否	0：拒绝，拒绝时必须填写说明 1：同意
+
+	 返回数据：
+	 返回格式	JSON
+	 成功	{
+	 "code": 1,
+	 "message": "调入成功！"
+	 }
+	 失败	{
+	 "code": 0,
+	 "message": "此记录不存在！"
+	 }
+	 或者
+	 {
+	 "code": 0,
+	 "message": "调入失败！"
+	 }
+	 报错	{
+	 "code": -1,
+	 "message": "服务器发生异常！"
+	 }
+	 */
+	public void in(){
+		JsonHashMap jhm = new JsonHashMap();
+		//调出记录的id
+		String id = getPara("id");
+		//说明
+		String desc=getPara("desc");
+		//同意或拒绝
+		String status=getPara("status");
+
+		try {
+			//判断move_info表中的调出记录是否存在
+			Record moveinfo=Db.findFirst("SELECT * FROM h_move_info WHERE id=?",id);
+			if (moveinfo==null){
+				jhm.putCode(0).putMessage("此记录不存在！");
+				renderJson(jhm);
+				return;
+			}
+			//修改move_info表记录的status,result
+		    Db.update("UPDATE h_move_info SET status=? , result=? WHERE id=?",status,desc,id);
+
+			//sender_id
+			String senderId=Db.findFirst("SELECT id FROM h_staff WHERE dept_id=(SELECT to_dept FROM h_move_info WHERE id=?) AND job='store_manager'",id).getStr("id");
+			//receiver_id
+			String receiverId=Db.findFirst("SELECT id FROM h_staff WHERE dept_id=(SELECT from_dept FROM h_move_info WHERE id=?) AND job='store_manager'",id).getStr("id");
+			//在notice表创建“给来源门店发确认接收的通知”，状态设置为已办理
+			Record r2=new Record();
+			r2.set("id", UUIDTool.getUUID());
+			r2.set("title", "店长接收调入（借调入）店员");
+			r2.set("content", desc);
+			r2.set("sender_id", senderId);
+			r2.set("receiver_id", receiverId);
+			r2.set("create_time", DateTool.GetDateTime());
+			r2.set("status", "2");
+			r2.set("type", "movein_notice");
+			r2.set("fid", id);
+			Db.save("h_notice",r2);
+
+			//在staff_log创建记录
+			Record r3=Db.findFirst("SELECT * FROM h_move_staff WHERE move_info_id=?",id);
+			if (r3==null){
+				jhm.putCode(0).putMessage("此move_staff不存在！");
+				renderJson(jhm);
+				return;
+			}
+			Record r4=Db.findFirst("SELECT type,t.desc FROM h_move_info t WHERE id=?",id);
+			String operateType=r4.getStr("type");
+			String desc2=r4.getStr("desc");
+			//move_infoID
+			r3.set("creater_id",senderId);
+			r3.set("create_time",DateTool.GetDateTime());
+			r3.set("modifier_id",null);
+			r3.set("modify_time",null);
+			r3.set("fid",id);
+			r3.set("operater_id",senderId);
+			r3.set("operate_time",DateTool.GetDateTime());
+			r3.set("operate_type",operateType);
+			r3.set("desc",desc2);
+			r3.remove("move_info_id");
+			boolean flag=Db.save("h_staff_log",r3);
+
+			String staffId=r3.getStr("staff_id");
+			String pinyin=Db.findFirst("SELECT pinyin FROM h_staff WHERE id=?",staffId).getStr("pinyin");
+			r3.set("pinyin",pinyin);
+
+			//更改staff表的dept_id
+			Db.update("UPDATE h_staff SET dept_id=(SELECT to_dept FROM h_move_info WHERE id=?)  WHERE id=?",id,staffId);
+
+			if (flag){
+				jhm.putCode(1).putMessage("调入成功！");
+			}else {
+				jhm.putCode(0).putMessage("调入失败！");
+			}
+
+		} catch (Exception e){
+			e.printStackTrace();
+			jhm.putCode(-1).putMessage("服务器发生异常");
+		}
+
+		renderJson(jhm);
+	}
 
 }
