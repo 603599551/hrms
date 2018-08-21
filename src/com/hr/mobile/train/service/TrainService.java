@@ -69,6 +69,7 @@ public class TrainService extends BaseService {
                 newR.set("staff_id", staff_id);
                 newR.set("type_1", typeParentId);
                 newR.set("type_2", type_id);
+                newR.set("article_id", "");
                 newR.set("create_time", DateTool.GetDateTime());
 
                 if(StringUtils.equals(flag,"product")){

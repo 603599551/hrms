@@ -155,6 +155,7 @@ public class TrainCtrl extends BaseCtrl {
                                     newR.set("type_1", type_1);
                                     newR.set("type_2", null);
                                     newR.set("status", "1");
+                                    newR.set("article_id", "");
                                     newR.set("create_time", DateTool.GetDateTime());
                                     Db.save("h_staff_train", newR);
                                 } else {
@@ -196,12 +197,12 @@ public class TrainCtrl extends BaseCtrl {
 
         try {
             //产品培训下的二级分类
-            List<Record> typeList = Db.find("select id as type_id , name as type_text from h_train_type where parent_id = ?", trainId);
+            List<Record> typeList = Db.find("select id as type_id , name as type_text from h_train_type where enable = '1' and parent_id = ?", trainId);
             if (typeList != null && typeList.size() > 0) {
                 //遍历二级寻找三级
                 for (int i = 0; i < typeList.size(); ++i) {
                     //每个二级分类下的三级分类
-                    List<Record> thirdTypeList = Db.find("select id as type_id , name as type_text from h_train_type where parent_id = ?", typeList.get(i).getStr("type_id"));
+                    List<Record> thirdTypeList = Db.find("select id as type_id , name as type_text from h_train_type where enable = '1' and parent_id = ?", typeList.get(i).getStr("type_id"));
                     for (int j = 0; j < thirdTypeList.size(); ++j) {
                         Record secRecord = Db.findFirst("select status from h_staff_train where type_3 = ? and staff_id = ?", thirdTypeList.get(j).getStr("type_id"), staffId);
                         if (secRecord == null) {
