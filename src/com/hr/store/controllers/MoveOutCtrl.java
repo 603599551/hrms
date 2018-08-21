@@ -222,14 +222,8 @@ public class MoveOutCtrl extends BaseCtrl {
         record.set("desc", desc);
         record.set("toStore", toStore);
 
-        try {
-            MoveOutService mos = enhance(MoveOutService.class);
-            mos.out(record, usu, id.split(","));
-            jhm.putMessage("调出成功");
-        } catch (Exception e) {
-            e.printStackTrace();
-            jhm.putCode(-1).putMessage("服务器发生异常！");
-        }
+        MoveOutService mos = enhance(MoveOutService.class);
+        jhm = mos.out(record, usu, id.split(","));
         renderJson(jhm);
 
 //        renderJson("{\n" +
