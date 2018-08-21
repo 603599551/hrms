@@ -24,6 +24,11 @@ public class ResignCtrl extends BaseCtrl {
         String deptId = getPara("deptid");
         //离职原因
         String reason = getPara("reason");
+        //测试数据
+        staffId="34e7034e6c8942e2807d30feb64574ef";
+        deptId="234k5jl234j5lkj24l35j423l5j";
+        reason="我有钱";
+
         if (StringUtils.isEmpty(staffId) || StringUtils.isEmpty(deptId)) {
             jhm.putCode(0).putMessage("员工不存在！");
             renderJson(jhm);
@@ -79,6 +84,7 @@ public class ResignCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         //获取经理id
         String staffId = getPara("staff_id");
+        staffId="60a6f36a65f341c78ee07c9fc250e916";
         //id非空验证
         if (StringUtils.isEmpty(staffId)) {
             jhm.putCode(0).putMessage("经理不存在！");
@@ -87,7 +93,7 @@ public class ResignCtrl extends BaseCtrl {
         }
         try {
             //参数为店长id
-            String sql = "SELECT n.id id, upper(LEFT (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, n.create_time time, n.content reason, ( CASE r. STATUS WHEN '0' THEN '0' ELSE '1' END ) ishandle, ( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree, ( SELECT count(*) FROM h_notice, h_resign WHERE h_notice.fid = h_resign.id AND h_notice.receiver_id = ? AND h_notice.type = 'resign' AND h_resign. STATUS = '0' ) untreated,(case r.review_time when null then '0' else r.review_time end) sortTime  FROM h_staff s, h_notice n, h_resign r WHERE s.id = n.sender_id AND n.fid = r.id AND n.receiver_id = ? AND n.type = 'resign'order by (case r.status when '0' then n.create_time else r.review_time end) desc";
+            String sql = "SELECT n.id id, upper(LEFT (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, n.create_time time, n.content reason, ( CASE r. STATUS WHEN '0' THEN '0' ELSE '1' END ) ishandle, ( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree, ( SELECT count(*) FROM h_notice, h_resign WHERE h_notice.fid = h_resign.id AND h_notice.receiver_id = ? AND h_notice.type = 'resign' AND h_resign. STATUS = '0' ) untreated,(case isNull(r.review_time) when true then '0' else r.review_time end) sortTime  FROM h_staff s, h_notice n, h_resign r WHERE s.id = n.sender_id AND n.fid = r.id AND n.receiver_id = ? AND n.type = 'resign'order by (case r.status when '0' then n.create_time else r.review_time end) desc";
             List<Record> applyList = Db.find(sql, staffId,staffId);
             String sqlAgree="SELECT n.id id, upper(LEFT (s.pinyin, 1)) firstname, s. NAME name, (select d.name from h_dictionary d where d.value=s.job and d.parent_id='200') job, n.create_time time, n.content reason, ( CASE r. STATUS WHEN '0' THEN '0' ELSE '1' END ) ishandle, ( CASE r. STATUS WHEN '1' THEN '1' else '0' END ) isagree, ( SELECT count(*) FROM h_notice, h_resign WHERE h_notice.fid = h_resign.id AND h_notice.receiver_id = ? AND h_notice.type = 'resign' AND h_resign. STATUS = '0' ) untreated,r.review_time sortTime  FROM h_staff_log s, h_notice n, h_resign r WHERE s.staff_id = n.sender_id AND n.fid = r.id AND n.receiver_id = ? AND n.type = 'resign' and r.status='1' order by r.review_time desc";
             List<Record> agreeList = Db.find(sqlAgree, staffId,staffId);
