@@ -52,35 +52,136 @@ public class TypeCtrl extends BaseCtrl {
      */
     public void list() {
 //        renderJson("{\"code\":1,\"data\":[{\"id\":\"分类id\",\"name\":\"分类名称\",\"enable\":\"1\",\"enable_text\":\"启用\"}]}");
+//        非递归
+//        JsonHashMap jhm = new JsonHashMap();
+//        String sql = "select id as value, case enable WHEN '1' THEN '启用' WHEN '0' THEN '停用'  END enable_text ,enable, id, parent_id, name, sort,`desc`, creater_id, create_time, modifier_id, modify_time from h_train_type where parent_id = -1 and enable <> 0 order by sort desc";
+//        String sonSql = "select id as value, case enable WHEN '1' THEN '启用' WHEN '0' THEN '停用'  END enable_text ,enable, id, parent_id, name, sort,`desc`, creater_id, create_time, modifier_id, modify_time from h_train_type where parent_id <> -1 and enable <> 0  order by sort desc";
+//        try {
+//            List<Record> list = new ArrayList<>();
+//            List<Record> dictList = Db.find(sql);
+//            List<Record> sonList = Db.find(sonSql);
+//            if (dictList.size() > 0 && dictList != null) {
+//                for (int i = dictList.size() - 1; i >= 0; i--) {
+//                    dictList.get(i).set("name", "┗" + dictList.get(i).getStr("name"));
+//                    String pid = dictList.get(i).getStr("id");
+//                    list.add(dictList.get(i));
+//                    for (int j = sonList.size() - 1; j >= 0; j--) {
+//                        if (StringUtils.equals(pid, sonList.get(j).getStr("parent_id"))) {
+//                            sonList.get(j).set("name", "　　┣" + sonList.get(j).getStr("name"));
+//                            list.add(sonList.get(j));
+//                            sonList.remove(j);
+//                        }
+//                    }
+//                }
+//            } else {
+//                jhm.putCode(1).putMessage("无记录");
+//            }
+//            jhm.put("data", list);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            jhm.putCode(-1).putMessage("服务器发生异常！");
+//        }
+//        renderJson(jhm);
+
+
+        //递归树状
         JsonHashMap jhm = new JsonHashMap();
-        String sql = "select id as value, case enable WHEN '1' THEN '启用' WHEN '0' THEN '停用'  END enable_text ,enable, id, parent_id, name, sort,`desc`, creater_id, create_time, modifier_id, modify_time from h_train_type where parent_id = -1 and enable <> 0 order by sort desc";
-        String sonSql = "select id as value, case enable WHEN '1' THEN '启用' WHEN '0' THEN '停用'  END enable_text ,enable, id, parent_id, name, sort,`desc`, creater_id, create_time, modifier_id, modify_time from h_train_type where parent_id <> -1 and enable <> 0  order by sort desc";
+
+        List<Record> recordList = new ArrayList<>();
         try {
-            List<Record> list = new ArrayList<>();
-            List<Record> dictList = Db.find(sql);
-            List<Record> sonList = Db.find(sonSql);
-            if (dictList.size() > 0 && dictList != null) {
-                for (int i = dictList.size() - 1; i >= 0; i--) {
-                    dictList.get(i).set("name", "┗" + dictList.get(i).getStr("name"));
-                    String pid = dictList.get(i).getStr("id");
-                    list.add(dictList.get(i));
-                    for (int j = sonList.size() - 1; j >= 0; j--) {
-                        if (StringUtils.equals(pid, sonList.get(j).getStr("parent_id"))) {
-                            sonList.get(j).set("name", "　　┣" + sonList.get(j).getStr("name"));
-                            list.add(sonList.get(j));
-                            sonList.remove(j);
-                        }
-                    }
-                }
-            } else {
-                jhm.putCode(1).putMessage("无记录");
-            }
-            jhm.put("data", list);
+            recordList = Db.find("select id as value, case enable WHEN '1' THEN '启用' WHEN '0' THEN '停用'  END enable_text ,enable, id, parent_id, name, sort,`desc`, creater_id, create_time, modifier_id, modify_time from h_train_type where enable <> 0 ORDER BY create_time desc");
         } catch (Exception e) {
             e.printStackTrace();
-            jhm.putCode(-1).putMessage("服务器发生异常！");
+            jhm.putCode(-1).putMessage("服务器发生异常");
         }
+
+        List<Record> dataList = new ArrayList(recordList);
+        List<Map> treeList = new ArrayList();
+        buildTree(dataList, treeList);
+        List reList = new ArrayList();
+        toWeb(treeList, reList);
+
+        jhm.putCode(1).put("data", reList);
         renderJson(jhm);
+    }
+
+    private void buildTree(List<Record> list, List<Map> treeList) {
+        if (list.isEmpty()) {
+            return;
+        }
+        //如果为空，取出顶级节点
+        if (treeList.isEmpty()) {
+            for (int i = 0; i < list.size(); i++) {
+                Record r = list.get(i);
+                String parentId = r.get("parent_id");
+                if ("-1".equalsIgnoreCase(parentId)) {
+                    treeList.add(r.getColumns());
+                    list.remove(r);
+                    i--;
+                }
+            }
+            buildTree(list, treeList);
+        } else {
+            //取出下面的节点
+            for (int j = 0; j < treeList.size(); j++) {
+                Map treeMap = treeList.get(j);
+                String id = (String) treeMap.get("id");
+                List childrenList = (List) treeMap.get("children");
+                if (childrenList == null) {
+                    childrenList = new ArrayList();
+                    treeMap.put("children", childrenList);
+                }
+
+                for (int i = 0; i < list.size(); i++) {
+                    Record r = list.get(i);
+                    String parentId = r.get("parent_id");
+                    if (id.equalsIgnoreCase(parentId)) {
+                        childrenList.add(r.getColumns());
+                        list.remove(r);
+                        i--;
+                    }
+                }
+                if (!childrenList.isEmpty()) {
+                    buildTree(list, childrenList);
+                }
+            }
+        }
+
+    }
+
+    private int level = 0;
+
+    private void toWeb(List<Map> treeList, List reList) {
+        for (int j = 0, size = treeList.size(); j < size; j++) {
+            Map map = (Map) treeList.get(j);
+            String name = (String) map.get("name");
+            List<Map> children = (List) map.get("children");
+
+            if (level == 0) {
+                map.put("name", "┗ " + name);
+            } else {
+                String nameTemp = "";
+                for (int i = 0; i < level; i++) {
+                    nameTemp = "　" + nameTemp;
+                }
+                if (j == size - 1) {
+                    map.put("name", nameTemp + "┗ " + name);
+                } else {
+                    map.put("name", nameTemp + "┣ " + name);
+                }
+            }
+            Map node = new HashMap();
+            node.putAll(map);
+            node.remove("children");
+            reList.add(node);
+
+            level++;
+            if (children != null) {
+                toWeb(children, reList);
+            }
+            level--;
+        }
+
     }
 
     /**
@@ -555,31 +656,31 @@ public class TypeCtrl extends BaseCtrl {
         List<Record> list = new ArrayList<>();
 
         try {
-                List<Record> dictList = Db.find(sql);
-                List<Record> sonList = Db.find(sonSql);
+            List<Record> dictList = Db.find(sql);
+            List<Record> sonList = Db.find(sonSql);
 
-                if (dictList == null) {
-                    jhm.putCode(1).putMessage("无记录！");
-                    renderJson(jhm);
-                    return;
-                }
-                if (dictList != null && dictList.size() > 0) {
-                    for (int i = dictList.size() - 1; i >= 0; i--) {
-                        dictList.get(i).set("name", "┗" + dictList.get(i).getStr("name"));
-                        String pid = dictList.get(i).getStr("value");
-                        list.add(dictList.get(i));
-                        for (int j = sonList.size() - 1; j >= 0; j--) {
-                            if (StringUtils.equals(pid, sonList.get(j).getStr("parent_id"))) {
-                                sonList.get(j).set("name", "　　┣" + sonList.get(j).getStr("name"));
-                                list.add(sonList.get(j));
-                                sonList.remove(j);
-                            }
+            if (dictList == null) {
+                jhm.putCode(1).putMessage("无记录！");
+                renderJson(jhm);
+                return;
+            }
+            if (dictList != null && dictList.size() > 0) {
+                for (int i = dictList.size() - 1; i >= 0; i--) {
+                    dictList.get(i).set("name", "┗" + dictList.get(i).getStr("name"));
+                    String pid = dictList.get(i).getStr("value");
+                    list.add(dictList.get(i));
+                    for (int j = sonList.size() - 1; j >= 0; j--) {
+                        if (StringUtils.equals(pid, sonList.get(j).getStr("parent_id"))) {
+                            sonList.get(j).set("name", "　　┣" + sonList.get(j).getStr("name"));
+                            list.add(sonList.get(j));
+                            sonList.remove(j);
                         }
-                        dictList.remove(i);
                     }
+                    dictList.remove(i);
+                }
                 jhm.put("data", list);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");
         }
