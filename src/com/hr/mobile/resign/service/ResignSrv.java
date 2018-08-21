@@ -178,6 +178,8 @@ public class ResignSrv extends BaseService {
             String staffLogId = UUIDTool.getUUID();
             staffRecord.set("staff_id", staffRecord.getStr("id"));
             staffRecord.set("id", staffLogId);
+            //在职状态改成离职
+            staffRecord.set("status","quit");
             //当前操作人id 即店长
             staffRecord.set("operater_id", usu.getUserId());
             //店长点击同意的时间即审核时间
