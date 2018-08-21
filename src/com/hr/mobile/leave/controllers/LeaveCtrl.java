@@ -179,6 +179,7 @@ public class LeaveCtrl extends BaseCtrl {
         String time=getPara("time");
         String reason = getPara("reason");
 
+
         //进行非空判断
         if(StringUtils.isEmpty(date)){
             jhm.putCode(0).putMessage("请输入请假的日期！");
@@ -274,9 +275,11 @@ public class LeaveCtrl extends BaseCtrl {
         UserSessionUtil usu = new UserSessionUtil(getRequest());
 
         try {
+            //获得当前经理操作的日期(年月日 时分秒)
+            String dateTime=DateTool.GetDateTime();
             //未审核
-            String sql = "SELECT s.pinyin AS pinyin, s.NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND s.dept_id = ? AND i.`status` = '0' ORDER BY i.create_time desc ";
-            List<Record> recordList = Db.find(sql, usu.getUserBean().getDeptId());
+            String sql = "SELECT s.pinyin AS pinyin, s.NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND s.dept_id = ? AND i.`status` = '0' and concat(i.date,' ', right (i.times, 5))>? ORDER BY i.create_time desc ";
+            List<Record> recordList = Db.find(sql, usu.getUserBean().getDeptId(),dateTime);
 
             DateTool dateTool = new DateTool();
             for(int i = 0; i < recordList.size(); i++){
@@ -296,7 +299,8 @@ public class LeaveCtrl extends BaseCtrl {
                 dateTool = new DateTool();
                 String day = dateTool.getWeekDayName(date);
                 records.get(i).set("day",day);
-                if(StringUtils.equals(records.get(i).getStr("status"),"1")){ //若数据库中status为1(同意)时返回1，若为2(拒绝)时返回0
+                //若数据库中status为1(同意)时返回1，若为2(拒绝)时返回0
+                if(StringUtils.equals(records.get(i).getStr("status"),"1")){
                     records.get(i).set("status","1");
                 } else {
                     records.get(i).set("status","0");
