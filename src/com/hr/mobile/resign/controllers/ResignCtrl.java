@@ -24,11 +24,6 @@ public class ResignCtrl extends BaseCtrl {
         String deptId = getPara("deptid");
         //离职原因
         String reason = getPara("reason");
-        //测试数据
-        staffId="34e7034e6c8942e2807d30feb64574ef";
-        deptId="234k5jl234j5lkj24l35j423l5j";
-        reason="我有钱";
-
         if (StringUtils.isEmpty(staffId) || StringUtils.isEmpty(deptId)) {
             jhm.putCode(0).putMessage("员工不存在！");
             renderJson(jhm);
@@ -84,7 +79,6 @@ public class ResignCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         //获取经理id
         String staffId = getPara("staff_id");
-        staffId="60a6f36a65f341c78ee07c9fc250e916";
         //id非空验证
         if (StringUtils.isEmpty(staffId)) {
             jhm.putCode(0).putMessage("经理不存在！");
