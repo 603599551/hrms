@@ -2,6 +2,8 @@ package com.common.controllers;
 
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import org.apache.commons.lang.StringUtils;
+import sun.swing.StringUIClientPropertyKey;
 import utils.bean.JsonHashMap;
 
 import java.util.List;
@@ -41,10 +43,13 @@ public class DictionaryCtrl extends BaseCtrl {
         JsonHashMap jhm=new JsonHashMap();
         try {
             List<Record> list = Db.find("select name, value from h_dictionary where parent_id=(select id from h_dictionary where value=?) order by sort", dict);
-            Record all = new Record();
-            all.set("value", "-1");
-            all.set("name", "请选择");
-            list.add(0, all);
+           //绩效考核的时候去掉”请选择“选项
+            if(!StringUtils.equals(dict,"performance_type")){
+                Record all = new Record();
+                all.set("value", "-1");
+                all.set("name", "请选择");
+                list.add(0, all);
+            }
             jhm.putCode(1).put("data", list);
         }catch (Exception e){
             e.printStackTrace();
