@@ -54,6 +54,14 @@ public class DictionaryCtrl extends BaseCtrl {
                     all.set("name", "请选择");
                     list.add(0, all);
                 }
+                //添加员工页面的在职状态只显示请选择和在职
+                if(StringUtils.equals(dict,"job_type")){
+                    for(int i = 1 ; i < list.size() ; ++i){
+                        if(!StringUtils.equals(list.get(i).getStr("value"),"on")){
+                            list.get(i).set("disabled",true);
+                        }
+                    }
+                }
             } else {
                 list = Db.find("select name, value from h_dictionary where (value = 'apply_movein' or value = 'movein_notice') and parent_id=(select id from h_dictionary where value=? )",dict);
                 Record all = new Record();
