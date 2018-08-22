@@ -68,7 +68,7 @@ public class QuestionCtrl extends BaseCtrl {
         int pageNum = NumberUtils.parseInt(pageNumStr, 1);
         int pageSize = NumberUtils.parseInt(pageSizeStr, 10);
         try {
-            String select = "select h_question.id id,h_question.title title,h_question.modify_time datetime,h_staff. name creater_name ";
+            String select = "select h_question.id id,h_question.title title,(select d.name from h_dictionary d where d.parent_id='3000'and d.value=h_question.kind_id) kind_id,(select t.name from h_question_type t where t.id=h_question.type_id) type_id,h_question.modify_time datetime,h_staff. name creater_name ";
             String sql = "from h_question left join h_staff on h_question.creater_id=h_staff.id where 1=1 ";
             //参数集合
             List<Object> params = new ArrayList<>();
@@ -124,37 +124,22 @@ public class QuestionCtrl extends BaseCtrl {
      * }
      */
     public void add() {
-        //renderJson("{\"code\":1,\"message\":\"添加成功！\"}");
         JsonHashMap jhm = new JsonHashMap();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
         Record question = this.getParaRecord();
         String title = question.getStr("title").trim();
-        UserSessionUtil usu = new UserSessionUtil(getRequest());
-
-
-        /**
-         * 前台页面需要修改的
-         */
-        String typeId=getPara("type_id");
-        String kindId=getPara("kind_id");
-
-        //添加的测试假数据
-        typeId="666";
-        kindId="666";
-
-        if(StringUtils.isEmpty(typeId)){
-            jhm.putCode(0).putMessage("请选择考题类别！");
+        String typeId = getPara("type_id");
+        String kindId = getPara("kind_id");
+        if (StringUtils.isEmpty(typeId) || StringUtils.equals(typeId, "-1")) {
+            jhm.putCode(0).putMessage("请选择考题分类！");
             renderJson(jhm);
             return;
         }
-        if(StringUtils.isEmpty(kindId)){
-            jhm.putCode(0).putMessage("请选择岗位类别！");
+        if (StringUtils.isEmpty(kindId) || StringUtils.equals(kindId, "-1")) {
+            jhm.putCode(0).putMessage("请选择岗位名称！");
             renderJson(jhm);
             return;
         }
-
-
-
-
         //考题标题不允许为空也不允许为空格
         if (StringUtils.isEmpty(title) || StringUtils.isBlank(title)) {
             jhm.putCode(0).putMessage("请填写考题标题！");
@@ -168,15 +153,8 @@ public class QuestionCtrl extends BaseCtrl {
             if (record.getInt("c") != 0) {
                 jhm.putCode(0).putMessage("考题标题重复！");
             } else {
-//              String pinyin = HanyuPinyinHelper.getFirstLettersLo(title);
-                question.set("id", UUIDTool.getUUID());//获取主键（UUID）的通用方法
-//              question.set("pinyin", pinyin);
-
+                question.set("id", UUIDTool.getUUID());
                 //前台需要修改增加的参数
-                question.set("type_id",typeId);
-                question.set("kind_id",kindId);
-
-
                 question.set("creater_id", usu.getUserId());
                 question.set("modifier_id", usu.getUserId());
                 String time = DateTool.GetDateTime();
@@ -236,12 +214,23 @@ public class QuestionCtrl extends BaseCtrl {
      * }
      */
     public void updateById() {
-        //renderJson("{\"code\":1,\"message\":\"修改成功！\"}");
         JsonHashMap jhm = new JsonHashMap();
         Record question = this.getParaRecord();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
+        String typeId = getPara("type_id");
+        String kindId = getPara("kind_id");
         if (StringUtils.isEmpty(question.getStr("id"))) {
             jhm.putCode(0).putMessage("考题id不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(typeId) || StringUtils.equals(typeId, "-1")) {
+            jhm.putCode(0).putMessage("请选择考题分类！");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(kindId) || StringUtils.equals(kindId, "-1")) {
+            jhm.putCode(0).putMessage("请选择岗位名称！");
             renderJson(jhm);
             return;
         }
@@ -261,8 +250,6 @@ public class QuestionCtrl extends BaseCtrl {
                 jhm.putCode(0).putMessage("考题标题重复！");
             } else {
                 String time = DateTool.GetDateTime();
-//              String pinyin = HanyuPinyinHelper.getFirstLettersLo(title);
-//              question.set("pinyin", pinyin);
                 question.set("modifier_id", usu.getUserId());
                 question.set("modify_time", time);
                 question.remove("datetime");
@@ -315,21 +302,21 @@ public class QuestionCtrl extends BaseCtrl {
      * }
      */
     public void showById() {
-        //renderJson("{\"code\":1,\"data\":{\"id\":\"考题id\",\"title\":\"考题标题\",\"datetime\":\"2018-6-26 13:52:24\",\"creater_name\":\"马云\"}}");
         JsonHashMap jhm = new JsonHashMap();
-        String id = getPara("id");//获取当前考题id
+        //获取当前考题id
+        String id = getPara("id");
         if (StringUtils.isEmpty(id)) {
             jhm.putCode(0).putMessage("查看失败！");
             renderJson(jhm);
             return;
         }
         try {
-            String sql = "select h_question.id id,h_question.title title,h_question.modify_time datetime,h_staff.name creater_name from h_question left join h_staff  on h_staff.id=h_question.creater_id where h_question.id=? ";
+            String sql = "select h_question.id id,h_question.title title,(select d.name from h_dictionary d where d.parent_id='3000'and d.value=h_question.kind_id) kind_id,h_question.content content,(select t.name from h_question_type t where t.id=h_question.type_id) type_id,h_question.modify_time datetime,h_staff.name creater_name from h_question left join h_staff  on h_staff.id=h_question.creater_id where h_question.id=? ";
             Record record = Db.findFirst(sql, id);
             if (record != null) {
                 jhm.put("data", record);
             } else {
-                jhm.putCode(0).putMessage("查看失败！");
+                jhm.putCode(0).putMessage("考题不存在！");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -368,7 +355,6 @@ public class QuestionCtrl extends BaseCtrl {
      * }
      */
     public void deleteById() {
-        //renderJson("{\"code\":1,\"message\":\"删除成功！\"}");
         JsonHashMap jhm = new JsonHashMap();
         String id = getPara("id");
         if (StringUtils.isEmpty(id)) {
@@ -386,6 +372,25 @@ public class QuestionCtrl extends BaseCtrl {
         } catch (Exception e) {
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+        renderJson(jhm);
+    }
+
+
+    public void getTypeByKind() {
+        String dict = getPara("dict");
+        JsonHashMap jhm = new JsonHashMap();
+        try {
+            List<Record> list;
+            list = Db.find("select t.name name from h_question_type t where t.kind_id=? order by t.id", dict);
+            Record all = new Record();
+            all.set("value", "-1");
+            all.set("name", "请选择");
+            list.add(0, all);
+            jhm.putCode(1).put("data", list);
+        } catch (Exception e) {
+            e.printStackTrace();
+            jhm.putCode(0).putMessage(e.toString());
         }
         renderJson(jhm);
     }

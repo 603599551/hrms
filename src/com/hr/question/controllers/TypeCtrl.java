@@ -171,7 +171,7 @@ public class TypeCtrl extends BaseCtrl{
     /**
      * 删除考题分类
      */
-    public void delete(){
+    public void deleteById(){
         JsonHashMap jhm = new JsonHashMap();
         String id = getPara("id");
         if (StringUtils.isEmpty(id)) {
