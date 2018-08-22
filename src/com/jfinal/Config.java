@@ -82,6 +82,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/train/article", ArticleCtrl.class);
 		routes.add("/mgr/question", QuestionCtrl.class);
 		routes.add("/mgr/exam", ExamCtrl.class);
+		routes.add("/mgr/question/type", com.hr.question.controllers.TypeCtrl.class);
 		routes.add("/mgr/notice", com.hr.notice.controllers.NoticeCtrl.class);
 
 		//测试排班
