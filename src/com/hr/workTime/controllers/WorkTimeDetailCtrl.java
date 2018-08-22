@@ -241,6 +241,12 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         List <Record> resultList = new ArrayList<>();
 
         if(StringUtils.isEmpty(emp_num)){
+            String dept = getPara("dept");
+            List<Record> staffList = new ArrayList<>();
+            if(!StringUtils.isEmpty(dept)){
+                staffList = Db.find("select name , emp_num from h_staff where dept_id = ?",dept);
+            }
+            jhm.put("staffList",staffList);
             jhm.putCode(1);
             jhm.put("staff", staffR);
             jhm.put("data", resultList);
@@ -278,6 +284,9 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         }
 
         try {
+
+
+
             String sql ="select count(*) as c from h_staff where emp_num = ?";
             Record record = Db.findFirst(sql, emp_num);
             if(record.getInt("c") > 0 ){
@@ -479,6 +488,14 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                         return record.getStr("date").compareTo(t1.getStr("date"));
                     }
                 });
+
+                String dept = getPara("dept");
+                List<Record> staffList = new ArrayList<>();
+                if(!StringUtils.isEmpty(dept)){
+                    staffList = Db.find("select name , emp_num from h_staff where dept_id = ?",dept);
+                }
+                jhm.put("staffList",staffList);
+
                 jhm.putCode(1);
                 jhm.put("staff", staffR);
                 jhm.put("data", resultList);
