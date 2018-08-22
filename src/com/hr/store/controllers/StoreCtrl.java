@@ -417,7 +417,7 @@ public class StoreCtrl extends BaseCtrl {
      * 字典值格式都是name，value格式
      */
     public void getStoreDict(){
-        String sql = "select name name, id value from h_store order by sort";
+        String sql = "select name name, id value from h_store where status = '1' order by sort";
         List<Record> list = Db.find(sql);
         Record record = new Record();
         record.set("name", "请选择");
