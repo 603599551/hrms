@@ -230,8 +230,8 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         StringBuilder staffSearch = new StringBuilder("SELECT s.store_color AS store_color, s.name name, hs.name staff_name, SUM(wt.real_number * 0.25) total_work_time, hs.hour_wage, SUM(0.25 * wt.real_number * hs.hour_wage ) total FROM h_work_time wt, h_store s, h_staff hs WHERE wt.store_id = s.id AND wt.staff_id = hs.id");
         StringBuilder workSearch = new StringBuilder("SELECT c.date, c.start_time as sb_time, c.end_time as xb_time, c.sign_in_time as sb_dk, c.sign_back_time as xb_dk, c.is_leave, c.is_late, c.is_leave_early from h_staff hs, h_staff_clock c where hs.id = c.staff_id");
         StringBuilder workDetailSearch = new StringBuilder("SELECT wtd.date as date, wtd.start_time, wtd.end_time, wtd.`status` from h_work_time_detail wtd, h_staff hs where hs.id = wtd.staff_id");
-        //数字对应字典值表id---1:id = 5010, 2:id = 5020, 3:id = 5030, 4:id = 5050, 5:id = 6010, 6:id = 6020, 7:id = 6030, 8:id = 6040
-        String dictionarySearch = "select d.status_color as status_color, name1.name as '1', name2.name as '2', name3.name as '3', name4.name as '4', name5.name as '5', name6.name as '6', name7.name as '7', name8.name as '8' from (SELECT name from h_dictionary where id = '5010')name1 ,(SELECT name from h_dictionary where id = '5020')name2, (SELECT name from h_dictionary where id = '5030')name3, (SELECT name from h_dictionary where id = '5040')name4, (SELECT name from h_dictionary where id = '6010')name5, (SELECT name from h_dictionary where id = '6020')name6, (SELECT name from h_dictionary where id = '6030')name7, (SELECT name from h_dictionary where id = '6040')name8, (select status_color from h_dictionary where id = '1120')d ";
+        //数字对应字典值表id---1:id = 7010, 2:id = 7020, 3:id = 7030, 4:id = 7050, 5:id = 8010, 6:id = 8020, 7:id = 8030, 8:id = 8040
+        String dictionarySearch = "select d.status_color as status_color, name1.name as '1', name2.name as '2', name3.name as '3', name4.name as '4', name5.name as '5', name6.name as '6', name7.name as '7', name8.name as '8' from (SELECT name from h_dictionary where id = '7010')name1 ,(SELECT name from h_dictionary where id = '7020')name2, (SELECT name from h_dictionary where id = '7030')name3, (SELECT name from h_dictionary where id = '7040')name4, (SELECT name from h_dictionary where id = '8010')name5, (SELECT name from h_dictionary where id = '8020')name6, (SELECT name from h_dictionary where id = '8030')name7, (SELECT name from h_dictionary where id = '8040')name8, (select status_color from h_dictionary where id = '1120')d ";
 
         List<String> params = new ArrayList<>();
         Record staffR = new Record();
@@ -241,6 +241,12 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         List <Record> resultList = new ArrayList<>();
 
         if(StringUtils.isEmpty(emp_num)){
+            String dept = getPara("dept");
+            List<Record> staffList = new ArrayList<>();
+            if(!StringUtils.isEmpty(dept)){
+                staffList = Db.find("select name , emp_num from h_staff where dept_id = ?",dept);
+            }
+            jhm.put("staffList",staffList);
             jhm.putCode(1);
             jhm.put("staff", staffR);
             jhm.put("data", resultList);
@@ -278,6 +284,9 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         }
 
         try {
+
+
+
             String sql ="select count(*) as c from h_staff where emp_num = ?";
             Record record = Db.findFirst(sql, emp_num);
             if(record.getInt("c") > 0 ){
@@ -479,6 +488,14 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                         return record.getStr("date").compareTo(t1.getStr("date"));
                     }
                 });
+
+                String dept = getPara("dept");
+                List<Record> staffList = new ArrayList<>();
+                if(!StringUtils.isEmpty(dept)){
+                    staffList = Db.find("select name , emp_num from h_staff where dept_id = ?",dept);
+                }
+                jhm.put("staffList",staffList);
+
                 jhm.putCode(1);
                 jhm.put("staff", staffR);
                 jhm.put("data", resultList);
