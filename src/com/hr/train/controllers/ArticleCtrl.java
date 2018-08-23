@@ -168,6 +168,7 @@ public class ArticleCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
+        String video = getPara("video");
         try {
             //sql查询文章标题是否重复
             String sql = "select count(*)c from h_train_article where title = ?";
@@ -182,24 +183,41 @@ public class ArticleCtrl extends BaseCtrl {
                 //查数据库分类
                 String classSearch = "select parent_id from h_train_type t where t.id = ?";
                 Record parentClass = Db.findFirst(classSearch, class_id);
-                String parent_type = parentClass.getStr("parent_id");
-                if (StringUtils.equals(parent_type, "-1")) {
-                    jhm.putCode(0).putMessage("添加文章时不能选择一级分类！");
+                if (parentClass == null) {
+                    jhm.putCode(0).putMessage("添加文章时不能选择跟分类！");
                 } else {
-                    type.set("type_1", parent_type);
-                    type.set("type_2", class_id);
-
-                    type.set("id", UUIDTool.getUUID());
-                    type.set("creater_id", usu.getUserId());
-                    type.set("modifier_id", usu.getUserId());
-                    String time = DateTool.GetDateTime();
-                    type.set("create_time", time);
-                    type.set("modify_time", time);
-                    boolean flag = Db.save("h_train_article", type);//保存数据到数据库
-                    if (flag) {
-                        jhm.putCode(1).putMessage("添加成功！");
+                    //上一级分类的id
+                    String parent_type = parentClass.getStr("parent_id");
+                    if (StringUtils.equals("-1", parent_type)) {
+                        jhm.putCode(0).putMessage("添加文章时不能选择一级分类！");
                     } else {
-                        jhm.putCode(0).putMessage("添加失败！");
+                        //通用数据
+                        type.set("id", UUIDTool.getUUID());
+                        type.set("creater_id", usu.getUserId());
+                        type.set("modifier_id", usu.getUserId());
+                        String time = DateTool.GetDateTime();
+                        type.set("create_time", time);
+                        type.set("modify_time", time);
+                        type.set("video",video);
+
+                        //寻找上上级分类 若存在则当前为第二级
+                        Record grandparentRecord = Db.findFirst("select parent_id from h_train_type t where t.id = ?", parent_type);
+                        if (StringUtils.equals("-1", grandparentRecord.getStr("parent_id"))) {
+                            type.set("type_1", parent_type);
+                            type.set("type_2", class_id);
+                        } else {
+                            //再往上寻找一级
+                            type.set("type_1", grandparentRecord.getStr("parent_id"));
+                            type.set("type_2", parent_type);
+                            type.set("type_3", class_id);
+                        }
+
+                        boolean flag = Db.save("h_train_article", type);//保存数据到数据库
+                        if (flag) {
+                            jhm.putCode(1).putMessage("添加成功！");
+                        } else {
+                            jhm.putCode(0).putMessage("添加失败！");
+                        }
                     }
                 }
             }
