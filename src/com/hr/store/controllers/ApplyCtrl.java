@@ -197,7 +197,7 @@ public class ApplyCtrl extends BaseCtrl {
 
         try {
             //查找当前门店的id
-            Record recordInfo = Db.findFirst("SELECT (SELECT store.name FROM h_store store WHERE store.id = staff.dept_id) to_dept FROM h_staff staff WHERE staff.id = ?", createrId);
+            Record recordInfo = Db.findFirst("SELECT (SELECT store.id FROM h_store store WHERE store.id = staff.dept_id) to_dept FROM h_staff staff WHERE staff.id = ?", createrId);
             Record recordNotice = new Record();
 
             //获取目标门店店长Id

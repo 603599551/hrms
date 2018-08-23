@@ -181,6 +181,10 @@ public class NoticeCtrl extends BaseCtrl {
             }
             if (StringUtils.equals(record.getStr("status"), "0")) {
                 record.set("status", "1");
+                record.set("show_in",true);
+            }else {
+                record.set("status", "0");
+                record.set("show_in",false);
             }
             Db.update("h_notice", record);
         } catch (Exception e) {
@@ -246,7 +250,7 @@ public class NoticeCtrl extends BaseCtrl {
         }
 
         try {
-            Record record = Db.findFirst("SELECT (SELECT s.`name` FROM h_store s WHERE s.id = info.from_dept) as from_store_name , info.date as work_date , n.type as type , (SELECT d.`name` FROM h_dictionary d WHERE d.`value` = info.`status` AND d.parent_id = '700') as type_text , n.id as id , info.`desc` as remark , (SELECT d.`name` FROM h_dictionary d WHERE d.`value` = n.`status` AND d.parent_id = '900') as status_text FROM h_notice n , h_move_info info WHERE info.id = n.fid AND n.type = 'movein_notice' AND n.id = ?", id);
+            Record record = Db.findFirst("SELECT  move.status as status, move.review_result as result, (SELECT s.`name` FROM h_store s WHERE s.id = move.from_dept) as from_store , move.work_date as work_date , n.type as type , (SELECT d.`name` FROM h_dictionary d WHERE d.`value` = move.`status` AND d.parent_id = '700') as type_text , n.id as id , move.reason as remark , (SELECT d.`name` FROM h_dictionary d WHERE d.`value` = n.`status` AND d.parent_id = '900') as status_text FROM h_notice n , h_apply_move move WHERE move.id = n.fid AND  n.type = 'apply_movein' AND n.id = ?", id);
             if (record == null) {
                 jhm.putCode(0).putMessage("此记录不存在");
             } else {
@@ -323,13 +327,13 @@ public class NoticeCtrl extends BaseCtrl {
         }
 
         try {
-            Record infoRecord = Db.findFirst("SELECT info.date as date , (SELECT d.`name` FROM h_dictionary d WHERE d.`value` = info.`status` AND d.parent_id = '700') as type , info.id as id , (SELECT s.`name` FROM h_store s WHERE s.id = info.from_dept) as out_store_name FROM h_move_info info WHERE info.id = ? ", id);
+            Record infoRecord = Db.findFirst("SELECT info.status as status , info.result as result ,info.id as id ,info.date as date , (SELECT d.`name` FROM h_dictionary d WHERE d.`value` = info.`status` AND d.parent_id = '700') as type_text , info.id as id , (SELECT s.`name` FROM h_store s WHERE s.id = info.from_dept) as out_store_name , n.type as type FROM h_move_info info ,h_notice n WHERE  info.id = n.fid and n.id = ? ", id);
             if (infoRecord == null) {
                 jhm.putCode(0).putMessage("此记录不存在");
                 renderJson(jhm);
                 return;
             }
-            List<Record> staffList = Db.find("SELECT REPLACE((SELECT GROUP_CONCAT(d.`name`) FROM h_dictionary d WHERE FIND_IN_SET(d.`value`,staff.kind)),',','/' )as kind, staff.phone as phone,(SELECT d.`name` FROM h_dictionary d WHERE d.`value` = staff.work_type AND d.parent_id = '300')as work_type,(CONCAT(staff.month_wage, '/' , staff.hour_wage )) as money,(SELECT d.`name` FROM h_dictionary d WHERE d.`value` = staff.job AND d.parent_id = '200')as job,staff.`name` as `name` , (CASE staff.gender WHEN '0' THEN '女' ELSE '男' END) as gender FROM h_move_staff staff WHERE staff.move_info_id = ?", id);
+            List<Record> staffList = Db.find("SELECT REPLACE((SELECT GROUP_CONCAT(d.`name`) FROM h_dictionary d WHERE FIND_IN_SET(d.`value`,staff.kind)),',','/' )as kind, staff.phone as phone,(SELECT d.`name` FROM h_dictionary d WHERE d.`value` = staff.work_type AND d.parent_id = '300')as work_type,(CONCAT(staff.month_wage, '/' , staff.hour_wage )) as money,(SELECT d.`name` FROM h_dictionary d WHERE d.`value` = staff.job AND d.parent_id = '200')as job,staff.`name` as `name` , (CASE staff.gender WHEN '0' THEN '女' ELSE '男' END) as gender FROM h_move_staff staff WHERE staff.move_info_id = ?", infoRecord.getStr("id"));
             infoRecord.set("staffList", staffList);
             jhm.put("data", infoRecord);
         } catch (Exception e) {

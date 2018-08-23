@@ -55,8 +55,9 @@ public class DictionaryCtrl extends BaseCtrl {
                     list.add(0, all);
                 }
                 //添加员工页面的在职状态只显示请选择和在职
-                if(StringUtils.equals(dict,"job_type")){
-                    for(int i = 1 ; i < list.size() ; ++i){
+                if(StringUtils.equals(dict,"job_type_disabled")){
+                    list = Db.find("select name, value from h_dictionary where parent_id=(select id from h_dictionary where value=?) order by sort", "job_type");
+                    for(int i = 0 ; i < list.size() ; ++i){
                         if(!StringUtils.equals(list.get(i).getStr("value"),"on")){
                             list.get(i).set("disabled",true);
                         }
