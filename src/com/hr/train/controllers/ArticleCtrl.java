@@ -200,11 +200,16 @@ public class ArticleCtrl extends BaseCtrl {
                         type.set("modify_time", time);
                         type.set("video",video);
 
-                        //寻找上上级分类 若存在则当前为第二级
-                        Record grandparentRecord = Db.findFirst("select parent_id from h_train_type t where t.id = ?", parent_type);
-                        if (StringUtils.equals("-1", grandparentRecord.getStr("parent_id"))) {
-                            type.set("type_1", parent_type);
-                            type.set("type_2", class_id);
+                        Record grandparentRecord = Db.findFirst("select parent_id , name from h_train_type t where t.id = ?", parent_type);
+                        if (StringUtils.equals("-1", grandparentRecord.getStr("parent_id"))  ) {
+                            if(!StringUtils.equals(grandparentRecord.getStr("name"),"产品培训")) {
+                                type.set("type_1", parent_type);
+                                type.set("type_2", class_id);
+                            } else {
+                                jhm.putCode(0).putMessage("产品培训需要在第三级分类添加文章！");
+                                renderJson(jhm);
+                                return;
+                            }
                         } else {
                             //再往上寻找一级
                             type.set("type_1", grandparentRecord.getStr("parent_id"));
