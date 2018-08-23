@@ -15,6 +15,13 @@ import java.util.Calendar;
  * @date 2018-08-06
  */
 public class SalaryCtrl extends BaseCtrl {
+    private static int lateFine=-10;
+    private static int earlyFine=-10;
+    private static int leaveFine=-10;
+    private static int absentFine=-100;
+    private static int addFine=100;
+    private static int reduceFine=-100;
+    private static int workDay=30;
 
     // 获取当天时间
     public static String getNowTime(String dateformat) {
@@ -154,21 +161,6 @@ public class SalaryCtrl extends BaseCtrl {
                 monthIsSecondHalf=1;
             }
             dateEnd=date;
-            /*
-                兼职工
-                */
-            //时薪
-            String sql="select hour_wage from h_staff where id=?";
-            Record staff=Db.findFirst(sql,staffId);
-            float hourWage=-1;
-            //每15分钟的薪水
-            float every15Wage=-1;
-            if(staff==null){
-                jhm.putCode(0).putMessage("用户不存在！");
-            }else{
-                hourWage=staff.getFloat("hour_wage");
-                every15Wage=hourWage/4;
-            }
 
             //应工作的时长
             float setWorkHour=0;
@@ -185,192 +177,397 @@ public class SalaryCtrl extends BaseCtrl {
                 jhm.putCode(0).putMessage("工作记录不存在！");
             }
 
-            //应得工资=时薪*应工作的时长
-            float duePay=hourWage*setWorkHour;
-            //实得工资=时薪*实际工作的时长
-            float takePay=hourWage*workHour;
-
-            //查询h_work_time中该用户在一段时间中 每天的工作情况
-            String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
-            List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
-            if (list1==null){
-                jhm.putCode(0).putMessage("工作记录不存在！");
-            }
-            String sql4="";
-            //存储该员工 当天的减班加班旷工请假记录（15分钟一条）
-            List<Record> list2345;
-            //存储该员工 当天的减班加班旷工请假记录（一段连续时间合并成一条）
-            List<Record> finalList=new ArrayList<>();
-            //finalRecord中的四个元素
-            String fRDate="";
-            String fRStartTime="";
-            String fREndTime="";
-            String fRTime="";
-            String fRCondition="";
-            float fRChange=-1;
-            //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
-            int count=0;
-
-            //遍历list1 查询h_work_time_detail表 找出每天减班加班旷工请假的情况加入list1中
-            if (list1!=null&&list1.size()>0){
-                for (Record r1:list1){
-                    //找到该员工 当天的情况
-                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id\n" +
-                            "and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
-                    list2345=Db.find(sql4,r1.getStr("date"),staffId);
-                    //finalList中的单条记录
-                    Record finalRecord=new Record();
-                    //遍历list2345 合并连续的相同情况
-                    for(int i=0;i< list2345.size()-1;i++){
-                        //第一次将要合并的数条记录中的第一条
-                        if (count==0){
-                            fRDate=list2345.get(i).getStr("date");
-                            fRStartTime=list2345.get(i).getStr("start_time");
-                            fREndTime=list2345.get(i).getStr("end_time");
-                            fRCondition=list2345.get(i).getStr("status");
-                            count++;
-                        }
-                        //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
-                        if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
-                            fREndTime=list2345.get(i+1).getStr("end_time");
-                            count++;
-                        }else {
-                            finalRecord.set("date",fRDate);
-                            fRTime=fRStartTime+"-"+fREndTime;
-                            finalRecord.set("time",fRTime);
-                            finalRecord.set("condition",fRCondition);
-                            if ("3".equals(fRCondition)){
-                                fRChange=count*every15Wage;
-                            }else{
-                                fRChange=-(count*every15Wage);
-                            }
-                            finalRecord.set("change",fRChange);
-                            finalList.add(finalRecord);
-                            finalRecord=new Record();
-                            count=0;
-                            //第二次开始将要合并的数条记录中的第一条
-                            fRDate=list2345.get(i+1).getStr("date");
-                            fRStartTime=list2345.get(i+1).getStr("start_time");
-                            fREndTime=list2345.get(i+1).getStr("end_time");
-                            fRCondition=list2345.get(i+1).getStr("status");
-                            count++;
-                        }
-                        if (i==list2345.size()-2){
-                            finalRecord.set("date",fRDate);
-                            fRTime=fRStartTime+"-"+fREndTime;
-                            finalRecord.set("time",fRTime);
-                            finalRecord.set("condition",fRCondition);
-                            if ("3".equals(fRCondition)){
-                                fRChange=count*every15Wage;
-                            }else{
-                                fRChange=-(count*every15Wage);
-                            }
-                            finalRecord.set("change",fRChange);
-                            finalList.add(finalRecord);
-                        }
-                    }
-                    fRDate="";
-                    fRStartTime="";
-                    fREndTime="";
-                    fRTime="";
-                    fRCondition="";
-                    fRChange=-1;
-                    count=0;
-                }
-            }
-
-            //初始化时间格式 20:40
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
-
-            //查询h_staff_clock表 迟到记录
-            String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
-            List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
-            if (list6!=null&&list6.size()>0){
-                for (Record r6:list6){
-                    Record finalRecord =new Record();
-                    fRDate=r6.getStr("date");
-                    finalRecord.set("date",fRDate);
-                    fRStartTime=r6.getStr("start_time");
-                    fREndTime=r6.getStr("end_time");
-                    fRTime=fRStartTime+"-"+fREndTime;
-                    finalRecord.set("time",fRTime);
-                    finalRecord.set("condition",6);
-
-                    //计算迟到时间
-                    String st=r6.getStr("start_time");
-                    String et=r6.getStr("sign_in_time");
-                    Date fd=simpleFormat.parse(st);
-                    Date td=simpleFormat.parse(et);
-                    String fromDate = simpleFormat.format(fd);
-                    String toDate = simpleFormat.format(td);
-                    long from = simpleFormat.parse(fromDate).getTime();
-                    long to = simpleFormat.parse(toDate).getTime();
-                    int minutes = (int) ((to - from)/(1000 * 60));
-                    int count6=(int)Math.ceil((double)minutes/(double)15);
-                    fRChange=-(count6*every15Wage);
-                    finalRecord.set("change",fRChange);
-
-                    finalList.add(finalRecord);
-                }
-            }
-
-            //查询h_staff_clock表 早退记录
-            String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
-            List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
-            if (list7!=null&&list7.size()>0){
-                for (Record r7:list7){
-                    Record finalRecord =new Record();
-                    fRDate=r7.getStr("date");
-                    finalRecord.set("date",fRDate);
-                    fRStartTime=r7.getStr("start_time");
-                    fREndTime=r7.getStr("end_time");
-                    fRTime=fRStartTime+"-"+fREndTime;
-                    finalRecord.set("time",fRTime);
-                    finalRecord.set("condition",7);
-
-                    //计算早退时间
-                    String st=r7.getStr("sign_back_time");
-                    String et=r7.getStr("end_time");
-                    Date fd=simpleFormat.parse(st);
-                    Date td=simpleFormat.parse(et);
-                    String fromDate = simpleFormat.format(fd);
-                    String toDate = simpleFormat.format(td);
-                    long from = simpleFormat.parse(fromDate).getTime();
-                    long to = simpleFormat.parse(toDate).getTime();
-                    int minutes = (int) ((to - from)/(1000 * 60));
-                    int count7=(int)Math.ceil((double)minutes/(double)15);
-                    fRChange=-(count7*every15Wage);
-                    finalRecord.set("change",fRChange);
-
-                    finalList.add(finalRecord);
-                }
-            }
-
-            Collections.sort(finalList, new Comparator<Record>(){
+            //判断全职兼职
+            String workType=Db.findFirst("SELECT work_type FROM h_staff WHERE id=?",staffId).getStr("work_type");
+            if ("part_time".equals(workType)) {
                 /*
-                 * int compare(Record p1, Record p2) 返回一个基本类型的整型，
-                 * 返回负数表示：p1的date 大于p2的date，
-                 * 返回0 表示：p1和p2相等，
-                 * 返回正数表示：p1的date 小于p2的date
-                 */
-                @Override
-                public int compare(Record p1, Record p2) {
-                    //按照record的date进行降序排列
-                    if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
-                        return -1;
-                    }
-                    if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
-                        return 0;
-                    }
-                    return 1;
+                兼职工
+                */
+                //时薪
+                String sql="select hour_wage from h_staff where id=?";
+                Record staff=Db.findFirst(sql,staffId);
+                float hourWage=-1;
+                //每15分钟的薪水
+                float every15Wage=-1;
+                if(staff==null){
+                    jhm.putCode(0).putMessage("用户不存在！");
+                }else{
+                    hourWage=staff.getFloat("hour_wage");
+                    every15Wage=hourWage/4;
                 }
-            });
+                //应得工资=时薪*应工作的时长
+                float duePay=hourWage*setWorkHour;
+                //实得工资=时薪*实际工作的时长
+                float takePay=hourWage*workHour;
 
-            jhm.put("month",monthIsSecondHalf);
-            jhm.put("workHour",workHour);
-            jhm.put("duePay",duePay);
-            jhm.put("takePay",takePay);
-            jhm.put("list",finalList);
+                //查询h_work_time中该用户在一段时间中 每天的工作情况
+                String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
+                List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+                if (list1==null){
+                    jhm.putCode(0).putMessage("工作记录不存在！");
+                }
+                String sql4="";
+                //存储该员工 当天的减班加班旷工请假记录（15分钟一条）
+                List<Record> list2345;
+                //存储该员工 当天的减班加班旷工请假记录（一段连续时间合并成一条）
+                List<Record> finalList=new ArrayList<>();
+                //finalRecord中的四个元素
+                String fRDate="";
+                String fRStartTime="";
+                String fREndTime="";
+                String fRTime="";
+                String fRCondition="";
+                float fRChange=-1;
+                //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+                int count=0;
+
+                //遍历list1 查询h_work_time_detail表 找出每天减班加班旷工请假的情况加入list1中
+                if (list1!=null&&list1.size()>0){
+                    for (Record r1:list1){
+                        //找到该员工 当天的情况
+                        sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id\n" +
+                                "and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+                        list2345=Db.find(sql4,r1.getStr("date"),staffId);
+                        //finalList中的单条记录
+                        Record finalRecord=new Record();
+                        //遍历list2345 合并连续的相同情况
+                        for(int i=0;i< list2345.size()-1;i++){
+                            //第一次将要合并的数条记录中的第一条
+                            if (count==0){
+                                fRDate=list2345.get(i).getStr("date");
+                                fRStartTime=list2345.get(i).getStr("start_time");
+                                fREndTime=list2345.get(i).getStr("end_time");
+                                fRCondition=list2345.get(i).getStr("status");
+                                count++;
+                            }
+                            //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+                            if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                count++;
+                            }else {
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=count*every15Wage;
+                                }else{
+                                    fRChange=-(count*every15Wage);
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                                finalRecord=new Record();
+                                count=0;
+                                //第二次开始将要合并的数条记录中的第一条
+                                fRDate=list2345.get(i+1).getStr("date");
+                                fRStartTime=list2345.get(i+1).getStr("start_time");
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                fRCondition=list2345.get(i+1).getStr("status");
+                                count++;
+                            }
+                            if (i==list2345.size()-2){
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=count*every15Wage;
+                                }else{
+                                    fRChange=-(count*every15Wage);
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                            }
+                        }
+                        fRDate="";
+                        fRStartTime="";
+                        fREndTime="";
+                        fRTime="";
+                        fRCondition="";
+                        fRChange=-1;
+                        count=0;
+                    }
+                }
+
+                //初始化时间格式 20:40
+                SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+
+                //查询h_staff_clock表 迟到记录
+                String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
+                if (list6!=null&&list6.size()>0){
+                    for (Record r6:list6){
+                        Record finalRecord =new Record();
+                        fRDate=r6.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r6.getStr("start_time");
+                        fREndTime=r6.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",6);
+
+                        //计算迟到时间
+                        String st=r6.getStr("start_time");
+                        String et=r6.getStr("sign_in_time");
+                        Date fd=simpleFormat.parse(st);
+                        Date td=simpleFormat.parse(et);
+                        String fromDate = simpleFormat.format(fd);
+                        String toDate = simpleFormat.format(td);
+                        long from = simpleFormat.parse(fromDate).getTime();
+                        long to = simpleFormat.parse(toDate).getTime();
+                        int minutes = (int) ((to - from)/(1000 * 60));
+                        int count6=(int)Math.ceil((double)minutes/(double)15);
+                        fRChange=-(count6*every15Wage);
+                        finalRecord.set("change",fRChange);
+
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                //查询h_staff_clock表 早退记录
+                String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
+                if (list7!=null&&list7.size()>0){
+                    for (Record r7:list7){
+                        Record finalRecord =new Record();
+                        fRDate=r7.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r7.getStr("start_time");
+                        fREndTime=r7.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",7);
+
+                        //计算早退时间
+                        String st=r7.getStr("sign_back_time");
+                        String et=r7.getStr("end_time");
+                        Date fd=simpleFormat.parse(st);
+                        Date td=simpleFormat.parse(et);
+                        String fromDate = simpleFormat.format(fd);
+                        String toDate = simpleFormat.format(td);
+                        long from = simpleFormat.parse(fromDate).getTime();
+                        long to = simpleFormat.parse(toDate).getTime();
+                        int minutes = (int) ((to - from)/(1000 * 60));
+                        int count7=(int)Math.ceil((double)minutes/(double)15);
+                        fRChange=-(count7*every15Wage);
+                        finalRecord.set("change",fRChange);
+
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                Collections.sort(finalList, new Comparator<Record>(){
+                    /*
+                     * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+                     * 返回负数表示：p1的date 大于p2的date，
+                     * 返回0 表示：p1和p2相等，
+                     * 返回正数表示：p1的date 小于p2的date
+                     */
+                    @Override
+                    public int compare(Record p1, Record p2) {
+                        //按照record的date进行降序排列
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+                            return -1;
+                        }
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+                            return 0;
+                        }
+                        return 1;
+                    }
+                });
+
+                jhm.put("month",monthIsSecondHalf);
+                jhm.put("workHour",workHour);
+                jhm.put("duePay",duePay);
+                jhm.put("takePay",takePay);
+                jhm.put("list",finalList);
+
+            }else {
+                //月薪
+                String sql="SELECT month_wage FROM h_staff WHERE id=?";
+                float monthWage=Db.findFirst(sql,staffId).getFloat("month_wage");
+                //应得工资=月薪
+                float duePay=monthWage;
+
+                //查询h_work_time中该用户在一段时间中 每天的工作情况
+                String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
+                List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+                if (list1==null){
+                    jhm.putCode(0).putMessage("工作记录不存在！");
+                }
+                String sql4="";
+                //存储该员工 当天的减班加班旷工请假记录（15分钟一条）
+                List<Record> list2345;
+                //存储该员工 当天的减班加班旷工请假记录（一段连续时间合并成一条）
+                List<Record> finalList=new ArrayList<>();
+                //finalRecord中的四个元素
+                String fRDate="";
+                String fRStartTime="";
+                String fREndTime="";
+                String fRTime="";
+                String fRCondition="";
+                float fRChange=-1;
+                //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+                int count=0;
+                //请假、旷班、减班、加班次数
+                int leaveCount=0;
+                int absentCount=0;
+                int reduceCount=0;
+                int addCount=0;
+
+                //遍历list1 查询h_work_time_detail表 找出每天减班加班旷工请假的情况加入list1中
+                if (list1!=null&&list1.size()>0){
+                    for (Record r1:list1){
+                        //找到该员工 当天的情况
+                        sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id\n" +
+                                "and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+                        list2345=Db.find(sql4,r1.getStr("date"),staffId);
+                        //finalList中的单条记录
+                        Record finalRecord=new Record();
+                        //遍历list2345 合并连续的相同情况
+                        for(int i=0;i< list2345.size()-1;i++){
+                            //第一次将要合并的数条记录中的第一条
+                            if (count==0){
+                                fRDate=list2345.get(i).getStr("date");
+                                fRStartTime=list2345.get(i).getStr("start_time");
+                                fREndTime=list2345.get(i).getStr("end_time");
+                                fRCondition=list2345.get(i).getStr("status");
+                                count++;
+                            }
+                            //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+                            if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                count++;
+                            }else {
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=addFine;
+                                    addCount++;
+                                }else if ("2".equals(fRCondition)){
+                                    fRChange=reduceFine;
+                                    reduceCount++;
+                                }else if ("4".equals(fRCondition)){
+                                    fRChange=absentFine;
+                                    absentCount++;
+                                }else if ("5".equals(fRCondition)){
+                                    fRChange=leaveFine;
+                                    leaveCount++;
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                                finalRecord=new Record();
+                                count=0;
+                                //第二次开始将要合并的数条记录中的第一条
+                                fRDate=list2345.get(i+1).getStr("date");
+                                fRStartTime=list2345.get(i+1).getStr("start_time");
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                fRCondition=list2345.get(i+1).getStr("status");
+                                count++;
+                            }
+                            if (i==list2345.size()-2){
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=addFine;
+                                    addCount++;
+                                }else if ("2".equals(fRCondition)){
+                                    fRChange=reduceFine;
+                                    reduceCount++;
+                                }else if ("4".equals(fRCondition)){
+                                    fRChange=absentFine;
+                                    absentCount++;
+                                }else if ("5".equals(fRCondition)){
+                                    fRChange=leaveFine;
+                                    leaveCount++;
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                            }
+                        }
+                        fRDate="";
+                        fRStartTime="";
+                        fREndTime="";
+                        fRTime="";
+                        fRCondition="";
+                        fRChange=-1;
+                        count=0;
+                    }
+                }
+
+                //初始化时间格式 20:40
+                SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+
+                //查询h_staff_clock表 迟到记录
+                String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
+                if (list6!=null&&list6.size()>0){
+                    for (Record r6:list6){
+                        Record finalRecord =new Record();
+                        fRDate=r6.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r6.getStr("start_time");
+                        fREndTime=r6.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",6);
+                        finalRecord.set("change",lateFine);
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                //查询h_staff_clock表 早退记录
+                String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
+                if (list7!=null&&list7.size()>0){
+                    for (Record r7:list7){
+                        Record finalRecord =new Record();
+                        fRDate=r7.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r7.getStr("start_time");
+                        fREndTime=r7.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",7);
+                        finalRecord.set("change",earlyFine);
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                Collections.sort(finalList, new Comparator<Record>(){
+                    /*
+                     * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+                     * 返回负数表示：p1的date 大于p2的date，
+                     * 返回0 表示：p1和p2相等，
+                     * 返回正数表示：p1的date 小于p2的date
+                     */
+                    @Override
+                    public int compare(Record p1, Record p2) {
+                        //按照record的date进行降序排列
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+                            return -1;
+                        }
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+                            return 0;
+                        }
+                        return 1;
+                    }
+                });
+
+                float takePay=monthWage-list6.size()*lateFine-list7.size()*earlyFine-addFine*addCount-reduceCount*reduceFine-leaveCount*leaveFine-absentCount*absentFine;
+                jhm.put("month",monthIsSecondHalf);
+                jhm.put("workHour",workHour);
+                jhm.put("duePay",duePay);
+                jhm.put("takePay",takePay);
+                jhm.put("list",finalList);
+            }
+
+
+
 
         }catch (Exception e){
             e.printStackTrace();
@@ -431,214 +628,412 @@ public class SalaryCtrl extends BaseCtrl {
         String date=getPara("date");
 
         try{
-            /*
+            //判断全职兼职
+            String workType=Db.findFirst("SELECT work_type FROM h_staff WHERE id=?",staffId).getStr("work_type");
+            if ("part_time".equals(workType)) {
+                /*
                 兼职工
                 */
-            //时薪
-            String sql="select hour_wage from h_staff where id=?";
-            Record staff=Db.findFirst(sql,staffId);
-            float hourWage=-1;
-            //每15分钟的薪水
-            float every15Wage=-1;
-            if(staff==null){
-                jhm.putCode(0).putMessage("用户不存在！");
-            }else{
-                hourWage=staff.getFloat("hour_wage");
-                every15Wage=hourWage/4;
-            }
-
-            //应工作的时长
-            float setWorkHour=0;
-            //实际工作的时长
-            float workHour=0;
-            String sql2="select number,real_number from h_work_time where staff_id=? and date=?";
-            List<Record> setWorkHourList=Db.find(sql2,staffId,date);
-            if (setWorkHourList!=null&&setWorkHourList.size()>0){
-                for (Record r:setWorkHourList){
-                    setWorkHour+=((float)r.getInt("number")*15.0/60.0);
-                    workHour+=((float)r.getInt("real_number")*15.0/60.0);
+                //时薪
+                String sql="select hour_wage from h_staff where id=?";
+                Record staff=Db.findFirst(sql,staffId);
+                float hourWage=-1;
+                //每15分钟的薪水
+                float every15Wage=-1;
+                if(staff==null){
+                    jhm.putCode(0).putMessage("用户不存在！");
+                }else{
+                    hourWage=staff.getFloat("hour_wage");
+                    every15Wage=hourWage/4;
                 }
+
+                //应工作的时长
+                float setWorkHour=0;
+                //实际工作的时长
+                float workHour=0;
+                String sql2="select number,real_number from h_work_time where staff_id=? and date=?";
+                List<Record> setWorkHourList=Db.find(sql2,staffId,date);
+                if (setWorkHourList!=null&&setWorkHourList.size()>0){
+                    for (Record r:setWorkHourList){
+                        setWorkHour+=((float)r.getInt("number")*15.0/60.0);
+                        workHour+=((float)r.getInt("real_number")*15.0/60.0);
+                    }
+                }else {
+                    jhm.putCode(0).putMessage("工作记录不存在1！");
+                }
+
+                //应得工资=时薪*应工作的时长
+                float duePay=hourWage*setWorkHour;
+                //实得工资=时薪*实际工作的时长
+                float takePay=hourWage*workHour;
+
+                //查询h_work_time中该用户一天的工作情况
+                String sql3="select * from h_work_time where date=? and staff_id=? order by date ASC";
+                List<Record> list1=Db.find(sql3,date,staffId);
+                if (list1==null){
+                    jhm.putCode(0).putMessage("工作记录不存在2！");
+                }
+                String sql4="";
+                //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
+                List<Record> list2345;
+                //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
+                List<Record> finalList=new ArrayList<>();
+                //finalRecord中的四个元素
+                String fRDate="";
+                String fRStartTime="";
+                String fREndTime="";
+                String fRTime="";
+                String fRCondition="";
+                float fRChange=-1;
+                //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+                int count=0;
+
+                //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
+                if (list1!=null&&list1.size()>0){
+                    //查询h_work_time_detail表该用户一天的迟到早退减班加班记录（15分钟一条）
+                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
+                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+                    list2345=Db.find(sql4,date,staffId);
+                    //finalList中的单条记录
+                    Record finalRecord=new Record();
+                    //遍历list2345 合并连续的相同情况
+                    for(int i=0;i< list2345.size()-1;i++){
+                        //第一次将要合并的数条记录中的第一条
+                        if (count==0){
+                            fRDate=list2345.get(i).getStr("date");
+                            fRStartTime=list2345.get(i).getStr("start_time");
+                            fREndTime=list2345.get(i).getStr("end_time");
+                            fRCondition=list2345.get(i).getStr("status");
+                            count++;
+                        }
+                        //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+                        if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+                            fREndTime=list2345.get(i+1).getStr("end_time");
+                            count++;
+                        }else {
+                            finalRecord.set("date",fRDate);
+                            fRTime=fRStartTime+"-"+fREndTime;
+                            finalRecord.set("time",fRTime);
+                            finalRecord.set("condition",fRCondition);
+                            if ("3".equals(fRCondition)){
+                                fRChange=count*every15Wage;
+                            }else{
+                                fRChange=-(count*every15Wage);
+                            }
+                            finalRecord.set("change",fRChange);
+                            finalList.add(finalRecord);
+                            finalRecord=new Record();
+                            count=0;
+                            //第二次开始将要合并的数条记录中的第一条
+                            fRDate=list2345.get(i+1).getStr("date");
+                            fRStartTime=list2345.get(i+1).getStr("start_time");
+                            fREndTime=list2345.get(i+1).getStr("end_time");
+                            fRCondition=list2345.get(i+1).getStr("status");
+                            count++;
+                        }
+                        if (i==list2345.size()-2){
+                            finalRecord.set("date",fRDate);
+                            fRTime=fRStartTime+"-"+fREndTime;
+                            finalRecord.set("time",fRTime);
+                            finalRecord.set("condition",fRCondition);
+                            if ("3".equals(fRCondition)){
+                                fRChange=count*every15Wage;
+                            }else{
+                                fRChange=-(count*every15Wage);
+                            }
+                            finalRecord.set("change",fRChange);
+                            finalList.add(finalRecord);
+                        }
+                    }
+                }
+
+                //初始化时间格式 20:40
+                SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+
+                //查询h_staff_clock表 迟到记录
+                String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date=?";
+                List<Record> list6=Db.find(sql6,staffId,date);
+                if (list6!=null&&list6.size()>0){
+                    for (Record r6:list6){
+                        Record finalRecord =new Record();
+                        fRDate=r6.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r6.getStr("start_time");
+                        fREndTime=r6.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",6);
+
+                        //计算迟到时间
+                        String st=r6.getStr("start_time");
+                        String et=r6.getStr("sign_in_time");
+                        Date fd=simpleFormat.parse(st);
+                        Date td=simpleFormat.parse(et);
+                        String fromDate = simpleFormat.format(fd);
+                        String toDate = simpleFormat.format(td);
+                        long from = simpleFormat.parse(fromDate).getTime();
+                        long to = simpleFormat.parse(toDate).getTime();
+                        int minutes = (int) ((to - from)/(1000 * 60));
+                        int count6=(int)Math.ceil((double)minutes/(double)15);
+                        fRChange=-(count6*every15Wage);
+                        finalRecord.set("change",fRChange);
+
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                //查询h_staff_clock表 早退记录
+                String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date=?";
+                List<Record> list7=Db.find(sql7,staffId,date);
+                if (list7!=null&&list7.size()>0){
+                    for (Record r7:list7){
+                        Record finalRecord =new Record();
+                        fRDate=r7.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r7.getStr("start_time");
+                        fREndTime=r7.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",7);
+
+                        //计算早退时间
+                        String st=r7.getStr("sign_back_time");
+                        String et=r7.getStr("end_time");
+                        Date fd=simpleFormat.parse(st);
+                        Date td=simpleFormat.parse(et);
+                        String fromDate = simpleFormat.format(fd);
+                        String toDate = simpleFormat.format(td);
+                        long from = simpleFormat.parse(fromDate).getTime();
+                        long to = simpleFormat.parse(toDate).getTime();
+                        int minutes = (int) ((to - from)/(1000 * 60));
+                        int count7=(int)Math.ceil((double)minutes/(double)15);
+                        fRChange=-(count7*every15Wage);
+                        finalRecord.set("change",fRChange);
+
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                Collections.sort(finalList, new Comparator<Record>(){
+                    /*
+                     * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+                     * 返回负数表示：p1的date 大于p2的date，
+                     * 返回0 表示：p1和p2相等，
+                     * 返回正数表示：p1的date 小于p2的date
+                     */
+                    @Override
+                    public int compare(Record p1, Record p2) {
+                        //按照record的date进行降序排列
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+                            return -1;
+                        }
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+                            return 0;
+                        }
+                        return 1;
+                    }
+                });
+
+
+                jhm.put("dayHour",workHour);
+                jhm.put("duePay",duePay);
+                jhm.put("takePay",takePay);
+                jhm.put("list",finalList);
             }else {
-                jhm.putCode(0).putMessage("工作记录不存在1！");
-            }
-
-            //应得工资=时薪*应工作的时长
-            float duePay=hourWage*setWorkHour;
-            //实得工资=时薪*实际工作的时长
-            float takePay=hourWage*workHour;
-
-            //查询h_work_time中该用户一天的工作情况
-            String sql3="select * from h_work_time where date=? and staff_id=? order by date ASC";
-            List<Record> list1=Db.find(sql3,date,staffId);
-            if (list1==null){
-                jhm.putCode(0).putMessage("工作记录不存在2！");
-            }
-            String sql4="";
-            //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
-            List<Record> list2345;
-            //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
-            List<Record> finalList=new ArrayList<>();
-            //finalRecord中的四个元素
-            String fRDate="";
-            String fRStartTime="";
-            String fREndTime="";
-            String fRTime="";
-            String fRCondition="";
-            float fRChange=-1;
-            //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
-            int count=0;
-
-            //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
-            if (list1!=null&&list1.size()>0){
-                //查询h_work_time_detail表该用户一天的迟到早退减班加班记录（15分钟一条）
-                sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
-                        " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
-                list2345=Db.find(sql4,date,staffId);
-                //finalList中的单条记录
-                Record finalRecord=new Record();
-                //遍历list2345 合并连续的相同情况
-                for(int i=0;i< list2345.size()-1;i++){
-                    //第一次将要合并的数条记录中的第一条
-                    if (count==0){
-                        fRDate=list2345.get(i).getStr("date");
-                        fRStartTime=list2345.get(i).getStr("start_time");
-                        fREndTime=list2345.get(i).getStr("end_time");
-                        fRCondition=list2345.get(i).getStr("status");
-                        count++;
+                String sql="select month_wage from h_staff where id=?";
+                Record staff=Db.findFirst(sql,staffId);
+                float dayWage=staff.getFloat("month_wage")/workDay;
+                //应工作的时长
+                float setWorkHour=0;
+                //实际工作的时长
+                float workHour=0;
+                String sql2="select number,real_number from h_work_time where staff_id=? and date=?";
+                List<Record> setWorkHourList=Db.find(sql2,staffId,date);
+                if (setWorkHourList!=null&&setWorkHourList.size()>0){
+                    for (Record r:setWorkHourList){
+                        setWorkHour+=((float)r.getInt("number")*15.0/60.0);
+                        workHour+=((float)r.getInt("real_number")*15.0/60.0);
                     }
-                    //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
-                    if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
-                        fREndTime=list2345.get(i+1).getStr("end_time");
-                        count++;
-                    }else {
+                }else {
+                    jhm.putCode(0).putMessage("工作记录不存在1！");
+                }
+
+                //应得工资=日薪
+                float duePay=dayWage;
+
+                //查询h_work_time中该用户一天的工作情况
+                String sql3="select * from h_work_time where date=? and staff_id=? order by date ASC";
+                List<Record> list1=Db.find(sql3,date,staffId);
+                if (list1==null){
+                    jhm.putCode(0).putMessage("工作记录不存在2！");
+                }
+                String sql4="";
+                //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
+                List<Record> list2345;
+                //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
+                List<Record> finalList=new ArrayList<>();
+                //finalRecord中的四个元素
+                String fRDate="";
+                String fRStartTime="";
+                String fREndTime="";
+                String fRTime="";
+                String fRCondition="";
+                float fRChange=-1;
+                //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+                int count=0;
+                //请假、旷班、减班、加班次数
+                int leaveCount=0;
+                int absentCount=0;
+                int reduceCount=0;
+                int addCount=0;
+
+                //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
+                if (list1!=null&&list1.size()>0){
+                    //查询h_work_time_detail表该用户一天的迟到早退减班加班记录（15分钟一条）
+                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
+                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+                    list2345=Db.find(sql4,date,staffId);
+                    //finalList中的单条记录
+                    Record finalRecord=new Record();
+                    //遍历list2345 合并连续的相同情况
+                    for(int i=0;i< list2345.size()-1;i++){
+                        //第一次将要合并的数条记录中的第一条
+                        if (count==0){
+                            fRDate=list2345.get(i).getStr("date");
+                            fRStartTime=list2345.get(i).getStr("start_time");
+                            fREndTime=list2345.get(i).getStr("end_time");
+                            fRCondition=list2345.get(i).getStr("status");
+                            count++;
+                        }
+                        //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+                        if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+                            fREndTime=list2345.get(i+1).getStr("end_time");
+                            count++;
+                        }else {
+                            finalRecord.set("date",fRDate);
+                            fRTime=fRStartTime+"-"+fREndTime;
+                            finalRecord.set("time",fRTime);
+                            finalRecord.set("condition",fRCondition);
+                            if ("3".equals(fRCondition)){
+                                fRChange=addFine;
+                                addCount++;
+                            }else if ("2".equals(fRCondition)){
+                                fRChange=reduceFine;
+                                reduceCount++;
+                            }else if ("4".equals(fRCondition)){
+                                fRChange=absentFine;
+                                absentCount++;
+                            }else if ("5".equals(fRCondition)){
+                                fRChange=leaveFine;
+                                leaveCount++;
+                            }
+                            finalRecord.set("change",fRChange);
+                            finalList.add(finalRecord);
+                            finalRecord=new Record();
+                            count=0;
+                            //第二次开始将要合并的数条记录中的第一条
+                            fRDate=list2345.get(i+1).getStr("date");
+                            fRStartTime=list2345.get(i+1).getStr("start_time");
+                            fREndTime=list2345.get(i+1).getStr("end_time");
+                            fRCondition=list2345.get(i+1).getStr("status");
+                            count++;
+                        }
+                        if (i==list2345.size()-2){
+                            finalRecord.set("date",fRDate);
+                            fRTime=fRStartTime+"-"+fREndTime;
+                            finalRecord.set("time",fRTime);
+                            finalRecord.set("condition",fRCondition);
+                            if ("3".equals(fRCondition)){
+                                fRChange=addFine;
+                                addCount++;
+                            }else if ("2".equals(fRCondition)){
+                                fRChange=reduceFine;
+                                reduceCount++;
+                            }else if ("4".equals(fRCondition)){
+                                fRChange=absentFine;
+                                absentCount++;
+                            }else if ("5".equals(fRCondition)){
+                                fRChange=leaveFine;
+                                leaveCount++;
+                            }
+                            finalRecord.set("change",fRChange);
+                            finalList.add(finalRecord);
+                        }
+                    }
+                }
+
+                //初始化时间格式 20:40
+                SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+
+                //查询h_staff_clock表 迟到记录
+                String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date=?";
+                List<Record> list6=Db.find(sql6,staffId,date);
+                if (list6!=null&&list6.size()>0){
+                    for (Record r6:list6){
+                        Record finalRecord =new Record();
+                        fRDate=r6.getStr("date");
                         finalRecord.set("date",fRDate);
+                        fRStartTime=r6.getStr("start_time");
+                        fREndTime=r6.getStr("end_time");
                         fRTime=fRStartTime+"-"+fREndTime;
                         finalRecord.set("time",fRTime);
-                        finalRecord.set("condition",fRCondition);
-                        if ("3".equals(fRCondition)){
-                            fRChange=count*every15Wage;
-                        }else{
-                            fRChange=-(count*every15Wage);
-                        }
-                        finalRecord.set("change",fRChange);
+                        finalRecord.set("condition",6);
+
+                        finalRecord.set("change",lateFine);
+
                         finalList.add(finalRecord);
-                        finalRecord=new Record();
-                        count=0;
-                        //第二次开始将要合并的数条记录中的第一条
-                        fRDate=list2345.get(i+1).getStr("date");
-                        fRStartTime=list2345.get(i+1).getStr("start_time");
-                        fREndTime=list2345.get(i+1).getStr("end_time");
-                        fRCondition=list2345.get(i+1).getStr("status");
-                        count++;
                     }
-                    if (i==list2345.size()-2){
+                }
+
+                //查询h_staff_clock表 早退记录
+                String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date=?";
+                List<Record> list7=Db.find(sql7,staffId,date);
+                if (list7!=null&&list7.size()>0){
+                    for (Record r7:list7){
+                        Record finalRecord =new Record();
+                        fRDate=r7.getStr("date");
                         finalRecord.set("date",fRDate);
+                        fRStartTime=r7.getStr("start_time");
+                        fREndTime=r7.getStr("end_time");
                         fRTime=fRStartTime+"-"+fREndTime;
                         finalRecord.set("time",fRTime);
-                        finalRecord.set("condition",fRCondition);
-                        if ("3".equals(fRCondition)){
-                            fRChange=count*every15Wage;
-                        }else{
-                            fRChange=-(count*every15Wage);
-                        }
-                        finalRecord.set("change",fRChange);
+                        finalRecord.set("condition",7);
+
+                        finalRecord.set("change",earlyFine);
+
                         finalList.add(finalRecord);
                     }
                 }
-            }
 
-            //初始化时间格式 20:40
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
-
-            //查询h_staff_clock表 迟到记录
-            String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date=?";
-            List<Record> list6=Db.find(sql6,staffId,date);
-            if (list6!=null&&list6.size()>0){
-                for (Record r6:list6){
-                    Record finalRecord =new Record();
-                    fRDate=r6.getStr("date");
-                    finalRecord.set("date",fRDate);
-                    fRStartTime=r6.getStr("start_time");
-                    fREndTime=r6.getStr("end_time");
-                    fRTime=fRStartTime+"-"+fREndTime;
-                    finalRecord.set("time",fRTime);
-                    finalRecord.set("condition",6);
-
-                    //计算迟到时间
-                    String st=r6.getStr("start_time");
-                    String et=r6.getStr("sign_in_time");
-                    Date fd=simpleFormat.parse(st);
-                    Date td=simpleFormat.parse(et);
-                    String fromDate = simpleFormat.format(fd);
-                    String toDate = simpleFormat.format(td);
-                    long from = simpleFormat.parse(fromDate).getTime();
-                    long to = simpleFormat.parse(toDate).getTime();
-                    int minutes = (int) ((to - from)/(1000 * 60));
-                    int count6=(int)Math.ceil((double)minutes/(double)15);
-                    fRChange=-(count6*every15Wage);
-                    finalRecord.set("change",fRChange);
-
-                    finalList.add(finalRecord);
-                }
-            }
-
-            //查询h_staff_clock表 早退记录
-            String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date=?";
-            List<Record> list7=Db.find(sql7,staffId,date);
-            if (list7!=null&&list7.size()>0){
-                for (Record r7:list7){
-                    Record finalRecord =new Record();
-                    fRDate=r7.getStr("date");
-                    finalRecord.set("date",fRDate);
-                    fRStartTime=r7.getStr("start_time");
-                    fREndTime=r7.getStr("end_time");
-                    fRTime=fRStartTime+"-"+fREndTime;
-                    finalRecord.set("time",fRTime);
-                    finalRecord.set("condition",7);
-
-                    //计算早退时间
-                    String st=r7.getStr("sign_back_time");
-                    String et=r7.getStr("end_time");
-                    Date fd=simpleFormat.parse(st);
-                    Date td=simpleFormat.parse(et);
-                    String fromDate = simpleFormat.format(fd);
-                    String toDate = simpleFormat.format(td);
-                    long from = simpleFormat.parse(fromDate).getTime();
-                    long to = simpleFormat.parse(toDate).getTime();
-                    int minutes = (int) ((to - from)/(1000 * 60));
-                    int count7=(int)Math.ceil((double)minutes/(double)15);
-                    fRChange=-(count7*every15Wage);
-                    finalRecord.set("change",fRChange);
-
-                    finalList.add(finalRecord);
-                }
-            }
-
-            Collections.sort(finalList, new Comparator<Record>(){
-                /*
-                 * int compare(Record p1, Record p2) 返回一个基本类型的整型，
-                 * 返回负数表示：p1的date 大于p2的date，
-                 * 返回0 表示：p1和p2相等，
-                 * 返回正数表示：p1的date 小于p2的date
-                 */
-                @Override
-                public int compare(Record p1, Record p2) {
-                    //按照record的date进行降序排列
-                    if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
-                        return -1;
+                Collections.sort(finalList, new Comparator<Record>(){
+                    /*
+                     * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+                     * 返回负数表示：p1的date 大于p2的date，
+                     * 返回0 表示：p1和p2相等，
+                     * 返回正数表示：p1的date 小于p2的date
+                     */
+                    @Override
+                    public int compare(Record p1, Record p2) {
+                        //按照record的date进行降序排列
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+                            return -1;
+                        }
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+                            return 0;
+                        }
+                        return 1;
                     }
-                    if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
-                        return 0;
-                    }
-                    return 1;
-                }
-            });
+                });
 
+                //实得工资=时薪*实际工作的时长
+                float takePay=dayWage-list6.size()*lateFine-list7.size()*earlyFine-addFine*addCount-reduceCount*reduceFine-leaveCount*leaveFine-absentCount*absentFine;
 
-            jhm.put("dayHour",workHour);
-            jhm.put("duePay",duePay);
-            jhm.put("takePay",takePay);
-            jhm.put("list",finalList);
+                jhm.put("dayHour",workHour);
+                jhm.put("duePay",duePay);
+                jhm.put("takePay",takePay);
+                jhm.put("list",finalList);
+            }
+
 
         }catch (Exception e){
             e.printStackTrace();
@@ -729,266 +1124,521 @@ public class SalaryCtrl extends BaseCtrl {
                 monthIsSecondHalf=1;
             }
             dateEnd=date;
-            /*
+
+            //判断全职兼职
+            String workType=Db.findFirst("SELECT work_type FROM h_staff WHERE id=?",staffId).getStr("work_type");
+            if ("part_time".equals(workType)) {
+                /*
                 兼职工
                 */
-            //时薪
-            String sql="select * from h_staff where id=?";
-            Record staff=Db.findFirst(sql,staffId);
-            float hourWage=-1;
-            //每15分钟的薪水
-            float every15Wage=-1;
-            //员工姓名
-            String name="";
-            //员工姓名首字母
-            String initial="";
-            //员工职位
-            String job="";
-            //员工岗位
-            String kindEnglish="";
-            String kindChinese="";
-            //员工电话
-            String phone="";
-            //员工工号
-            String number="";
-            if(staff==null){
-                jhm.putCode(0).putMessage("用户不存在！");
-                renderJson(jhm);
-                return;
-            }else{
-                hourWage=staff.getFloat("hour_wage");
-                every15Wage=hourWage/4;
-                name=staff.getStr("name");
-                initial=staff.getStr("pinyin").substring(0,1);
-                job=staff.getStr("job");
-                phone=staff.getStr("phone");
-                number=staff.getStr("emp_num");
-                kindEnglish=staff.getStr("kind");
-                String sql7="select h_dictionary.name as name from h_dictionary,h_staff where find_in_set(h_dictionary.value,h_staff.kind) and h_staff.id=?";
-                List<Record> list7=Db.find(sql7,staffId);
-                if (list7 != null && list7.size() > 0){
+                //时薪
+                String sql="select * from h_staff where id=?";
+                Record staff=Db.findFirst(sql,staffId);
+                float hourWage=-1;
+                //每15分钟的薪水
+                float every15Wage=-1;
+                //员工姓名
+                String name="";
+                //员工姓名首字母
+                String initial="";
+                //员工职位
+                String job="";
+                //员工岗位
+                String kindEnglish="";
+                String kindChinese="";
+                //员工电话
+                String phone="";
+                //员工工号
+                String number="";
+                if(staff==null){
+                    jhm.putCode(0).putMessage("用户不存在！");
+                    renderJson(jhm);
+                    return;
+                }else{
+                    hourWage=staff.getFloat("hour_wage");
+                    every15Wage=hourWage/4;
+                    name=staff.getStr("name");
+                    initial=staff.getStr("pinyin").substring(0,1);
+                    job=staff.getStr("job");
+                    phone=staff.getStr("phone");
+                    number=staff.getStr("emp_num");
+                    kindEnglish=staff.getStr("kind");
+                    String sql7="select h_dictionary.name as name from h_dictionary,h_staff where find_in_set(h_dictionary.value,h_staff.kind) and h_staff.id=?";
+                    List<Record> list7=Db.find(sql7,staffId);
+                    if (list7 != null && list7.size() > 0){
+                        for (Record r7:list7){
+                            if (r7==list7.get(0)){
+                                kindChinese=r7.getStr("name");
+                            }else{
+                                kindChinese+=","+r7.getStr("name");
+                            }
+                        }
+                    }
+
+
+                }
+
+
+                //应工作的时长
+                float setWorkHour=0;
+                //实际工作的时长
+                float workHour=0;
+                String sql2="select number,real_number from h_work_time where staff_id=? and date>=? and date<=?";
+                List<Record> setWorkHourList=Db.find(sql2,staffId,dateStart,dateEnd);
+                if (setWorkHourList!=null&&setWorkHourList.size()>0){
+                    for (Record r:setWorkHourList){
+                        setWorkHour+=((float)r.getInt("number")*15.0/60.0);
+                        workHour+=((float)r.getInt("real_number")*15.0/60.0);
+                    }
+                }else {
+                    jhm.putCode(0).putMessage("工作记录不存在！");
+                }
+
+                //应得工资=时薪*应工作的时长
+                float duePay=hourWage*setWorkHour;
+                //实得工资=时薪*实际工作的时长
+                float takePay=hourWage*workHour;
+
+                //查询h_work_time中该用户在一段时间中 每天的工作情况
+                String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
+                List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+                if (list1==null){
+                    jhm.putCode(0).putMessage("工作记录不存在！");
+                }
+                String sql4="";
+                //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
+                List<Record> list2345;
+                //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
+                List<Record> finalList=new ArrayList<>();
+                //finalRecord中的四个元素
+                String fRDate="";
+                String fRStartTime="";
+                String fREndTime="";
+                String fRTime="";
+                String fRCondition="";
+                float fRChange=-1;
+                //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+                int count=0;
+
+                //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
+                if (list1!=null&&list1.size()>0){
+                    for (Record r1:list1){
+                        //找到该员工 当天的情况
+                        sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
+                                " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+                        list2345=Db.find(sql4,r1.getStr("date"),staffId);
+                        //finalList中的单条记录
+                        Record finalRecord=new Record();
+                        //遍历list2345 合并连续的相同情况
+                        for(int i=0;i< list2345.size()-1;i++){
+                            //第一次将要合并的数条记录中的第一条
+                            if (count==0){
+                                fRDate=list2345.get(i).getStr("date");
+                                fRStartTime=list2345.get(i).getStr("start_time");
+                                fREndTime=list2345.get(i).getStr("end_time");
+                                fRCondition=list2345.get(i).getStr("status");
+                                count++;
+                            }
+                            //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+                            if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                count++;
+                            }else {
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=count*every15Wage;
+                                }else{
+                                    fRChange=-(count*every15Wage);
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                                finalRecord=new Record();
+                                count=0;
+                                //第二次开始将要合并的数条记录中的第一条
+                                fRDate=list2345.get(i+1).getStr("date");
+                                fRStartTime=list2345.get(i+1).getStr("start_time");
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                fRCondition=list2345.get(i+1).getStr("status");
+                                count++;
+                            }
+                            if (i==list2345.size()-2){
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=count*every15Wage;
+                                }else{
+                                    fRChange=-(count*every15Wage);
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                            }
+                        }
+                        fRDate="";
+                        fRStartTime="";
+                        fREndTime="";
+                        fRTime="";
+                        fRCondition="";
+                        fRChange=-1;
+                        count=0;
+                    }
+                }
+
+                //初始化时间格式 20:40
+                SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+
+                //查询h_staff_clock表 迟到记录
+                String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
+                if (list6!=null&&list6.size()>0){
+                    for (Record r6:list6){
+                        Record finalRecord =new Record();
+                        fRDate=r6.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r6.getStr("start_time");
+                        fREndTime=r6.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",6);
+
+                        //计算迟到时间
+                        String st=r6.getStr("start_time");
+                        String et=r6.getStr("sign_in_time");
+                        Date fd=simpleFormat.parse(st);
+                        Date td=simpleFormat.parse(et);
+                        String fromDate = simpleFormat.format(fd);
+                        String toDate = simpleFormat.format(td);
+                        long from = simpleFormat.parse(fromDate).getTime();
+                        long to = simpleFormat.parse(toDate).getTime();
+                        int minutes = (int) ((to - from)/(1000 * 60));
+                        int count6=(int)Math.ceil((double)minutes/(double)15);
+                        fRChange=-(count6*every15Wage);
+                        finalRecord.set("change",fRChange);
+
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                //查询h_staff_clock表 早退记录
+                String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
+                if (list7!=null&&list7.size()>0){
                     for (Record r7:list7){
-                        if (r7==list7.get(0)){
-                            kindChinese=r7.getStr("name");
-                        }else{
-                            kindChinese+=","+r7.getStr("name");
-                        }
+                        Record finalRecord =new Record();
+                        fRDate=r7.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r7.getStr("start_time");
+                        fREndTime=r7.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",7);
+
+                        //计算早退时间
+                        String st=r7.getStr("sign_back_time");
+                        String et=r7.getStr("end_time");
+                        Date fd=simpleFormat.parse(st);
+                        Date td=simpleFormat.parse(et);
+                        String fromDate = simpleFormat.format(fd);
+                        String toDate = simpleFormat.format(td);
+                        long from = simpleFormat.parse(fromDate).getTime();
+                        long to = simpleFormat.parse(toDate).getTime();
+                        int minutes = (int) ((to - from)/(1000 * 60));
+                        int count7=(int)Math.ceil((double)minutes/(double)15);
+                        fRChange=-(count7*every15Wage);
+                        finalRecord.set("change",fRChange);
+
+                        finalList.add(finalRecord);
                     }
                 }
 
+                Collections.sort(finalList, new Comparator<Record>(){
+                    /*
+                     * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+                     * 返回负数表示：p1的date 大于p2的date，
+                     * 返回0 表示：p1和p2相等，
+                     * 返回正数表示：p1的date 小于p2的date
+                     */
+                    @Override
+                    public int compare(Record p1, Record p2) {
+                        //按照record的date进行降序排列
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+                            return -1;
+                        }
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+                            return 0;
+                        }
+                        return 1;
+                    }
+                });
 
-            }
-
-
-            //应工作的时长
-            float setWorkHour=0;
-            //实际工作的时长
-            float workHour=0;
-            String sql2="select number,real_number from h_work_time where staff_id=? and date>=? and date<=?";
-            List<Record> setWorkHourList=Db.find(sql2,staffId,dateStart,dateEnd);
-            if (setWorkHourList!=null&&setWorkHourList.size()>0){
-                for (Record r:setWorkHourList){
-                    setWorkHour+=((float)r.getInt("number")*15.0/60.0);
-                    workHour+=((float)r.getInt("real_number")*15.0/60.0);
-                }
+                jhm.putCode(1);
+                jhm.put("name",name);
+                jhm.put("firstName",initial);
+                jhm.put("job",job);
+                jhm.put("kindChinese",kindChinese);
+                jhm.put("kindEnglish",kindEnglish);
+                jhm.put("phone",phone);
+                jhm.put("number",number);
+                jhm.put("month",monthIsSecondHalf);
+                jhm.put("workHour",workHour);
+                jhm.put("duePay",duePay);
+                jhm.put("takePay",takePay);
+                jhm.put("list",finalList);
             }else {
-                jhm.putCode(0).putMessage("工作记录不存在！");
-            }
-
-            //应得工资=时薪*应工作的时长
-            float duePay=hourWage*setWorkHour;
-            //实得工资=时薪*实际工作的时长
-            float takePay=hourWage*workHour;
-
-            //查询h_work_time中该用户在一段时间中 每天的工作情况
-            String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
-            List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
-            if (list1==null){
-                jhm.putCode(0).putMessage("工作记录不存在！");
-            }
-            String sql4="";
-            //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
-            List<Record> list2345;
-            //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
-            List<Record> finalList=new ArrayList<>();
-            //finalRecord中的四个元素
-            String fRDate="";
-            String fRStartTime="";
-            String fREndTime="";
-            String fRTime="";
-            String fRCondition="";
-            float fRChange=-1;
-            //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
-            int count=0;
-
-            //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
-            if (list1!=null&&list1.size()>0){
-                for (Record r1:list1){
-                    //找到该员工 当天的情况
-                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
-                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
-                    list2345=Db.find(sql4,r1.getStr("date"),staffId);
-                    //finalList中的单条记录
-                    Record finalRecord=new Record();
-                    //遍历list2345 合并连续的相同情况
-                    for(int i=0;i< list2345.size()-1;i++){
-                        //第一次将要合并的数条记录中的第一条
-                        if (count==0){
-                            fRDate=list2345.get(i).getStr("date");
-                            fRStartTime=list2345.get(i).getStr("start_time");
-                            fREndTime=list2345.get(i).getStr("end_time");
-                            fRCondition=list2345.get(i).getStr("status");
-                            count++;
-                        }
-                        //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
-                        if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
-                            fREndTime=list2345.get(i+1).getStr("end_time");
-                            count++;
-                        }else {
-                            finalRecord.set("date",fRDate);
-                            fRTime=fRStartTime+"-"+fREndTime;
-                            finalRecord.set("time",fRTime);
-                            finalRecord.set("condition",fRCondition);
-                            if ("3".equals(fRCondition)){
-                                fRChange=count*every15Wage;
+                String sql="select * from h_staff where id=?";
+                Record staff=Db.findFirst(sql,staffId);
+                float monthWage=-1;
+                //员工姓名
+                String name="";
+                //员工姓名首字母
+                String initial="";
+                //员工职位
+                String job="";
+                //员工岗位
+                String kindEnglish="";
+                String kindChinese="";
+                //员工电话
+                String phone="";
+                //员工工号
+                String number="";
+                if(staff==null){
+                    jhm.putCode(0).putMessage("用户不存在！");
+                    renderJson(jhm);
+                    return;
+                }else{
+                    monthWage=staff.getFloat("month_wage");
+                    name=staff.getStr("name");
+                    initial=staff.getStr("pinyin").substring(0,1);
+                    job=staff.getStr("job");
+                    phone=staff.getStr("phone");
+                    number=staff.getStr("emp_num");
+                    kindEnglish=staff.getStr("kind");
+                    String sql7="select h_dictionary.name as name from h_dictionary,h_staff where find_in_set(h_dictionary.value,h_staff.kind) and h_staff.id=?";
+                    List<Record> list7=Db.find(sql7,staffId);
+                    if (list7 != null && list7.size() > 0){
+                        for (Record r7:list7){
+                            if (r7==list7.get(0)){
+                                kindChinese=r7.getStr("name");
                             }else{
-                                fRChange=-(count*every15Wage);
+                                kindChinese+=","+r7.getStr("name");
                             }
-                            finalRecord.set("change",fRChange);
-                            finalList.add(finalRecord);
-                            finalRecord=new Record();
-                            count=0;
-                            //第二次开始将要合并的数条记录中的第一条
-                            fRDate=list2345.get(i+1).getStr("date");
-                            fRStartTime=list2345.get(i+1).getStr("start_time");
-                            fREndTime=list2345.get(i+1).getStr("end_time");
-                            fRCondition=list2345.get(i+1).getStr("status");
-                            count++;
-                        }
-                        if (i==list2345.size()-2){
-                            finalRecord.set("date",fRDate);
-                            fRTime=fRStartTime+"-"+fREndTime;
-                            finalRecord.set("time",fRTime);
-                            finalRecord.set("condition",fRCondition);
-                            if ("3".equals(fRCondition)){
-                                fRChange=count*every15Wage;
-                            }else{
-                                fRChange=-(count*every15Wage);
-                            }
-                            finalRecord.set("change",fRChange);
-                            finalList.add(finalRecord);
                         }
                     }
-                    fRDate="";
-                    fRStartTime="";
-                    fREndTime="";
-                    fRTime="";
-                    fRCondition="";
-                    fRChange=-1;
-                    count=0;
+
+
                 }
-            }
 
-            //初始化时间格式 20:40
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
 
-            //查询h_staff_clock表 迟到记录
-            String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
-            List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
-            if (list6!=null&&list6.size()>0){
-                for (Record r6:list6){
-                    Record finalRecord =new Record();
-                    fRDate=r6.getStr("date");
-                    finalRecord.set("date",fRDate);
-                    fRStartTime=r6.getStr("start_time");
-                    fREndTime=r6.getStr("end_time");
-                    fRTime=fRStartTime+"-"+fREndTime;
-                    finalRecord.set("time",fRTime);
-                    finalRecord.set("condition",6);
-
-                    //计算迟到时间
-                    String st=r6.getStr("start_time");
-                    String et=r6.getStr("sign_in_time");
-                    Date fd=simpleFormat.parse(st);
-                    Date td=simpleFormat.parse(et);
-                    String fromDate = simpleFormat.format(fd);
-                    String toDate = simpleFormat.format(td);
-                    long from = simpleFormat.parse(fromDate).getTime();
-                    long to = simpleFormat.parse(toDate).getTime();
-                    int minutes = (int) ((to - from)/(1000 * 60));
-                    int count6=(int)Math.ceil((double)minutes/(double)15);
-                    fRChange=-(count6*every15Wage);
-                    finalRecord.set("change",fRChange);
-
-                    finalList.add(finalRecord);
-                }
-            }
-
-            //查询h_staff_clock表 早退记录
-            String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
-            List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
-            if (list7!=null&&list7.size()>0){
-                for (Record r7:list7){
-                    Record finalRecord =new Record();
-                    fRDate=r7.getStr("date");
-                    finalRecord.set("date",fRDate);
-                    fRStartTime=r7.getStr("start_time");
-                    fREndTime=r7.getStr("end_time");
-                    fRTime=fRStartTime+"-"+fREndTime;
-                    finalRecord.set("time",fRTime);
-                    finalRecord.set("condition",7);
-
-                    //计算早退时间
-                    String st=r7.getStr("sign_back_time");
-                    String et=r7.getStr("end_time");
-                    Date fd=simpleFormat.parse(st);
-                    Date td=simpleFormat.parse(et);
-                    String fromDate = simpleFormat.format(fd);
-                    String toDate = simpleFormat.format(td);
-                    long from = simpleFormat.parse(fromDate).getTime();
-                    long to = simpleFormat.parse(toDate).getTime();
-                    int minutes = (int) ((to - from)/(1000 * 60));
-                    int count7=(int)Math.ceil((double)minutes/(double)15);
-                    fRChange=-(count7*every15Wage);
-                    finalRecord.set("change",fRChange);
-
-                    finalList.add(finalRecord);
-                }
-            }
-
-            Collections.sort(finalList, new Comparator<Record>(){
-                /*
-                 * int compare(Record p1, Record p2) 返回一个基本类型的整型，
-                 * 返回负数表示：p1的date 大于p2的date，
-                 * 返回0 表示：p1和p2相等，
-                 * 返回正数表示：p1的date 小于p2的date
-                 */
-                @Override
-                public int compare(Record p1, Record p2) {
-                    //按照record的date进行降序排列
-                    if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
-                        return -1;
+                //应工作的时长
+                float setWorkHour=0;
+                //实际工作的时长
+                float workHour=0;
+                String sql2="select number,real_number from h_work_time where staff_id=? and date>=? and date<=?";
+                List<Record> setWorkHourList=Db.find(sql2,staffId,dateStart,dateEnd);
+                if (setWorkHourList!=null&&setWorkHourList.size()>0){
+                    for (Record r:setWorkHourList){
+                        setWorkHour+=((float)r.getInt("number")*15.0/60.0);
+                        workHour+=((float)r.getInt("real_number")*15.0/60.0);
                     }
-                    if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
-                        return 0;
-                    }
-                    return 1;
+                }else {
+                    jhm.putCode(0).putMessage("工作记录不存在！");
                 }
-            });
 
-            jhm.putCode(1);
-            jhm.put("name",name);
-            jhm.put("firstName",initial);
-            jhm.put("job",job);
-            jhm.put("kindChinese",kindChinese);
-            jhm.put("kindEnglish",kindEnglish);
-            jhm.put("phone",phone);
-            jhm.put("number",number);
-            jhm.put("month",monthIsSecondHalf);
-            jhm.put("workHour",workHour);
-            jhm.put("duePay",duePay);
-            jhm.put("takePay",takePay);
-            jhm.put("list",finalList);
+                //应得工资=时薪*应工作的时长
+                float duePay=monthWage;
+
+                //查询h_work_time中该用户在一段时间中 每天的工作情况
+                String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
+                List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+                if (list1==null){
+                    jhm.putCode(0).putMessage("工作记录不存在！");
+                }
+                String sql4="";
+                //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
+                List<Record> list2345;
+                //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
+                List<Record> finalList=new ArrayList<>();
+                //finalRecord中的四个元素
+                String fRDate="";
+                String fRStartTime="";
+                String fREndTime="";
+                String fRTime="";
+                String fRCondition="";
+                float fRChange=-1;
+                //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+                int count=0;
+                //请假、旷班、减班、加班次数
+                int leaveCount=0;
+                int absentCount=0;
+                int reduceCount=0;
+                int addCount=0;
+
+                //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
+                if (list1!=null&&list1.size()>0){
+                    for (Record r1:list1){
+                        //找到该员工 当天的情况
+                        sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
+                                " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+                        list2345=Db.find(sql4,r1.getStr("date"),staffId);
+                        //finalList中的单条记录
+                        Record finalRecord=new Record();
+                        //遍历list2345 合并连续的相同情况
+                        for(int i=0;i< list2345.size()-1;i++){
+                            //第一次将要合并的数条记录中的第一条
+                            if (count==0){
+                                fRDate=list2345.get(i).getStr("date");
+                                fRStartTime=list2345.get(i).getStr("start_time");
+                                fREndTime=list2345.get(i).getStr("end_time");
+                                fRCondition=list2345.get(i).getStr("status");
+                                count++;
+                            }
+                            //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+                            if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                count++;
+                            }else {
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=addFine;
+                                    addCount++;
+                                }else if ("2".equals(fRCondition)){
+                                    fRChange=reduceFine;
+                                    reduceCount++;
+                                }else if ("4".equals(fRCondition)){
+                                    fRChange=absentFine;
+                                    absentCount++;
+                                }else if ("5".equals(fRCondition)){
+                                    fRChange=leaveFine;
+                                    leaveCount++;
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                                finalRecord=new Record();
+                                count=0;
+                                //第二次开始将要合并的数条记录中的第一条
+                                fRDate=list2345.get(i+1).getStr("date");
+                                fRStartTime=list2345.get(i+1).getStr("start_time");
+                                fREndTime=list2345.get(i+1).getStr("end_time");
+                                fRCondition=list2345.get(i+1).getStr("status");
+                                count++;
+                            }
+                            if (i==list2345.size()-2){
+                                finalRecord.set("date",fRDate);
+                                fRTime=fRStartTime+"-"+fREndTime;
+                                finalRecord.set("time",fRTime);
+                                finalRecord.set("condition",fRCondition);
+                                if ("3".equals(fRCondition)){
+                                    fRChange=addFine;
+                                    addCount++;
+                                }else if ("2".equals(fRCondition)){
+                                    fRChange=reduceFine;
+                                    reduceCount++;
+                                }else if ("4".equals(fRCondition)){
+                                    fRChange=absentFine;
+                                    absentCount++;
+                                }else if ("5".equals(fRCondition)){
+                                    fRChange=leaveFine;
+                                    leaveCount++;
+                                }
+                                finalRecord.set("change",fRChange);
+                                finalList.add(finalRecord);
+                            }
+                        }
+                        fRDate="";
+                        fRStartTime="";
+                        fREndTime="";
+                        fRTime="";
+                        fRCondition="";
+                        fRChange=-1;
+                        count=0;
+                    }
+                }
+
+                //初始化时间格式 20:40
+                SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+
+                //查询h_staff_clock表 迟到记录
+                String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
+                if (list6!=null&&list6.size()>0){
+                    for (Record r6:list6){
+                        Record finalRecord =new Record();
+                        fRDate=r6.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r6.getStr("start_time");
+                        fREndTime=r6.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",6);
+                        finalRecord.set("change",lateFine);
+
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                //查询h_staff_clock表 早退记录
+                String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
+                List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
+                if (list7!=null&&list7.size()>0){
+                    for (Record r7:list7){
+                        Record finalRecord =new Record();
+                        fRDate=r7.getStr("date");
+                        finalRecord.set("date",fRDate);
+                        fRStartTime=r7.getStr("start_time");
+                        fREndTime=r7.getStr("end_time");
+                        fRTime=fRStartTime+"-"+fREndTime;
+                        finalRecord.set("time",fRTime);
+                        finalRecord.set("condition",7);
+                        finalRecord.set("change",earlyFine);
+
+                        finalList.add(finalRecord);
+                    }
+                }
+
+                Collections.sort(finalList, new Comparator<Record>(){
+                    /*
+                     * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+                     * 返回负数表示：p1的date 大于p2的date，
+                     * 返回0 表示：p1和p2相等，
+                     * 返回正数表示：p1的date 小于p2的date
+                     */
+                    @Override
+                    public int compare(Record p1, Record p2) {
+                        //按照record的date进行降序排列
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+                            return -1;
+                        }
+                        if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+                            return 0;
+                        }
+                        return 1;
+                    }
+                });
+
+                //实得工资=时薪*实际工作的时长
+                float takePay=monthWage-list6.size()*lateFine-list7.size()*earlyFine-addFine*addCount-reduceCount*reduceFine-leaveCount*leaveFine-absentCount*absentFine;
+
+                jhm.putCode(1);
+                jhm.put("name",name);
+                jhm.put("firstName",initial);
+                jhm.put("job",job);
+                jhm.put("kindChinese",kindChinese);
+                jhm.put("kindEnglish",kindEnglish);
+                jhm.put("phone",phone);
+                jhm.put("number",number);
+                jhm.put("month",monthIsSecondHalf);
+                jhm.put("workHour",workHour);
+                jhm.put("duePay",duePay);
+                jhm.put("takePay",takePay);
+                jhm.put("list",finalList);
+            }
 
         }catch (Exception e){
             e.printStackTrace();
@@ -996,4 +1646,740 @@ public class SalaryCtrl extends BaseCtrl {
         }
         renderJson(jhm);
     }
+
+    /**
+     * 全职
+     */
+
+    /**
+     * 计算半个月工资
+     */
+//    public void showFullSalaryHalfMonth(){
+//        JsonHashMap jhm=new JsonHashMap();
+//
+//        //请求参数
+//        String staffId=getPara("staff_id");
+//        String date=getPara("date");
+//
+//        try{
+//            //获取当月第一天
+//            String firstDayOfMonth=SalaryCtrl.getFirstDayOfMonth();
+//            //获取当月中间天
+//            String midDayOfMonth=SalaryCtrl.getMidDayOfMonth();
+//            //获得今天在本月的第几天(获得当前日)
+//            int ddCount=SalaryCtrl.getDayOfMonth();
+//
+//            String dateStart="";
+//            String dateEnd="";
+//            //json中的month 0:上半月 1:下半月
+//            int monthIsSecondHalf=-1;
+//            if (ddCount<=15){
+//                dateStart=firstDayOfMonth;
+//                monthIsSecondHalf=0;
+//            }else {
+//                dateStart=midDayOfMonth;
+//                monthIsSecondHalf=1;
+//            }
+//            dateEnd=date;
+//
+//            //应工作的时长
+//            float setWorkHour=0;
+//            //实际工作的时长
+//            float workHour=0;
+//            String sql2="select number,real_number from h_work_time where staff_id=? and date>=? and date<=?";
+//            List<Record> setWorkHourList=Db.find(sql2,staffId,dateStart,dateEnd);
+//            if (setWorkHourList!=null&&setWorkHourList.size()>0){
+//                for (Record r:setWorkHourList){
+//                    setWorkHour+=((float)r.getInt("number")*15.0/60.0);
+//                    workHour+=((float)r.getInt("real_number")*15.0/60.0);
+//                }
+//            }else{
+//                jhm.putCode(0).putMessage("工作记录不存在！");
+//                renderJson(jhm);
+//                return;
+//            }
+//
+//            //月薪
+//            String sql="SELECT month_wage FROM h_staff WHERE id=?";
+//            float monthWage=Db.findFirst(sql,staffId).getFloat("month_wage");
+//            //应得工资=月薪
+//            float duePay=monthWage;
+//
+//            //查询h_work_time中该用户在一段时间中 每天的工作情况
+//            String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
+//            List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+//            if (list1==null){
+//                jhm.putCode(0).putMessage("工作记录不存在！");
+//            }
+//            String sql4="";
+//            //存储该员工 当天的减班加班旷工请假记录（15分钟一条）
+//            List<Record> list2345;
+//            //存储该员工 当天的减班加班旷工请假记录（一段连续时间合并成一条）
+//            List<Record> finalList=new ArrayList<>();
+//            //finalRecord中的四个元素
+//            String fRDate="";
+//            String fRStartTime="";
+//            String fREndTime="";
+//            String fRTime="";
+//            String fRCondition="";
+//            float fRChange=-1;
+//            //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+//            int count=0;
+//            //请假、旷班、减班、加班次数
+//            int leaveCount=0;
+//            int absentCount=0;
+//            int reduceCount=0;
+//            int addCount=0;
+//
+//            //遍历list1 查询h_work_time_detail表 找出每天减班加班旷工请假的情况加入list1中
+//            if (list1!=null&&list1.size()>0){
+//                for (Record r1:list1){
+//                    //找到该员工 当天的情况
+//                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id\n" +
+//                            "and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+//                    list2345=Db.find(sql4,r1.getStr("date"),staffId);
+//                    //finalList中的单条记录
+//                    Record finalRecord=new Record();
+//                    //遍历list2345 合并连续的相同情况
+//                    for(int i=0;i< list2345.size()-1;i++){
+//                        //第一次将要合并的数条记录中的第一条
+//                        if (count==0){
+//                            fRDate=list2345.get(i).getStr("date");
+//                            fRStartTime=list2345.get(i).getStr("start_time");
+//                            fREndTime=list2345.get(i).getStr("end_time");
+//                            fRCondition=list2345.get(i).getStr("status");
+//                            count++;
+//                        }
+//                        //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+//                        if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+//                            fREndTime=list2345.get(i+1).getStr("end_time");
+//                            count++;
+//                        }else {
+//                            finalRecord.set("date",fRDate);
+//                            fRTime=fRStartTime+"-"+fREndTime;
+//                            finalRecord.set("time",fRTime);
+//                            finalRecord.set("condition",fRCondition);
+//                            if ("3".equals(fRCondition)){
+//                                fRChange=addFine;
+//                                addCount++;
+//                            }else if ("2".equals(fRCondition)){
+//                                fRChange=reduceFine;
+//                                reduceCount++;
+//                            }else if ("4".equals(fRCondition)){
+//                                fRChange=absentFine;
+//                                absentCount++;
+//                            }else if ("5".equals(fRCondition)){
+//                                fRChange=leaveFine;
+//                                leaveCount++;
+//                            }
+//                            finalRecord.set("change",fRChange);
+//                            finalList.add(finalRecord);
+//                            finalRecord=new Record();
+//                            count=0;
+//                            //第二次开始将要合并的数条记录中的第一条
+//                            fRDate=list2345.get(i+1).getStr("date");
+//                            fRStartTime=list2345.get(i+1).getStr("start_time");
+//                            fREndTime=list2345.get(i+1).getStr("end_time");
+//                            fRCondition=list2345.get(i+1).getStr("status");
+//                            count++;
+//                        }
+//                        if (i==list2345.size()-2){
+//                            finalRecord.set("date",fRDate);
+//                            fRTime=fRStartTime+"-"+fREndTime;
+//                            finalRecord.set("time",fRTime);
+//                            finalRecord.set("condition",fRCondition);
+//                            if ("3".equals(fRCondition)){
+//                                fRChange=addFine;
+//                                addCount++;
+//                            }else if ("2".equals(fRCondition)){
+//                                fRChange=reduceFine;
+//                                reduceCount++;
+//                            }else if ("4".equals(fRCondition)){
+//                                fRChange=absentFine;
+//                                absentCount++;
+//                            }else if ("5".equals(fRCondition)){
+//                                fRChange=leaveFine;
+//                                leaveCount++;
+//                            }
+//                            finalRecord.set("change",fRChange);
+//                            finalList.add(finalRecord);
+//                        }
+//                    }
+//                    fRDate="";
+//                    fRStartTime="";
+//                    fREndTime="";
+//                    fRTime="";
+//                    fRCondition="";
+//                    fRChange=-1;
+//                    count=0;
+//                }
+//            }
+//
+//            //初始化时间格式 20:40
+//            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+//
+//            //查询h_staff_clock表 迟到记录
+//            String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
+//            List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
+//            if (list6!=null&&list6.size()>0){
+//                for (Record r6:list6){
+//                    Record finalRecord =new Record();
+//                    fRDate=r6.getStr("date");
+//                    finalRecord.set("date",fRDate);
+//                    fRStartTime=r6.getStr("start_time");
+//                    fREndTime=r6.getStr("end_time");
+//                    fRTime=fRStartTime+"-"+fREndTime;
+//                    finalRecord.set("time",fRTime);
+//                    finalRecord.set("condition",6);
+//                    finalRecord.set("change",lateFine);
+//                    finalList.add(finalRecord);
+//                }
+//            }
+//
+//            //查询h_staff_clock表 早退记录
+//            String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
+//            List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
+//            if (list7!=null&&list7.size()>0){
+//                for (Record r7:list7){
+//                    Record finalRecord =new Record();
+//                    fRDate=r7.getStr("date");
+//                    finalRecord.set("date",fRDate);
+//                    fRStartTime=r7.getStr("start_time");
+//                    fREndTime=r7.getStr("end_time");
+//                    fRTime=fRStartTime+"-"+fREndTime;
+//                    finalRecord.set("time",fRTime);
+//                    finalRecord.set("condition",7);
+//                    finalRecord.set("change",earlyFine);
+//                    finalList.add(finalRecord);
+//                }
+//            }
+//
+//            Collections.sort(finalList, new Comparator<Record>(){
+//                /*
+//                 * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+//                 * 返回负数表示：p1的date 大于p2的date，
+//                 * 返回0 表示：p1和p2相等，
+//                 * 返回正数表示：p1的date 小于p2的date
+//                 */
+//                @Override
+//                public int compare(Record p1, Record p2) {
+//                    //按照record的date进行降序排列
+//                    if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+//                        return -1;
+//                    }
+//                    if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+//                        return 0;
+//                    }
+//                    return 1;
+//                }
+//            });
+//
+//            float takePay=monthWage-list6.size()*lateFine-list7.size()*earlyFine-addFine*addCount-reduceCount*reduceFine-leaveCount*leaveFine-absentCount*absentFine;
+//            jhm.put("month",monthIsSecondHalf);
+//            jhm.put("workHour",workHour);
+//            jhm.put("duePay",duePay);
+//            jhm.put("takePay",takePay);
+//            jhm.put("list",finalList);
+//
+//        }catch (Exception e){
+//            e.printStackTrace();
+//            jhm.putCode(-1).putMessage("服务器发生异常");
+//        }
+//        renderJson(jhm);
+//
+//    }
+
+//    public void showFullSalaryHalfMonth2(){
+//
+//        JsonHashMap jhm=new JsonHashMap();
+//
+//        //请求参数
+//        String staffId=getPara("staff_id");
+//        String date=getPara("date");
+//
+//        try{
+//            //获取当月第一天
+//            String firstDayOfMonth=SalaryCtrl.getFirstDayOfMonth();
+//            //获取当月中间天
+//            String midDayOfMonth=SalaryCtrl.getMidDayOfMonth();
+//            //获得今天在本月的第几天(获得当前日)
+//            int ddCount=SalaryCtrl.getDayOfMonth();
+//
+//            String dateStart="";
+//            String dateEnd="";
+//            //json中的month 0:上半月 1:下半月
+//            int monthIsSecondHalf=-1;
+//            if (ddCount<=15){
+//                dateStart=firstDayOfMonth;
+//                monthIsSecondHalf=0;
+//            }else {
+//                dateStart=midDayOfMonth;
+//                monthIsSecondHalf=1;
+//            }
+//            dateEnd=date;
+//
+//            String sql="select * from h_staff where id=?";
+//            Record staff=Db.findFirst(sql,staffId);
+//            float monthWage=-1;
+//            //员工姓名
+//            String name="";
+//            //员工姓名首字母
+//            String initial="";
+//            //员工职位
+//            String job="";
+//            //员工岗位
+//            String kindEnglish="";
+//            String kindChinese="";
+//            //员工电话
+//            String phone="";
+//            //员工工号
+//            String number="";
+//            if(staff==null){
+//                jhm.putCode(0).putMessage("用户不存在！");
+//                renderJson(jhm);
+//                return;
+//            }else{
+//                monthWage=staff.getFloat("month_wage");
+//                name=staff.getStr("name");
+//                initial=staff.getStr("pinyin").substring(0,1);
+//                job=staff.getStr("job");
+//                phone=staff.getStr("phone");
+//                number=staff.getStr("emp_num");
+//                kindEnglish=staff.getStr("kind");
+//                String sql7="select h_dictionary.name as name from h_dictionary,h_staff where find_in_set(h_dictionary.value,h_staff.kind) and h_staff.id=?";
+//                List<Record> list7=Db.find(sql7,staffId);
+//                if (list7 != null && list7.size() > 0){
+//                    for (Record r7:list7){
+//                        if (r7==list7.get(0)){
+//                            kindChinese=r7.getStr("name");
+//                        }else{
+//                            kindChinese+=","+r7.getStr("name");
+//                        }
+//                    }
+//                }
+//
+//
+//            }
+//
+//
+//            //应工作的时长
+//            float setWorkHour=0;
+//            //实际工作的时长
+//            float workHour=0;
+//            String sql2="select number,real_number from h_work_time where staff_id=? and date>=? and date<=?";
+//            List<Record> setWorkHourList=Db.find(sql2,staffId,dateStart,dateEnd);
+//            if (setWorkHourList!=null&&setWorkHourList.size()>0){
+//                for (Record r:setWorkHourList){
+//                    setWorkHour+=((float)r.getInt("number")*15.0/60.0);
+//                    workHour+=((float)r.getInt("real_number")*15.0/60.0);
+//                }
+//            }else {
+//                jhm.putCode(0).putMessage("工作记录不存在！");
+//            }
+//
+//            //应得工资=时薪*应工作的时长
+//            float duePay=monthWage;
+//
+//            //查询h_work_time中该用户在一段时间中 每天的工作情况
+//            String sql3="select * from h_work_time where date>=? and date <=? and staff_id=? order by date ASC";
+//            List<Record> list1=Db.find(sql3,dateStart,dateEnd,staffId);
+//            if (list1==null){
+//                jhm.putCode(0).putMessage("工作记录不存在！");
+//            }
+//            String sql4="";
+//            //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
+//            List<Record> list2345;
+//            //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
+//            List<Record> finalList=new ArrayList<>();
+//            //finalRecord中的四个元素
+//            String fRDate="";
+//            String fRStartTime="";
+//            String fREndTime="";
+//            String fRTime="";
+//            String fRCondition="";
+//            float fRChange=-1;
+//            //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+//            int count=0;
+//            //请假、旷班、减班、加班次数
+//            int leaveCount=0;
+//            int absentCount=0;
+//            int reduceCount=0;
+//            int addCount=0;
+//
+//            //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
+//            if (list1!=null&&list1.size()>0){
+//                for (Record r1:list1){
+//                    //找到该员工 当天的情况
+//                    sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
+//                            " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+//                    list2345=Db.find(sql4,r1.getStr("date"),staffId);
+//                    //finalList中的单条记录
+//                    Record finalRecord=new Record();
+//                    //遍历list2345 合并连续的相同情况
+//                    for(int i=0;i< list2345.size()-1;i++){
+//                        //第一次将要合并的数条记录中的第一条
+//                        if (count==0){
+//                            fRDate=list2345.get(i).getStr("date");
+//                            fRStartTime=list2345.get(i).getStr("start_time");
+//                            fREndTime=list2345.get(i).getStr("end_time");
+//                            fRCondition=list2345.get(i).getStr("status");
+//                            count++;
+//                        }
+//                        //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+//                        if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+//                            fREndTime=list2345.get(i+1).getStr("end_time");
+//                            count++;
+//                        }else {
+//                            finalRecord.set("date",fRDate);
+//                            fRTime=fRStartTime+"-"+fREndTime;
+//                            finalRecord.set("time",fRTime);
+//                            finalRecord.set("condition",fRCondition);
+//                            if ("3".equals(fRCondition)){
+//                                fRChange=addFine;
+//                                addCount++;
+//                            }else if ("2".equals(fRCondition)){
+//                                fRChange=reduceFine;
+//                                reduceCount++;
+//                            }else if ("4".equals(fRCondition)){
+//                                fRChange=absentFine;
+//                                absentCount++;
+//                            }else if ("5".equals(fRCondition)){
+//                                fRChange=leaveFine;
+//                                leaveCount++;
+//                            }
+//                            finalRecord.set("change",fRChange);
+//                            finalList.add(finalRecord);
+//                            finalRecord=new Record();
+//                            count=0;
+//                            //第二次开始将要合并的数条记录中的第一条
+//                            fRDate=list2345.get(i+1).getStr("date");
+//                            fRStartTime=list2345.get(i+1).getStr("start_time");
+//                            fREndTime=list2345.get(i+1).getStr("end_time");
+//                            fRCondition=list2345.get(i+1).getStr("status");
+//                            count++;
+//                        }
+//                        if (i==list2345.size()-2){
+//                            finalRecord.set("date",fRDate);
+//                            fRTime=fRStartTime+"-"+fREndTime;
+//                            finalRecord.set("time",fRTime);
+//                            finalRecord.set("condition",fRCondition);
+//                            if ("3".equals(fRCondition)){
+//                                fRChange=addFine;
+//                                addCount++;
+//                            }else if ("2".equals(fRCondition)){
+//                                fRChange=reduceFine;
+//                                reduceCount++;
+//                            }else if ("4".equals(fRCondition)){
+//                                fRChange=absentFine;
+//                                absentCount++;
+//                            }else if ("5".equals(fRCondition)){
+//                                fRChange=leaveFine;
+//                                leaveCount++;
+//                            }
+//                            finalRecord.set("change",fRChange);
+//                            finalList.add(finalRecord);
+//                        }
+//                    }
+//                    fRDate="";
+//                    fRStartTime="";
+//                    fREndTime="";
+//                    fRTime="";
+//                    fRCondition="";
+//                    fRChange=-1;
+//                    count=0;
+//                }
+//            }
+//
+//            //初始化时间格式 20:40
+//            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+//
+//            //查询h_staff_clock表 迟到记录
+//            String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date>=? and date<=?";
+//            List<Record> list6=Db.find(sql6,staffId,dateStart,dateEnd);
+//            if (list6!=null&&list6.size()>0){
+//                for (Record r6:list6){
+//                    Record finalRecord =new Record();
+//                    fRDate=r6.getStr("date");
+//                    finalRecord.set("date",fRDate);
+//                    fRStartTime=r6.getStr("start_time");
+//                    fREndTime=r6.getStr("end_time");
+//                    fRTime=fRStartTime+"-"+fREndTime;
+//                    finalRecord.set("time",fRTime);
+//                    finalRecord.set("condition",6);
+//                    finalRecord.set("change",lateFine);
+//
+//                    finalList.add(finalRecord);
+//                }
+//            }
+//
+//            //查询h_staff_clock表 早退记录
+//            String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date>=? and date<=?";
+//            List<Record> list7=Db.find(sql7,staffId,dateStart,dateEnd);
+//            if (list7!=null&&list7.size()>0){
+//                for (Record r7:list7){
+//                    Record finalRecord =new Record();
+//                    fRDate=r7.getStr("date");
+//                    finalRecord.set("date",fRDate);
+//                    fRStartTime=r7.getStr("start_time");
+//                    fREndTime=r7.getStr("end_time");
+//                    fRTime=fRStartTime+"-"+fREndTime;
+//                    finalRecord.set("time",fRTime);
+//                    finalRecord.set("condition",7);
+//                    finalRecord.set("change",earlyFine);
+//
+//                    finalList.add(finalRecord);
+//                }
+//            }
+//
+//            Collections.sort(finalList, new Comparator<Record>(){
+//                /*
+//                 * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+//                 * 返回负数表示：p1的date 大于p2的date，
+//                 * 返回0 表示：p1和p2相等，
+//                 * 返回正数表示：p1的date 小于p2的date
+//                 */
+//                @Override
+//                public int compare(Record p1, Record p2) {
+//                    //按照record的date进行降序排列
+//                    if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+//                        return -1;
+//                    }
+//                    if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+//                        return 0;
+//                    }
+//                    return 1;
+//                }
+//            });
+//
+//            //实得工资=时薪*实际工作的时长
+//            float takePay=monthWage-list6.size()*lateFine-list7.size()*earlyFine-addFine*addCount-reduceCount*reduceFine-leaveCount*leaveFine-absentCount*absentFine;
+//
+//            jhm.putCode(1);
+//            jhm.put("name",name);
+//            jhm.put("firstName",initial);
+//            jhm.put("job",job);
+//            jhm.put("kindChinese",kindChinese);
+//            jhm.put("kindEnglish",kindEnglish);
+//            jhm.put("phone",phone);
+//            jhm.put("number",number);
+//            jhm.put("month",monthIsSecondHalf);
+//            jhm.put("workHour",workHour);
+//            jhm.put("duePay",duePay);
+//            jhm.put("takePay",takePay);
+//            jhm.put("list",finalList);
+//
+//        }catch (Exception e){
+//            e.printStackTrace();
+//            jhm.putCode(-1).putMessage("服务器发生异常");
+//        }
+//        renderJson(jhm);
+//    }
+
+//    public void showFullSalaryOneDay(){
+//        JsonHashMap jhm=new JsonHashMap();
+//        //请求参数
+//        String staffId=getPara("staff_id");
+//        String date=getPara("date");
+//
+//        try{
+//
+//            String sql="select month_wage from h_staff where id=?";
+//            Record staff=Db.findFirst(sql,staffId);
+//            float dayWage=staff.getFloat("month_wage")/workDay;
+//            //应工作的时长
+//            float setWorkHour=0;
+//            //实际工作的时长
+//            float workHour=0;
+//            String sql2="select number,real_number from h_work_time where staff_id=? and date=?";
+//            List<Record> setWorkHourList=Db.find(sql2,staffId,date);
+//            if (setWorkHourList!=null&&setWorkHourList.size()>0){
+//                for (Record r:setWorkHourList){
+//                    setWorkHour+=((float)r.getInt("number")*15.0/60.0);
+//                    workHour+=((float)r.getInt("real_number")*15.0/60.0);
+//                }
+//            }else {
+//                jhm.putCode(0).putMessage("工作记录不存在1！");
+//            }
+//
+//            //应得工资=日薪
+//            float duePay=dayWage;
+//
+//            //查询h_work_time中该用户一天的工作情况
+//            String sql3="select * from h_work_time where date=? and staff_id=? order by date ASC";
+//            List<Record> list1=Db.find(sql3,date,staffId);
+//            if (list1==null){
+//                jhm.putCode(0).putMessage("工作记录不存在2！");
+//            }
+//            String sql4="";
+//            //存储该员工 当天的迟到早退减班加班记录（15分钟一条）
+//            List<Record> list2345;
+//            //存储该员工 当天的迟到早退减班加班记录（一段连续时间合并成一条）
+//            List<Record> finalList=new ArrayList<>();
+//            //finalRecord中的四个元素
+//            String fRDate="";
+//            String fRStartTime="";
+//            String fREndTime="";
+//            String fRTime="";
+//            String fRCondition="";
+//            float fRChange=-1;
+//            //记录当前合并记录的条数 以此来计算时间 继而算出fRChange
+//            int count=0;
+//            //请假、旷班、减班、加班次数
+//            int leaveCount=0;
+//            int absentCount=0;
+//            int reduceCount=0;
+//            int addCount=0;
+//
+//            //遍历list1 查询h_work_time_detail表 找出每天迟到早退减班加班的情况加入list1中
+//            if (list1!=null&&list1.size()>0){
+//                //查询h_work_time_detail表该用户一天的迟到早退减班加班记录（15分钟一条）
+//                sql4="select h_work_time_detail.* from h_work_time_detail,h_work_time where h_work_time.date=? and h_work_time.staff_id=? and h_work_time.id=h_work_time_detail.work_time_id" +
+//                        " and h_work_time.date=h_work_time_detail.date and h_work_time.staff_id=h_work_time_detail.staff_id and h_work_time_detail.status!=0 and h_work_time_detail.status!=1 order by start_time ASC";
+//                list2345=Db.find(sql4,date,staffId);
+//                //finalList中的单条记录
+//                Record finalRecord=new Record();
+//                //遍历list2345 合并连续的相同情况
+//                for(int i=0;i< list2345.size()-1;i++){
+//                    //第一次将要合并的数条记录中的第一条
+//                    if (count==0){
+//                        fRDate=list2345.get(i).getStr("date");
+//                        fRStartTime=list2345.get(i).getStr("start_time");
+//                        fREndTime=list2345.get(i).getStr("end_time");
+//                        fRCondition=list2345.get(i).getStr("status");
+//                        count++;
+//                    }
+//                    //当本条记录的结束时间和下一条记录的开始时间相同且两条记录的状态相同时“合并”
+//                    if (list2345.get(i).getStr("end_time").equals(list2345.get(i+1).getStr("start_time"))&&list2345.get(i).getStr("status").equals(list2345.get(i+1).getStr("status"))){
+//                        fREndTime=list2345.get(i+1).getStr("end_time");
+//                        count++;
+//                    }else {
+//                        finalRecord.set("date",fRDate);
+//                        fRTime=fRStartTime+"-"+fREndTime;
+//                        finalRecord.set("time",fRTime);
+//                        finalRecord.set("condition",fRCondition);
+//                        if ("3".equals(fRCondition)){
+//                            fRChange=addFine;
+//                            addCount++;
+//                        }else if ("2".equals(fRCondition)){
+//                            fRChange=reduceFine;
+//                            reduceCount++;
+//                        }else if ("4".equals(fRCondition)){
+//                            fRChange=absentFine;
+//                            absentCount++;
+//                        }else if ("5".equals(fRCondition)){
+//                            fRChange=leaveFine;
+//                            leaveCount++;
+//                        }
+//                        finalRecord.set("change",fRChange);
+//                        finalList.add(finalRecord);
+//                        finalRecord=new Record();
+//                        count=0;
+//                        //第二次开始将要合并的数条记录中的第一条
+//                        fRDate=list2345.get(i+1).getStr("date");
+//                        fRStartTime=list2345.get(i+1).getStr("start_time");
+//                        fREndTime=list2345.get(i+1).getStr("end_time");
+//                        fRCondition=list2345.get(i+1).getStr("status");
+//                        count++;
+//                    }
+//                    if (i==list2345.size()-2){
+//                        finalRecord.set("date",fRDate);
+//                        fRTime=fRStartTime+"-"+fREndTime;
+//                        finalRecord.set("time",fRTime);
+//                        finalRecord.set("condition",fRCondition);
+//                        if ("3".equals(fRCondition)){
+//                            fRChange=addFine;
+//                            addCount++;
+//                        }else if ("2".equals(fRCondition)){
+//                            fRChange=reduceFine;
+//                            reduceCount++;
+//                        }else if ("4".equals(fRCondition)){
+//                            fRChange=absentFine;
+//                            absentCount++;
+//                        }else if ("5".equals(fRCondition)){
+//                            fRChange=leaveFine;
+//                            leaveCount++;
+//                        }
+//                        finalRecord.set("change",fRChange);
+//                        finalList.add(finalRecord);
+//                    }
+//                }
+//            }
+//
+//            //初始化时间格式 20:40
+//            SimpleDateFormat simpleFormat = new SimpleDateFormat("HH:mm");
+//
+//            //查询h_staff_clock表 迟到记录
+//            String sql6="select * from h_staff_clock where is_late='2' and staff_id=? and date=?";
+//            List<Record> list6=Db.find(sql6,staffId,date);
+//            if (list6!=null&&list6.size()>0){
+//                for (Record r6:list6){
+//                    Record finalRecord =new Record();
+//                    fRDate=r6.getStr("date");
+//                    finalRecord.set("date",fRDate);
+//                    fRStartTime=r6.getStr("start_time");
+//                    fREndTime=r6.getStr("end_time");
+//                    fRTime=fRStartTime+"-"+fREndTime;
+//                    finalRecord.set("time",fRTime);
+//                    finalRecord.set("condition",6);
+//
+//                    finalRecord.set("change",lateFine);
+//
+//                    finalList.add(finalRecord);
+//                }
+//            }
+//
+//            //查询h_staff_clock表 早退记录
+//            String sql7="select * from h_staff_clock where is_leave_early='2' and staff_id=? and date=?";
+//            List<Record> list7=Db.find(sql7,staffId,date);
+//            if (list7!=null&&list7.size()>0){
+//                for (Record r7:list7){
+//                    Record finalRecord =new Record();
+//                    fRDate=r7.getStr("date");
+//                    finalRecord.set("date",fRDate);
+//                    fRStartTime=r7.getStr("start_time");
+//                    fREndTime=r7.getStr("end_time");
+//                    fRTime=fRStartTime+"-"+fREndTime;
+//                    finalRecord.set("time",fRTime);
+//                    finalRecord.set("condition",7);
+//
+//                    finalRecord.set("change",earlyFine);
+//
+//                    finalList.add(finalRecord);
+//                }
+//            }
+//
+//            Collections.sort(finalList, new Comparator<Record>(){
+//                /*
+//                 * int compare(Record p1, Record p2) 返回一个基本类型的整型，
+//                 * 返回负数表示：p1的date 大于p2的date，
+//                 * 返回0 表示：p1和p2相等，
+//                 * 返回正数表示：p1的date 小于p2的date
+//                 */
+//                @Override
+//                public int compare(Record p1, Record p2) {
+//                    //按照record的date进行降序排列
+//                    if(p1.getStr("date").compareTo(p2.getStr("date"))>0){
+//                        return -1;
+//                    }
+//                    if(p1.getStr("date").compareTo(p2.getStr("date"))==0){
+//                        return 0;
+//                    }
+//                    return 1;
+//                }
+//            });
+//
+//            //实得工资=时薪*实际工作的时长
+//            float takePay=dayWage-list6.size()*lateFine-list7.size()*earlyFine-addFine*addCount-reduceCount*reduceFine-leaveCount*leaveFine-absentCount*absentFine;
+//
+//            jhm.put("dayHour",workHour);
+//            jhm.put("duePay",duePay);
+//            jhm.put("takePay",takePay);
+//            jhm.put("list",finalList);
+//
+//        }catch (Exception e){
+//            e.printStackTrace();
+//            jhm.putCode(-1).putMessage("服务器发生异常");
+//        }
+//        renderJson(jhm);
+//    }
 }
