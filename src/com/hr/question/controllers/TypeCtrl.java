@@ -188,6 +188,14 @@ public class TypeCtrl extends BaseCtrl {
                 renderJson(jhm);
                 return;
             }
+            //判断此分类下是否有考题，如果有不能删除
+            String sqlQuestion="select count(*) c from h_question where h_question.type_id=?";
+            Record questionRecord = Db.findFirst(sqlQuestion, id);
+            if(questionRecord.getInt("c")!=0){
+                jhm.putCode(0).putMessage("此分类下有考题，不能删除！");
+                renderJson(jhm);
+                return;
+            }
             boolean flag = Db.deleteById("h_question_type", id);
             if (flag) {
                 jhm.putCode(1).putMessage("删除成功！");
