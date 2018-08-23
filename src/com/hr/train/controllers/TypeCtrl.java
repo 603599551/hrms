@@ -469,7 +469,7 @@ public class TypeCtrl extends BaseCtrl {
                         jhm.putCode(0).putMessage("该分类下有培训文章，不能删除！");
                     } else {
                         type.set("enable", 0);
-                        boolean flag = Db.update("h_train_type", type);
+                        boolean flag = Db.deleteById("h_train_type", id);
                         if (flag) {
                             jhm.putCode(1).putMessage("删除成功！");
                         } else {
