@@ -68,7 +68,7 @@ public class QuestionCtrl extends BaseCtrl {
         int pageNum = NumberUtils.parseInt(pageNumStr, 1);
         int pageSize = NumberUtils.parseInt(pageSizeStr, 10);
         try {
-            String select = "select h_question.id id,h_question.title title,(select d.name from h_dictionary d where d.parent_id='3000'and d.value=h_question.kind_id) kind_id,(select t.name from h_question_type t where t.id=h_question.type_id) type_id,h_question.modify_time datetime,h_staff. name creater_name ";
+            String select = "select h_question.id id,h_question.title title,(select d.name from h_dictionary d where d.parent_id='3000'and d.value=h_question.kind_id) kind_id,(select t.name from h_question_type t where t.id=h_question.type_id) type_id,h_question.modify_time datetime,h_staff.name creater_name ";
             String sql = "from h_question left join h_staff on h_question.creater_id=h_staff.id where 1=1 ";
             //参数集合
             List<Object> params = new ArrayList<>();
@@ -311,7 +311,7 @@ public class QuestionCtrl extends BaseCtrl {
             return;
         }
         try {
-            String sql = "select h_question.id id,h_question.title title,(select d.name from h_dictionary d where d.parent_id='3000'and d.value=h_question.kind_id) kind_id,h_question.content content,(select t.name from h_question_type t where t.id=h_question.type_id) type_id,h_question.modify_time datetime,h_staff.name creater_name from h_question left join h_staff  on h_staff.id=h_question.creater_id where h_question.id=? ";
+            String sql = "select h_question.id id,h_question.title title,h_question.kind_id kind_id,h_question.content content,h_question.type_id type_id,h_question.modify_time datetime,h_staff.name creater_name from h_question left join h_staff  on h_staff.id=h_question.creater_id where h_question.id=? ";
             Record record = Db.findFirst(sql, id);
             if (record != null) {
                 jhm.put("data", record);
@@ -382,11 +382,7 @@ public class QuestionCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         try {
             List<Record> list;
-            list = Db.find("select t.name name from h_question_type t where t.kind_id=? order by t.id", dict);
-            Record all = new Record();
-            all.set("value", "-1");
-            all.set("name", "请选择");
-            list.add(0, all);
+            list = Db.find("select t.name name,t.id value from h_question_type t where t.kind_id=? order by t.id", dict);
             jhm.putCode(1).put("data", list);
         } catch (Exception e) {
             e.printStackTrace();

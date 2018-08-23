@@ -10,14 +10,15 @@ import easy.util.NumberUtils;
 import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class TypeCtrl extends BaseCtrl{
+public class TypeCtrl extends BaseCtrl {
     /**
      * 考题分类列表
      */
-    public void list(){
+    public void list() {
         JsonHashMap jhm = new JsonHashMap();
         String keyword = getPara("keyword").trim();
         String pageNumStr = getPara("pageNum");
@@ -26,7 +27,7 @@ public class TypeCtrl extends BaseCtrl{
         int pageNum = NumberUtils.parseInt(pageNumStr, 1);
         int pageSize = NumberUtils.parseInt(pageSizeStr, 10);
         try {
-            String select = "select h_question_type.id id,h_question_type.name name,h_question_type.kind_id kind,h_question_type.modify_time date,h_staff.name creater_name ";
+            String select = "select h_question_type.id id,h_question_type.name name,(select d.name from h_dictionary d where d.parent_id='3000'and d.value=h_question_type.kind_id) kind,h_question_type.modify_time date,h_staff.name creater_name ";
             String sql = "from h_question_type left join h_staff on h_question_type.creater_id=h_staff.id where 1=1 ";
             //参数集合
             List<Object> params = new ArrayList<>();
@@ -45,23 +46,24 @@ public class TypeCtrl extends BaseCtrl{
         }
         renderJson(jhm);
     }
+
     /**
      * 添加考题分类
      */
 
-    public void add(){
+    public void add() {
         JsonHashMap jhm = new JsonHashMap();
         Record type = this.getParaRecord();
         String name = type.getStr("name").trim();
-        String kind=type.getStr("kind").trim();
+        String kind = type.getStr("kind").trim();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
         //考题分类名称不允许为空也不允许为空格
-        if(StringUtils.isEmpty(name)|| StringUtils.isBlank(name)){
+        if (StringUtils.isEmpty(name) || StringUtils.isBlank(name)) {
             jhm.putCode(0).putMessage("请填写考题分类名称！");
             renderJson(jhm);
             return;
         }
-        if(StringUtils.isEmpty(kind)|| StringUtils.isBlank(kind)){
+        if (StringUtils.isEmpty(kind) || StringUtils.isBlank(kind)) {
             jhm.putCode(0).putMessage("请选择岗位名称！");
             renderJson(jhm);
             return;
@@ -69,24 +71,24 @@ public class TypeCtrl extends BaseCtrl{
 
         try {
 
-                type.set("id", UUIDTool.getUUID());
-                type.set("name",name);
-                type.set("kind_id",kind);
-                type.set("creater_id", usu.getUserId());
-                type.set("modifier_id", usu.getUserId());
-                String time = DateTool.GetDateTime();
-                type.set("create_time", time);
-                type.set("modify_time", time);
-                type.remove("kind");
-                //保存数据到数据库
-                boolean flag = Db.save("h_question_type", type);
-                if (flag) {
-                    //添加成功
-                    jhm.putCode(1).putMessage("添加成功！");
-                } else {
-                    //添加失败
-                    jhm.putCode(0).putMessage("添加失败！");
-                }
+            type.set("id", UUIDTool.getUUID());
+            type.set("name", name);
+            type.set("kind_id", kind);
+            type.set("creater_id", usu.getUserId());
+            type.set("modifier_id", usu.getUserId());
+            String time = DateTool.GetDateTime();
+            type.set("create_time", time);
+            type.set("modify_time", time);
+            type.remove("kind");
+            //保存数据到数据库
+            boolean flag = Db.save("h_question_type", type);
+            if (flag) {
+                //添加成功
+                jhm.putCode(1).putMessage("添加成功！");
+            } else {
+                //添加失败
+                jhm.putCode(0).putMessage("添加失败！");
+            }
         } catch (Exception e) {
             jhm.putCode(-1).putMessage("服务器发生异常！");
             e.printStackTrace();
@@ -95,10 +97,9 @@ public class TypeCtrl extends BaseCtrl{
     }
 
     /**
-     *
      * 修改考题分类
      */
-    public void updateById(){
+    public void updateById() {
         JsonHashMap jhm = new JsonHashMap();
         Record type = this.getParaRecord();
         UserSessionUtil usu = new UserSessionUtil(getRequest());
@@ -108,9 +109,9 @@ public class TypeCtrl extends BaseCtrl{
             return;
         }
         String name = type.getStr("name").trim();
-        String kind=type.getStr("kind").trim();
+        String kind = type.getStr("kind").trim();
         //分类名称不允许为空也不允许为空格
-        if (StringUtils.isEmpty(name)|| StringUtils.isBlank(name)) {
+        if (StringUtils.isEmpty(name) || StringUtils.isBlank(name)) {
             jhm.putCode(0).putMessage("请填写考题分类名称！");
             renderJson(jhm);
             return;
@@ -122,18 +123,18 @@ public class TypeCtrl extends BaseCtrl{
             return;
         }
         try {
-                String time = DateTool.GetDateTime();
-                type.set("name",name);
-                type.set("kind_id",kind);
-                type.set("modifier_id", usu.getUserId());
-                type.set("modify_time", time);
-                type.remove("kind");
-                boolean flag = Db.update("h_question_type", type);
-                if (flag) {
-                    jhm.putCode(1).putMessage("修改成功！");
-                } else {
-                    jhm.putCode(0).putMessage("修改失败！");
-                }
+            String time = DateTool.GetDateTime();
+            type.set("name", name);
+            type.set("kind_id", kind);
+            type.set("modifier_id", usu.getUserId());
+            type.set("modify_time", time);
+            type.remove("kind");
+            boolean flag = Db.update("h_question_type", type);
+            if (flag) {
+                jhm.putCode(1).putMessage("修改成功！");
+            } else {
+                jhm.putCode(0).putMessage("修改失败！");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");
@@ -142,10 +143,9 @@ public class TypeCtrl extends BaseCtrl{
     }
 
     /**
-     *
      * 查看考题
      */
-    public void showById(){
+    public void showById() {
         JsonHashMap jhm = new JsonHashMap();
         //获取当前考题分类id
         String id = getPara("id");
@@ -168,10 +168,11 @@ public class TypeCtrl extends BaseCtrl{
         }
         renderJson(jhm);
     }
+
     /**
      * 删除考题分类
      */
-    public void deleteById(){
+    public void deleteById() {
         JsonHashMap jhm = new JsonHashMap();
         String id = getPara("id");
         if (StringUtils.isEmpty(id)) {
