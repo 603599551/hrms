@@ -310,12 +310,13 @@ id	string		是	调入记录的id
 				r3.set("operate_time",DateTool.GetDateTime());
 				r3.set("operate_type",operateType);
 				r3.set("desc",desc2);
-				r3.remove("move_info_id");
-				boolean flag=Db.save("h_staff_log",r3);
-
 				String staffId=r3.getStr("staff_id");
 				String pinyin=Db.findFirst("SELECT pinyin FROM h_staff WHERE id=?",staffId).getStr("pinyin");
 				r3.set("pinyin",pinyin);
+				r3.remove("move_info_id");
+				boolean flag=Db.save("h_staff_log",r3);
+
+
 
 				//更改staff表的dept_id
 				Db.update("UPDATE h_staff SET dept_id=(SELECT to_dept FROM h_move_info WHERE id=?)  WHERE id=?",id,staffId);
