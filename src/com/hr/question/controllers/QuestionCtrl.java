@@ -243,9 +243,9 @@ public class QuestionCtrl extends BaseCtrl {
         }
         //考题标题不能重复
         try {
-            String sql = "select count(*) c from h_question where title=? and id <>?";
+            String sql = "select count(*) c from h_question where title=? and type_id=? and kind_id=? and id <>?";
             String id = question.getStr("id");
-            Record record = Db.findFirst(sql, title, id);
+            Record record = Db.findFirst(sql, title,typeId,kindId,id);
             if (record.getInt("c") != 0) {
                 jhm.putCode(0).putMessage("考题标题重复！");
             } else {
