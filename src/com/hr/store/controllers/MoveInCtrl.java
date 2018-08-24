@@ -269,7 +269,7 @@ id	string		是	调入记录的id
 				return;
 			}
 			//修改move_info表记录的status,result
-		    Db.update("UPDATE h_move_info SET status=? , result=? WHERE id=?",status,desc,id);
+		    Db.update("UPDATE h_move_info SET status=? , result=? WHERE id=?",String.valueOf(Integer.valueOf(status)  + 2),desc,id);
 
 			//sender_id
 			String senderId=Db.findFirst("SELECT id FROM h_staff WHERE dept_id=(SELECT to_dept FROM h_move_info WHERE id=?) AND job='store_manager'",id).getStr("id");
