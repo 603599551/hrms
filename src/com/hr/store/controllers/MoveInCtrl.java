@@ -280,8 +280,7 @@ id	string		是	调入记录的id
 			//在notice表创建“给来源门店发确认接收的通知”，状态设置为已办理
 			Record r2=new Record();
 			r2.set("id", UUIDTool.getUUID());
-			r2.set("title", "店长接收调入（借调入）店员");
-			r2.set("content", desc);
+			r2.set("content", "店长接收调入（借调入）店员");
 			r2.set("sender_id", senderId);
 			r2.set("receiver_id", receiverId);
 			r2.set("create_time", DateTool.GetDateTime());
