@@ -31,13 +31,13 @@ public class ApplyService extends BaseService {
                 Db.update("h_notice", noticeRecord);
             }
 
-            Record infoRecord = Db.findFirst("SELECT move.id as id , move.`status` as `status`  FROM h_apply_move move , h_notice n WHERE move.id = ? AND n.type = ?", noticeRecord.getStr("fid"), type);
+            Record infoRecord = Db.findFirst("SELECT move.id as id , move.`status` as `status`  FROM h_apply_move move  WHERE move.id = ? ", noticeRecord.getStr("fid"));
             //判断通知是否已撤销
             if (StringUtils.equals("1", infoRecord.getStr("status"))) {
                 jhm.putCode(0).putMessage("此申请已被撤销");
                 return jhm;
             }
-            infoRecord.set("status",Integer.valueOf(status)  + 2);
+            infoRecord.set("status",String.valueOf(Integer.valueOf(status)  + 2));
             infoRecord.set("review_result", desc);
             infoRecord.set("reviewer_id", usu.getUserId());
             infoRecord.set("review_time", DateTool.GetDateTime());

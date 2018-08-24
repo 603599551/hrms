@@ -269,17 +269,18 @@ id	string		是	调入记录的id
 				return;
 			}
 			//修改move_info表记录的status,result
-		    Db.update("UPDATE h_move_info SET status=? , result=? WHERE id=?",status,desc,id);
+		    Db.update("UPDATE h_move_info SET status=? , result=? WHERE id=?",String.valueOf(Integer.valueOf(status)  + 2),desc,id);
 
 			//sender_id
 			String senderId=Db.findFirst("SELECT id FROM h_staff WHERE dept_id=(SELECT to_dept FROM h_move_info WHERE id=?) AND job='store_manager'",id).getStr("id");
 			//receiver_id
 			String receiverId=Db.findFirst("SELECT id FROM h_staff WHERE dept_id=(SELECT from_dept FROM h_move_info WHERE id=?) AND job='store_manager'",id).getStr("id");
+			//更新调出记录在notice表对应通知的status为2
+			Db.update("UPDATE h_notice SET status='2' WHERE fid=?",id);
 			//在notice表创建“给来源门店发确认接收的通知”，状态设置为已办理
 			Record r2=new Record();
 			r2.set("id", UUIDTool.getUUID());
-			r2.set("title", "店长接收调入（借调入）店员");
-			r2.set("content", desc);
+			r2.set("content", "店长接收调入（借调入）店员");
 			r2.set("sender_id", senderId);
 			r2.set("receiver_id", receiverId);
 			r2.set("create_time", DateTool.GetDateTime());
@@ -288,42 +289,44 @@ id	string		是	调入记录的id
 			r2.set("fid", id);
 			Db.save("h_notice",r2);
 
-			//在staff_log创建记录
-			Record r3=Db.findFirst("SELECT * FROM h_move_staff WHERE move_info_id=?",id);
-			if (r3==null){
-				jhm.putCode(0).putMessage("此move_staff不存在！");
-				renderJson(jhm);
-				return;
-			}
-			Record r4=Db.findFirst("SELECT type,t.desc FROM h_move_info t WHERE id=?",id);
-			String operateType=r4.getStr("type");
-			String desc2=r4.getStr("desc");
-			//move_infoID
-			r3.set("creater_id",senderId);
-			r3.set("create_time",DateTool.GetDateTime());
-			r3.set("modifier_id",null);
-			r3.set("modify_time",null);
-			r3.set("fid",id);
-			r3.set("operater_id",senderId);
-			r3.set("operate_time",DateTool.GetDateTime());
-			r3.set("operate_type",operateType);
-			r3.set("desc",desc2);
-			r3.remove("move_info_id");
-			boolean flag=Db.save("h_staff_log",r3);
+			if ("1".equals(status)){
+				//在staff_log创建记录
+				Record r3=Db.findFirst("SELECT * FROM h_move_staff WHERE move_info_id=?",id);
+				if (r3==null){
+					jhm.putCode(0).putMessage("此move_staff不存在！");
+					renderJson(jhm);
+					return;
+				}
+				Record r4=Db.findFirst("SELECT type,t.desc FROM h_move_info t WHERE id=?",id);
+				String operateType=r4.getStr("type");
+				String desc2=r4.getStr("desc");
+				//move_infoID
+				r3.set("creater_id",senderId);
+				r3.set("create_time",DateTool.GetDateTime());
+				r3.set("modifier_id",null);
+				r3.set("modify_time",null);
+				r3.set("fid",id);
+				r3.set("operater_id",senderId);
+				r3.set("operate_time",DateTool.GetDateTime());
+				r3.set("operate_type",operateType);
+				r3.set("desc",desc2);
+				r3.remove("move_info_id");
+				boolean flag=Db.save("h_staff_log",r3);
 
-			String staffId=r3.getStr("staff_id");
-			String pinyin=Db.findFirst("SELECT pinyin FROM h_staff WHERE id=?",staffId).getStr("pinyin");
-			r3.set("pinyin",pinyin);
+				String staffId=r3.getStr("staff_id");
+				String pinyin=Db.findFirst("SELECT pinyin FROM h_staff WHERE id=?",staffId).getStr("pinyin");
+				r3.set("pinyin",pinyin);
 
-			//更改staff表的dept_id
-			Db.update("UPDATE h_staff SET dept_id=(SELECT to_dept FROM h_move_info WHERE id=?)  WHERE id=?",id,staffId);
-
-			if (flag){
-				jhm.putCode(1).putMessage("调入成功！");
+				//更改staff表的dept_id
+				Db.update("UPDATE h_staff SET dept_id=(SELECT to_dept FROM h_move_info WHERE id=?)  WHERE id=?",id,staffId);
+				if (flag){
+					jhm.putCode(1).putMessage("调入成功！");
+				}else {
+					jhm.putCode(0).putMessage("调入失败！");
+				}
 			}else {
-				jhm.putCode(0).putMessage("调入失败！");
+				jhm.putCode(1).putMessage("拒绝调入！");
 			}
-
 		} catch (Exception e){
 			e.printStackTrace();
 			jhm.putCode(-1).putMessage("服务器发生异常");
