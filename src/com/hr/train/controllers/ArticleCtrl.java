@@ -90,8 +90,16 @@ public class ArticleCtrl extends BaseCtrl {
                     sql.append(" and type_1 = ? ");
                     params.add(classId);
                 } else {
-                    sql.append(" and type_2 = ? ");
-                    params.add(classId);
+                    //验证条件查询是否是二级分类
+                    String searchId="select parent_id parent from h_train_type t where t.id=?";
+                    Record recordId = Db.findFirst(searchId, record.getStr("p"));
+                    if (StringUtils.equals(recordId.getStr("parent"), "-1")) {
+                        sql.append(" and type_2 = ? ");
+                        params.add(classId);
+                    }else{
+                        sql.append(" and type_3 = ? ");
+                        params.add(classId);
+                    }
                 }
             }
 
