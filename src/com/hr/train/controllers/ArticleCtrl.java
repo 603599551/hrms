@@ -275,8 +275,9 @@ public class ArticleCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         String title = getPara("title").trim();
         String id = getPara("id");
-        String type_2 = getPara("class_id");
+        String class_id = getPara("class_id");
         String content = getPara("content");
+        String video = getPara("video");
         UserSessionUtil usu = new UserSessionUtil(getRequest());
 
         //进行非空验证
@@ -290,7 +291,7 @@ public class ArticleCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        if (StringUtils.isEmpty(type_2)) {
+        if (StringUtils.isEmpty(class_id)) {
             jhm.putCode(0).putMessage("请选择分类！");
             renderJson(jhm);
             return;
@@ -302,19 +303,52 @@ public class ArticleCtrl extends BaseCtrl {
                 jhm.putCode(0).putMessage("文章标题重复！");
                 renderJson(jhm);
                 return;
-            }
-            Record record = Db.findById("h_train_article", id);
-            record.set("title", title);
-            record.set("content", content);
-            record.set("type_2", type_2);
-            record.set("modifier_id", usu.getUserId());
-            String time = DateTool.GetDateTime();//获取时间的通用方法，yyyy-MM-dd HH:mm:ss   这个类中也有其他格式的获取方法
-            record.set("modify_time", time);
-            boolean flag = Db.update("h_train_article", record);
-            if (flag) {
-                jhm.putCode(1).putMessage("修改成功！");
             } else {
-                jhm.putCode(0).putMessage("修改失败！");
+                Record type = Db.findById("h_train_article", id);
+                type.set("title", title);
+                type.set("content", content);
+
+                //查数据库分类
+                String classSearch = "select parent_id from h_train_type t where t.id = ?";
+                Record parentClass = Db.findFirst(classSearch, class_id);
+                if (parentClass == null) {
+                    jhm.putCode(0).putMessage("添加文章时不能选择跟分类！");
+                } else {
+                    //上一级分类的id
+                    String parent_type = parentClass.getStr("parent_id");
+                    if (StringUtils.equals("-1", parent_type)) {
+                        jhm.putCode(0).putMessage("添加文章时不能选择一级分类！");
+                    } else {
+                        //通用数据
+                        type.set("modifier_id", usu.getUserId());
+                        String time = DateTool.GetDateTime();
+                        type.set("modify_time", time);
+                        type.set("video",video);
+
+                        Record grandparentRecord = Db.findFirst("select parent_id , name from h_train_type t where t.id = ?", parent_type);
+                        if (StringUtils.equals("-1", grandparentRecord.getStr("parent_id"))  ) {
+                            if(!StringUtils.equals(grandparentRecord.getStr("name"),"产品培训")) {
+                                type.set("type_1", parent_type);
+                                type.set("type_2", class_id);
+                            } else {
+                                jhm.putCode(0).putMessage("产品培训需要在第三级分类添加文章！");
+                                renderJson(jhm);
+                                return;
+                            }
+                        } else {
+                            //再往上寻找一级
+                            type.set("type_1", grandparentRecord.getStr("parent_id"));
+                            type.set("type_2", parent_type);
+                            type.set("type_3", class_id);
+                        }
+                        boolean flag = Db.update("h_train_article", type);
+                        if (flag) {
+                            jhm.putCode(1).putMessage("修改成功！");
+                        } else {
+                            jhm.putCode(0).putMessage("修改失败！");
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
