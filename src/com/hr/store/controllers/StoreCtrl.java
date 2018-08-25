@@ -432,14 +432,14 @@ public class StoreCtrl extends BaseCtrl {
             Record deptId = Db.findFirst("select dept_id from h_staff where id = ?",usu.getUserId());
             String sql = "select name name, id value from h_store where status = '1' and id = ? order by sort";
             list = Db.find(sql,deptId.getStr("dept_id"));
-            record.set("name", "请选择");
-            record.set("value", "-1");
-            if (list != null) {
-                list.add(0, record);
-            } else {
-                list = new ArrayList<>();
-                list.add(record);
-            }
+//            record.set("name", "请选择");
+//            record.set("value", "-1");
+//            if (list != null) {
+//                list.add(0, record);
+//            } else {
+//                list = new ArrayList<>();
+//                list.add(record);
+//            }
         }
         jhm.put("data", list);
         renderJson(jhm);

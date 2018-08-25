@@ -249,22 +249,31 @@ public class ApplyCtrl extends BaseCtrl {
         renderJson(jhm);
     }
 
-    public void getFromStoreDict(){
+    public void getFromStoreDict() {
         //当前登录人信息
-        UserSessionUtil usu=new UserSessionUtil(getRequest());
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
         //登录人id
-        String staffId=usu.getUserId();
+        String staffId = usu.getUserId();
         //根据登录人id查询staff表得deptId
-        String deptId=Db.findFirst("SELECT dept_id FROM h_staff WHERE id=?",staffId).getStr("dept_id");
+        String deptId = Db.findFirst("SELECT dept_id FROM h_staff WHERE id=?", staffId).getStr("dept_id");
+        String sql = "";
+        List<Record> list = new ArrayList<>();
+        if (StringUtils.equals(usu.getUsername(), "admin")) {
+            sql = "select name name, id value from h_store where status = '1' order by sort";
+            list = Db.find(sql);
+        } else {
+            sql = "select name name, id value from h_store where status = '1'and id!=? order by sort";
+            list = Db.find(sql, deptId);
 
-        String sql = "select name name, id value from h_store where status = '1'and id!=? order by sort";
-        List<Record> list = Db.find(sql,deptId);
+        }
+
+
         Record record = new Record();
         record.set("name", "请选择");
         record.set("value", "-1");
-        if(list != null){
+        if (list != null) {
             list.add(0, record);
-        }else{
+        } else {
             list = new ArrayList<>();
             list.add(record);
         }
@@ -272,6 +281,7 @@ public class ApplyCtrl extends BaseCtrl {
         jhm.put("data", list);
         renderJson(jhm);
     }
+
     /**
      * 9.3.	查看申请
      * 名称	查看申请
