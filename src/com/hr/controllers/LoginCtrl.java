@@ -5,6 +5,7 @@ import com.common.controllers.BaseCtrl;
 import com.jfinal.KEY;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import com.utils.UserSessionUtil;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
@@ -36,6 +37,12 @@ public class LoginCtrl extends BaseCtrl {
                     renderJson(jhm);
                     return;
                 }
+                if (!(StringUtils.equals(username,"admin")||StringUtils.equals(r.get("job"),"store_manager"))){
+                    jhm.putCode(-1).putMessage("员工不能登录！");
+                    renderJson(jhm);
+                    return;
+                }
+
                 UserBean ub=new UserBean();
                 ub.setId(r.get("id"));
                 ub.setName(r.getStr("username"));
@@ -59,6 +66,11 @@ public class LoginCtrl extends BaseCtrl {
                 user.set("name", ub.getRealName());
                 user.set("id", ub.getId());
                 user.set("roles", new ArrayList<>());
+                if (StringUtils.equals(username,"admin")){
+                    user.set("dept_id","");
+                }else {
+                    user.set("dept_id",ub.getDeptId());
+                }
 
                 jhm.put("data", user);
                 jhm.put("sessionId",getSession().getId());
