@@ -226,8 +226,8 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         String startDate = getPara("start_date");
         //结束日期
         String endDate = getPara("end_date");
-        //员工姓名
-        String keyword = getPara("keyword");
+        //员工工号
+        String empNum = getPara("emp_num");
 
         StringBuilder staffSearch = new StringBuilder("SELECT s.store_color AS store_color, s.name name, hs.name staff_name, SUM(wt.real_number * 0.25) total_work_time, hs.hour_wage, SUM(0.25 * wt.real_number * hs.hour_wage ) total FROM h_work_time wt, h_store s, h_staff hs WHERE wt.store_id = s.id AND wt.staff_id = hs.id");
         StringBuilder workSearch = new StringBuilder("SELECT c.date, c.start_time as sb_time, c.end_time as xb_time, c.sign_in_time as sb_dk, c.sign_back_time as xb_dk, c.is_leave, c.status from h_staff hs, h_staff_clock c where hs.id = c.staff_id");
@@ -252,7 +252,7 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
             return;
         }
 
-        if(StringUtils.isEmpty(keyword)){
+        if(StringUtils.isEmpty(empNum)){
             if(!StringUtils.isEmpty(dept)){
                 staffList = Db.find("select name, emp_num from h_staff where dept_id = ?",dept);
             }
@@ -263,10 +263,10 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         } else {
-            staffSearch.append(" AND hs.name = ? ");
-            workSearch.append(" AND c.staff_id = ( SELECT id FROM h_staff WHERE name = ? ) ");
-            workDetailSearch.append(" AND wtd.staff_id = ( SELECT id FROM h_staff WHERE name = ? ) ");
-            params.add(keyword);
+            staffSearch.append(" AND hs.emp_num = ? ");
+            workSearch.append(" AND c.staff_id = ( SELECT id FROM h_staff WHERE emp_num = ? ) ");
+            workDetailSearch.append(" AND wtd.staff_id = ( SELECT id FROM h_staff WHERE emp_num = ? ) ");
+            params.add(empNum);
         }
         if(StringUtils.isEmpty(startDate)){
             jhm.putCode(1);
@@ -296,8 +296,8 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         }
 
         try {
-            String sql ="select count(*) as c from h_staff where name = ?";
-            Record record = Db.findFirst(sql, keyword);
+            String sql ="select count(*) as c from h_staff where emp_num = ?";
+            Record record = Db.findFirst(sql, empNum);
             if(record.getInt("c") > 0 ){
                 //15分钟毫秒数
                 Long standardTime = 15 * 60 * 1000L;
