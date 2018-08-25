@@ -412,18 +412,35 @@ public class StoreCtrl extends BaseCtrl {
      * 字典值格式都是name，value格式
      */
     public void getStoreDict() {
-        String sql = "select name name, id value from h_store where status = '1' order by sort";
-        List<Record> list = Db.find(sql);
-        Record record = new Record();
-        record.set("name", "请选择");
-        record.set("value", "-1");
-        if (list != null) {
-            list.add(0, record);
-        } else {
-            list = new ArrayList<>();
-            list.add(record);
-        }
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
         JsonHashMap jhm = new JsonHashMap();
+        Record record = new Record();
+        List<Record> list = new ArrayList<>();
+        //判断登录人
+        if(StringUtils.equals(usu.getUsername(),"admin")) {
+            String sql = "select name name, id value from h_store where status = '1' order by sort";
+            list = Db.find(sql);
+            record.set("name", "请选择");
+            record.set("value", "-1");
+            if (list != null) {
+                list.add(0, record);
+            } else {
+                list = new ArrayList<>();
+                list.add(record);
+            }
+        } else {
+            Record deptId = Db.findFirst("select dept_id from h_staff where id = ?",usu.getUserId());
+            String sql = "select name name, id value from h_store where status = '1' and id = ? order by sort";
+            list = Db.find(sql,deptId.getStr("dept_id"));
+            record.set("name", "请选择");
+            record.set("value", "-1");
+            if (list != null) {
+                list.add(0, record);
+            } else {
+                list = new ArrayList<>();
+                list.add(record);
+            }
+        }
         jhm.put("data", list);
         renderJson(jhm);
     }

@@ -268,6 +268,13 @@ id	string		是	调入记录的id
 				renderJson(jhm);
 				return;
 			}
+			if (StringUtils.equals(moveinfo.getStr("status"),"1")){
+                //更新调出记录在notice表对应通知的status为2
+                Db.update("UPDATE h_notice SET status='2' WHERE fid=?",id);
+			    jhm.putCode(0).putMessage("该通知已被撤销！");
+			    renderJson(jhm);
+			    return;
+            }
 			//修改move_info表记录的status,result
 		    Db.update("UPDATE h_move_info SET status=? , result=? WHERE id=?",String.valueOf(Integer.valueOf(status)  + 2),desc,id);
 
