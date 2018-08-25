@@ -4,6 +4,7 @@ import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
+import com.utils.UserSessionUtil;
 import easy.util.NumberUtils;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
@@ -69,6 +70,7 @@ public class ExamCtrl extends BaseCtrl {
 //        renderJson("{\"code\":1,\"data\":{\"totalRow\":1,\"pageNumber\":1,\"firstPage\":true,\"lastPage\":true,\"totalPage\":1,\"pageSize\":10,\"list\":[{\"id\":\"记录id\",\"name\":\"考生姓名\",\"datetime\":\"2018-6-26 13:52\",\"hiredate\":\"2018-6-26\",\"kind\":\"传菜员/收银员\",\"examiner\":\"马云\",\"result_color\": \"warming\",\"result_text\":\"通过\",\"result\":\"1\"}]}}");
 
         JsonHashMap jhm = new JsonHashMap();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
         String pageNumStr = getPara("pageNum");
         String pageSizeStr = getPara("pageSize");
         //如果为空时赋给默认值
@@ -81,6 +83,16 @@ public class ExamCtrl extends BaseCtrl {
             String select = "select e.id id, hs.name name,e.create_time datetime,e.hiredate hiredate,(SELECT group_concat(h. NAME) kind FROM h_exam ee LEFT JOIN h_dictionary h ON find_in_set(h. VALUE, ee.kind_id)where h.parent_id = '3000' and ee.id=e.id GROUP BY ee.id ORDER BY ee.id ASC ) kind,(select s.name from h_staff s where s.id=e.examiner_id) examiner,(case result when '1' then 'success' else 'warnning' end)result_color,(case result when'1'then'通过'else'未通过' end)result_text,result result ";
             StringBuilder sql = new StringBuilder("from h_exam e,h_staff hs  where hs.id=e.staff_id ");
             List<Object> params = new ArrayList<>();
+            //获取当前登录人的id和门店id
+            String id=usu.getUserId();
+            String sqlStore="select s.dept_id storeId from h_staff s where s.id=?";
+            Record r=Db.findFirst(sqlStore,id);
+            String storeId=r.getStr("storeId");
+            //当前登录人不是admin
+            if(!StringUtils.equals(id,"1")){
+                sql.append(" and hs.dept_id=? ");
+                params.add(storeId);
+            }
             if (!StringUtils.isEmpty(name)) {
                 name = "%" + name + "%";
                 sql.append(" and hs.name like ? ");
