@@ -278,7 +278,7 @@ public class LeaveCtrl extends BaseCtrl {
             //获得当前经理操作的日期(年月日 时分秒)
             String dateTime=DateTool.GetDateTime();
             //未审核
-            String sql = "SELECT s.pinyin AS pinyin, s.NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND s.dept_id = ? AND i.`status` = '0' and concat(i.date,' ', right (i.times, 5))>? ORDER BY i.create_time desc ";
+            String sql = "SELECT s.pinyin AS pinyin, s.NAME AS name, ( SELECT d.`name` FROM h_dictionary d WHERE d.`value` = s.job ) job, i.date AS date, i.times AS time, i.reason AS reason, i.id as leave_info_id FROM h_staff s, h_staff_leave_info i WHERE i.staff_id = s.id AND s.dept_id = ? AND i.`status` = '0' and concat(i.date,' ', left (i.times, 5))>? ORDER BY i.create_time desc ";
             List<Record> recordList = Db.find(sql, usu.getUserBean().getDeptId(),dateTime);
 
             DateTool dateTool = new DateTool();

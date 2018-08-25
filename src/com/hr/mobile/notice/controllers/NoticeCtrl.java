@@ -4,6 +4,7 @@ import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.sun.org.apache.regexp.internal.RE;
+import easy.util.DateTool;
 import easy.util.NumberUtils;
 import easy.util.StringUtils;
 import utils.bean.JsonHashMap;
@@ -249,12 +250,13 @@ public class NoticeCtrl extends BaseCtrl{
             renderJson(jhm);
             return;
         }
+        String currentTime= DateTool.GetDateTime();
 
         try{
             //查询请假消息未处理数量
-            String sql="select count(*) as c from h_staff_leave_info where store_mgr_id=? and status='0'";
+            String sql="select count(*) as c from h_staff_leave_info i where store_mgr_id=? and status='0'and concat(i.date,' ', left (i.times, 5))>?";
             //数据类型有可能是int long ....
-            Object cObj1=Db.findFirst(sql,staffId).get("c");
+            Object cObj1=Db.findFirst(sql,staffId,currentTime).get("c");
             //将Object转为int
             int count1=NumberUtils.parseInt(cObj1,0);
 
