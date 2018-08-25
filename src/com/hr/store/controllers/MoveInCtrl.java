@@ -290,41 +290,36 @@ id	string		是	调入记录的id
 			Db.save("h_notice",r2);
 
 			if ("1".equals(status)){
-				//在staff_log创建记录
-				Record r3=Db.findFirst("SELECT * FROM h_move_staff WHERE move_info_id=?",id);
-				if (r3==null){
-					jhm.putCode(0).putMessage("此move_staff不存在！");
-					renderJson(jhm);
-					return;
-				}
 				Record r4=Db.findFirst("SELECT type,t.desc FROM h_move_info t WHERE id=?",id);
 				String operateType=r4.getStr("type");
 				String desc2=r4.getStr("desc");
-				//move_infoID
-				r3.set("creater_id",senderId);
-				r3.set("create_time",DateTool.GetDateTime());
-				r3.set("modifier_id",null);
-				r3.set("modify_time",null);
-				r3.set("fid",id);
-				r3.set("operater_id",senderId);
-				r3.set("operate_time",DateTool.GetDateTime());
-				r3.set("operate_type",operateType);
-				r3.set("desc",desc2);
-				String staffId=r3.getStr("staff_id");
-				String pinyin=Db.findFirst("SELECT pinyin FROM h_staff WHERE id=?",staffId).getStr("pinyin");
-				r3.set("pinyin",pinyin);
-				r3.remove("move_info_id");
-				boolean flag=Db.save("h_staff_log",r3);
-
-
-
-				//更改staff表的dept_id
-				Db.update("UPDATE h_staff SET dept_id=(SELECT to_dept FROM h_move_info WHERE id=?)  WHERE id=?",id,staffId);
-				if (flag){
-					jhm.putCode(1).putMessage("调入成功！");
-				}else {
-					jhm.putCode(0).putMessage("调入失败！");
+				List<Record> list3=Db.find("SELECT * FROM h_move_staff WHERE move_info_id=?",id);
+				if (list3!=null&&list3.size()>0){
+					for (Record r3:list3){
+						//move_infoID
+						r3.set("creater_id",senderId);
+						r3.set("create_time",DateTool.GetDateTime());
+						r3.set("modifier_id",null);
+						r3.set("modify_time",null);
+						r3.set("fid",id);
+						r3.set("operater_id",senderId);
+						r3.set("operate_time",DateTool.GetDateTime());
+						r3.set("operate_type",operateType);
+						r3.set("desc",desc2);
+						String staffId=r3.getStr("staff_id");
+						String pinyin=Db.findFirst("SELECT pinyin FROM h_staff WHERE id=?",staffId).getStr("pinyin");
+						r3.set("pinyin",pinyin);
+						r3.remove("move_info_id");
+						boolean flag=Db.save("h_staff_log",r3);
+						if (!flag){
+							jhm.putCode(0).putMessage("调入失败！");
+							break;
+						}
+						//更改staff表的dept_id
+						Db.update("UPDATE h_staff SET dept_id=(SELECT to_dept FROM h_move_info WHERE id=?)  WHERE id=?",id,staffId);
+					}
 				}
+			jhm.putCode(1).putMessage("调入成功！");
 			}else {
 				jhm.putCode(1).putMessage("拒绝调入！");
 			}
