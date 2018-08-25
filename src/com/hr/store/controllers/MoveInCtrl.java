@@ -258,7 +258,7 @@ id	string		是	调入记录的id
 		//说明
 		String desc=getPara("desc");
 		//同意或拒绝
-		String status=getPara("status");
+		String status=getPara("status2");
 
 		try {
 			//判断move_info表中的调出记录是否存在

@@ -227,7 +227,7 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
         //结束日期
         String endDate = getPara("end_date");
         //员工工号
-        String empNum = getPara("emp_num");
+        String empNum = getPara("keyword");
 
         StringBuilder staffSearch = new StringBuilder("SELECT s.store_color AS store_color, s.name name, hs.name staff_name, SUM(wt.real_number * 0.25) total_work_time, hs.hour_wage, SUM(0.25 * wt.real_number * hs.hour_wage ) total FROM h_work_time wt, h_store s, h_staff hs WHERE wt.store_id = s.id AND wt.staff_id = hs.id");
         StringBuilder workSearch = new StringBuilder("SELECT c.date, c.start_time as sb_time, c.end_time as xb_time, c.sign_in_time as sb_dk, c.sign_back_time as xb_dk, c.is_leave, c.status from h_staff hs, h_staff_clock c where hs.id = c.staff_id");
@@ -254,7 +254,7 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
 
         if(StringUtils.isEmpty(empNum)){
             if(!StringUtils.isEmpty(dept)){
-                staffList = Db.find("select name, emp_num from h_staff where dept_id = ?",dept);
+                staffList = Db.find("select name, emp_num as value from h_staff where dept_id = ?",dept);
             }
             jhm.putCode(1);
             jhm.put("staff", staffR);
@@ -485,7 +485,7 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                 });
 
                 if(!StringUtils.isEmpty(dept)){
-                    staffList = Db.find("select name , emp_num from h_staff where dept_id = ?",dept);
+                    staffList = Db.find("select name , emp_num as value from h_staff where dept_id = ?",dept);
                 }
                 jhm.put("staffList",staffList);
 

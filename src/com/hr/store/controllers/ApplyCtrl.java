@@ -449,7 +449,7 @@ public class ApplyCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-        String status = getPara("status");
+        String status = getPara("status2");
         if (StringUtils.isEmpty(status)) {
             jhm.putCode(0).putMessage("请选择处理类型!");
             renderJson(jhm);
