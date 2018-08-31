@@ -73,7 +73,7 @@ public class UserCtrl extends BaseCtrl {
             return ;
         }
         try{
-            Record r= Db.findFirst("select s.*,case gender when 1 then '男' when 0 then '女' end as gender_text,(select name from h_dictionary where id=s.status) as status_text,(select name from h_job where id=s.job) as job_text,dept.name as dept_text from h_staff s  left join (select id,name from h_dept  union all select id,name from h_store ) as dept on s.dept_id=dept.id where s.id=?",usu.getUserId());
+            Record r= Db.findFirst("select s.*,case gender when 1 then '男' when 0 then '女' end as gender_text,(select name from h_dictionary where id=s.status) as status_text,(select name from h_job where id=s.job) as job_text,dept.name as dept_text from h_staff s  left join (select id,name from h_store ) as dept on s.dept_id=dept.id where s.id=?",usu.getUserId());
             r.remove("password");
             RecordUtils.obj2str(r);
             jhm.putCode(1).put("data",r);
