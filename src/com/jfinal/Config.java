@@ -22,20 +22,20 @@ import com.hr.workTime.controllers.WorkTimeCtrl;
 import com.hr.workTime.controllers.WorkTimeDetailCtrl;
 import com.jfinal.config.*;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
+import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.TxByMethodRegex;
 import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
 import easy.util.FileUploadPath;
-import paiban.controllers.SchedulingCtrl;
-import paiban.controllers.StaffIdleTimeCtrl;
-import paiban.controllers.StoreForecastTurnoverCtrl;
-import paiban.controllers.VariableTimeGuideCtrl;
+import paiban.controllers.*;
+import utils.DictionaryConstants;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
 
 public class Config extends JFinalConfig {
 
@@ -90,6 +90,7 @@ public class Config extends JFinalConfig {
 		routes.add("/mgr/schedulingCtrl", SchedulingCtrl.class);
 		routes.add("/mgr/variableTimeGuideCtrl", VariableTimeGuideCtrl.class);
 		routes.add("/mgr/staffIdleTimeCtrl", StaffIdleTimeCtrl.class);
+		routes.add("/mgr/areaCtrl", AreaCtrl.class);
 		//工资统计
 		routes.add("/mgr/workTimeCtrl", WorkTimeCtrl.class);
 		//工资详情
@@ -169,6 +170,36 @@ public class Config extends JFinalConfig {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String sDate = sdf.format(new Date());
 		System.out.println("当前时间："+sDate);
+		loadDictionary();
+	}
 
+	private void loadDictionary(){
+		List<Record> dictList = Db.find("select * from h_dictionary order by sort");
+		Map<String, List<Record>> dictMap = new HashMap<>();
+		Map<String, String> dictIdValueMap = new HashMap<>();
+		if(dictList != null && dictList.size() > 0){
+			for(Record r : dictList){
+				List<Record> list = dictMap.computeIfAbsent(r.getStr("parent_id"), k -> new ArrayList<>());
+				list.add(r);
+				dictIdValueMap.put(r.getStr("id"), r.getStr("value"));
+			}
+		}
+		if(dictMap != null && dictMap.size() > 0){
+		    for(String key : dictMap.keySet()){
+		        if("0".equals(key)){
+		            continue;
+                }
+		        List<Record> list = dictMap.get(key);
+		        String dict_key = dictIdValueMap.get(key);
+		        Map<String, String> stringMap = DictionaryConstants.DICT_STRING_MAP.computeIfAbsent(dict_key, k -> new HashMap<>());
+		        Map<String, Record> recordMap = DictionaryConstants.DICT_RECORD_MAP.computeIfAbsent(dict_key, k -> new HashMap<>());
+		        if(list != null && list.size() > 0){
+		            for(Record r : list){
+		                stringMap.put(r.getStr("value"), r.getStr("name"));
+                        recordMap.put(r.getStr("value"), r);
+                    }
+                }
+            }
+        }
 	}
 }

@@ -49,7 +49,7 @@ public class SchedulingCtrl extends BaseCtrl {
         JsonHashMap jhm = new JsonHashMap();
         try {
             JSONObject object = JSONObject.parseObject(this.getRequestObject());
-//             service.update(object, new UserSessionUtil(getRequest()));
+            service.update(object, new UserSessionUtil(getRequest()));
             jhm.putMessage("保存成功！");
         } catch (Exception e) {
             e.printStackTrace();
@@ -117,7 +117,7 @@ public class SchedulingCtrl extends BaseCtrl {
      *  Map<日期, Map<时间段, Map<岗位, Map<color:单元格颜色（红色代码人员不足，需要手动排班），emp:List<Record（name:人名）>>>>>>
      *
      */
-    public void createSchedulingTablesssss() {
+    public void createSchedulingTable_bak() {
         JsonHashMap jhm = new JsonHashMap();
         String[] date = getParaValues("date");
         String startDate = date[0];
