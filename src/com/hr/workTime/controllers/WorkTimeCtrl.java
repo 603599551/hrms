@@ -6,8 +6,11 @@ import com.jfinal.plugin.activerecord.Record;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class WorkTimeCtrl extends BaseCtrl {
 
@@ -16,6 +19,7 @@ public class WorkTimeCtrl extends BaseCtrl {
         String storeId = getPara("dept");
         String startDate = getPara("start_date");
         String endDate = getPara("end_date");
+        Record record = new Record();
 
         try {
             StringBuilder sql = new StringBuilder(" SELECT s.store_color AS store_color, s.name name, hs.name staff_name, SUM(wt.real_number * 0.25) total_work_time, hs.hour_wage, SUM((0.25 * wt.real_number * hs.hour_wage )) total FROM h_work_time wt, h_store s, h_staff hs WHERE wt.store_id = s.id AND wt.staff_id = hs.id ");
@@ -48,9 +52,19 @@ public class WorkTimeCtrl extends BaseCtrl {
 
             sql.append("GROUP BY wt.staff_id");
             workTimeList = Db.find(sql.toString(), params.toArray());
-//            for(int i = 0; i < workTimeList.size(); i++){
-//                workTimeList.get(i).set("total_work_time", String.valueOf(Double.valueOf(workTimeList.get(i).getStr("total_work_time")) * 0.25));
-//            }
+            Double allWorkTime = 0d;
+            Double allSalary = 0d;
+            DecimalFormat df = new DecimalFormat("#####0.00");
+            for(int i = 0; i < workTimeList.size(); i++){
+                record = workTimeList.get(i);
+                record.set("total", df.format(Double.valueOf(record.getStr("total"))));
+                record.set("hour_wage", df.format(Double.valueOf(record.getStr("hour_wage"))));
+                record.set("total_work_time", df.format(Double.valueOf(record.getStr("total_work_time"))));
+                allWorkTime += Double.valueOf(record.getStr("total_work_time"));
+                allSalary += Double.valueOf(record.getStr("total"));
+            }
+            jhm.put("allWorkTime", df.format(allWorkTime));
+            jhm.put("allSalary", df.format(allSalary));
             jhm.put("data", workTimeList);
         } catch (Exception e){
             e.printStackTrace();
