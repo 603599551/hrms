@@ -29,7 +29,12 @@ public class LoginCtrl extends BaseCtrl {
                 renderJson(jhm);
                 return;
             }
-            Record r = Db.findFirst("select *, (select store_color from h_store s where s.id=h_staff.dept_id) store_color,(select city from h_store s where s.id=h_staff.dept_id) city from h_staff where username=? and password=?", username, password);
+            Record r;
+            if(StringUtils.equals(username,"admin")){
+                r = Db.findFirst("select * from h_admin where username=? and password=?", username, password);
+            }else {
+                r = Db.findFirst("select *, (select store_color from h_store s where s.id=h_staff.dept_id) store_color,(select city from h_store s where s.id=h_staff.dept_id) city from h_staff where username=? and password=?", username, password);
+            }
             if (r != null) {
                 String status=r.get("status");
                 if("6".equals(status)){
@@ -50,13 +55,20 @@ public class LoginCtrl extends BaseCtrl {
                 ub.setDeptId(r.getStr("dept_id"));
                 ub.setDeptName(r.getStr("dept_name"));
                 ub.put("store_id", r.getStr("dept_id"));
-                ub.put("store_color", r.getStr("store_color"));
-                ub.put("city", r.getStr("city"));
+                if (StringUtils.equals(username,"admin")){
+                    ub.put("store_color", "");
+                    ub.put("city","");
+                }else {
+                    ub.put("store_color", r.getStr("store_color"));
+                    ub.put("city", r.getStr("city"));
+                }
                 Object job=r.get("job");
-                if(job==null)
+                if(job==null){
                     job="";
-                else
+                }
+                else{
                     job=job+"";
+                }
                 ub.setJobId((String)job);
                 ub.setJobName(r.getStr("job_name"));
                 setSessionAttr(KEY.SESSION_USER,ub);
