@@ -3,7 +3,9 @@ package com.hr.workTime.controllers;
 import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import easy.util.NumberUtils;
 import org.apache.commons.lang.StringUtils;
+import utils.NumberFormat;
 import utils.bean.JsonHashMap;
 
 import java.text.DecimalFormat;
@@ -54,17 +56,16 @@ public class WorkTimeCtrl extends BaseCtrl {
             workTimeList = Db.find(sql.toString(), params.toArray());
             Double allWorkTime = 0d;
             Double allSalary = 0d;
-            DecimalFormat df = new DecimalFormat("#####0.00");
             for(int i = 0; i < workTimeList.size(); i++){
                 record = workTimeList.get(i);
-                record.set("total", df.format(Double.valueOf(record.getStr("total"))));
-                record.set("hour_wage", df.format(Double.valueOf(record.getStr("hour_wage"))));
-                record.set("total_work_time", df.format(Double.valueOf(record.getStr("total_work_time"))));
+                record.set("total", NumberFormat.doubleFormatStr(Double.valueOf(record.getStr("total"))));
+                record.set("hour_wage", NumberFormat.doubleFormatStr(Double.valueOf(record.getStr("hour_wage"))));
+                record.set("total_work_time", NumberFormat.doubleFormatStr(Double.valueOf(record.getStr("total_work_time"))));
                 allWorkTime += Double.valueOf(record.getStr("total_work_time"));
                 allSalary += Double.valueOf(record.getStr("total"));
             }
-            jhm.put("allWorkTime", df.format(allWorkTime));
-            jhm.put("allSalary", df.format(allSalary));
+            jhm.put("allWorkTime", NumberFormat.doubleFormatStr(allWorkTime));
+            jhm.put("allSalary", NumberFormat.doubleFormatStr(allSalary));
             jhm.put("data", workTimeList);
         } catch (Exception e){
             e.printStackTrace();

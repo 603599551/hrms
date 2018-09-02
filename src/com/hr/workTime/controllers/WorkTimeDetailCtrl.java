@@ -4,7 +4,9 @@ import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.sun.org.apache.regexp.internal.RE;
+import easy.util.NumberUtils;
 import org.apache.commons.lang.StringUtils;
+import utils.NumberFormat;
 import utils.bean.JsonHashMap;
 
 import java.text.DecimalFormat;
@@ -104,13 +106,12 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                 //15分钟毫秒数
                 Long standardTime = 15 * 60 * 1000L;
                 Double fifthMinutes = 0.25;
-                DecimalFormat df = new DecimalFormat("####0.00");
 
                 dictionaryR = Db.findFirst(dictionarySearch.toString());
                 staffR = Db.findFirst(staffSearch.toString(), params.toArray());
-                staffR.set("total", df.format(Double.valueOf(staffR.getStr("total"))));
-                staffR.set("total_work_time", df.format(Double.valueOf(staffR.getStr("total_work_time"))));
-                staffR.set("hour_wage", df.format(Double.valueOf(staffR.getStr("hour_wage"))));
+                staffR.set("total", NumberFormat.doubleFormatStr(Double.valueOf(staffR.getStr("total"))));
+                staffR.set("total_work_time", NumberFormat.doubleFormatStr(Double.valueOf(staffR.getStr("total_work_time"))));
+                staffR.set("hour_wage", NumberFormat.doubleFormatStr(Double.valueOf(staffR.getStr("hour_wage"))));
                 workSearch.append(" order by c.date, start_time ");
                 workList = Db.find(workSearch.toString(), params.toArray());
                 workDetailSearch.append(" order by wtd.date, start_time");
@@ -146,16 +147,16 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                             if(sbTime >= sbDk){
                                 if(xbDk >= xbTime){
                                     workTimeNumber = (xbTime - sbTime) / standardTime;
-                                    workList.get(i).set("work_time", String.valueOf(df.format(workTimeNumber * fifthMinutes)));
-                                    workList.get(i).set("total", String.valueOf(df.format((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage")))));
+                                    workList.get(i).set("work_time", NumberFormat.doubleFormatStr(workTimeNumber * fifthMinutes));
+                                    workList.get(i).set("total", NumberFormat.doubleFormatStr((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage"))));
                                     workList.get(i).set("status_text", dictionaryR.getStr("1"));
                                     workList.get(i).set("status_color", "");
                                     workList.get(i).remove("is_leave");
                                 } else {
                                     xb = (xbTime - xbDk) / standardTime +1L;
                                     workTimeNumber = (xbTime - sbTime) / standardTime -xb;
-                                    workList.get(i).set("work_time", String.valueOf(df.format(workTimeNumber * fifthMinutes)));
-                                    workList.get(i).set("total", String.valueOf(df.format((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage")))));
+                                    workList.get(i).set("work_time", NumberFormat.doubleFormatStr(workTimeNumber * fifthMinutes));
+                                    workList.get(i).set("total", NumberFormat.doubleFormatStr((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage"))));
                                     workList.get(i).set("status_text", dictionaryR.getStr("6"));
                                     workList.get(i).set("status_color", dictionaryR.getStr("status_color"));
                                     workList.get(i).remove("is_leave");
@@ -164,8 +165,8 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                                 sb = (sbDk - sbTime) / standardTime + 1L;
                                 if(xbDk >= xbTime){
                                     workTimeNumber = (xbTime - sbTime) / standardTime - sb;
-                                    workList.get(i).set("work_time", String.valueOf(df.format(workTimeNumber * fifthMinutes)));
-                                    workList.get(i).set("total", String.valueOf(df.format((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage")))));
+                                    workList.get(i).set("work_time", NumberFormat.doubleFormatStr(workTimeNumber * fifthMinutes));
+                                    workList.get(i).set("total", NumberFormat.doubleFormatStr((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage"))));
                                     workList.get(i).set("status_text", dictionaryR.getStr("5"));
                                     workList.get(i).set("status_color", dictionaryR.getStr("status_color"));
                                     workList.get(i).remove("is_leave");
@@ -176,8 +177,8 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                                         xb = 0L;
                                     }
                                     workTimeNumber = (xbTime - sbTime) / standardTime - sb - xb;
-                                    workList.get(i).set("work_time", String.valueOf(df.format(workTimeNumber * fifthMinutes)));
-                                    workList.get(i).set("total", String.valueOf(df.format((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage")))));
+                                    workList.get(i).set("work_time", NumberFormat.doubleFormatStr(workTimeNumber * fifthMinutes));
+                                    workList.get(i).set("total", NumberFormat.doubleFormatStr((workTimeNumber * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage"))));
                                     workList.get(i).set("status_text", dictionaryR.getStr("7"));
                                     workList.get(i).set("status_color", dictionaryR.getStr("status_color"));
                                     workList.get(i).remove("is_leave");
@@ -212,8 +213,8 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                                 continue;
                             }
                         }
-                        workList.get(i).set("work_time", String.valueOf(df.format(count * fifthMinutes)));
-                        workList.get(i).set("total", String.valueOf(df.format((count * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage")))));
+                        workList.get(i).set("work_time", NumberFormat.doubleFormatStr(count * fifthMinutes));
+                        workList.get(i).set("total", NumberFormat.doubleFormatStr((count * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage"))));
                         workList.get(i).set("status_text", dictionaryR.getStr("4"));
                         workList.get(i).set("status_color", dictionaryR.getStr("status_color"));
                         workList.get(i).remove("is_leave");
@@ -236,8 +237,8 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                             } else {
                                 workDetailList.get(i).set("sb_time", workDetailList.get(i).getStr("start_time"));
                                 workDetailList.get(i).set("xb_time", workDetailList.get(i).getStr("end_time"));
-                                workDetailList.get(i).set("work_time", String.valueOf(df.format(fifthMinutes)));
-                                workDetailList.get(i).set("total", String.valueOf(df.format(fifthMinutes * Double.valueOf(staffR.getStr("hour_wage")))));
+                                workDetailList.get(i).set("work_time",NumberFormat.doubleFormatStr(fifthMinutes));
+                                workDetailList.get(i).set("total", NumberFormat.doubleFormatStr(fifthMinutes * Double.valueOf(staffR.getStr("hour_wage"))));
                                 workDetailList.get(i).set("sb_dk", "");
                                 workDetailList.get(i).set("xb_dk", "");
                                 workDetailList.get(i).set("status_color", "");
@@ -267,9 +268,9 @@ public class WorkTimeDetailCtrl extends BaseCtrl {
                                     workDetailList.get(i).set("total", "0.00");
                                 }
                                 if(StringUtils.equals(workDetailList.get(i).getStr("status"),"3")){
-                                    workDetailList.get(i).set("work_time", String.valueOf(df.format((count + 1) * fifthMinutes)));
+                                    workDetailList.get(i).set("work_time", NumberFormat.doubleFormatStr((count + 1) * fifthMinutes));
                                     workDetailList.get(i).set("status_text", dictionaryR.getStr("3"));
-                                    workDetailList.get(i).set("total",  String.valueOf(df.format(((count + 1) * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage")))));
+                                    workDetailList.get(i).set("total",  NumberFormat.doubleFormatStr(((count + 1) * fifthMinutes) * Double.valueOf(staffR.getStr("hour_wage"))));
                                 }
                                 workDetailList.get(i).remove("start_time");
                                 workDetailList.get(i).remove("end_time");
