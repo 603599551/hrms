@@ -120,6 +120,14 @@ public class ArticleCtrl extends BaseCtrl {
     }
 
     /**
+     * 上传PDF
+     * URL	http://localhost:8081/mgr/train/article/uploadPDF
+     */
+    public void uploadPDF(){
+        renderJson("{\"code\":1,\n" + "\"message\":\"上传成功\",\n" + "\"data\":\n" + "    {\"id\":\"cjlkh8gye000aj8g7cgvvwliv\",\"filePath\":\"pdf路径\"}\n" + "}\n");
+    }
+
+    /**
      * 15.8.	添加文章
      * 名称	添加文章
      * 描述	添加文章。
@@ -161,7 +169,7 @@ public class ArticleCtrl extends BaseCtrl {
 
         JsonHashMap jhm = new JsonHashMap();
         String title = getPara("title").trim();
-        String content = getPara("content");
+        String content = getPara("pdf_path");
         String class_id = getPara("class_id");
         UserSessionUtil usu = new UserSessionUtil(getRequest());
 
@@ -284,7 +292,7 @@ public class ArticleCtrl extends BaseCtrl {
         String title = getPara("title").trim();
         String id = getPara("id");
         String class_id = getPara("class_id");
-        String content = getPara("content");
+        String content = getPara("pdf_path");
         String video = getPara("video");
         UserSessionUtil usu = new UserSessionUtil(getRequest());
 
