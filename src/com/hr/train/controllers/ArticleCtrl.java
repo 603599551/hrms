@@ -4,6 +4,7 @@ import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
+import com.jfinal.upload.UploadFile;
 import com.sun.javafx.tk.RenderJob;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
@@ -12,6 +13,8 @@ import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -123,7 +126,35 @@ public class ArticleCtrl extends BaseCtrl {
      * 上传PDF
      * URL	http://localhost:8081/mgr/train/article/uploadPDF
      */
+    static class Preference {
+        public static String _PATH = "upload\\pdf\\";
+    }
+
     public void uploadPDF(){
+        HttpServletRequest request = getRequest();
+        String basePath = request.getContextPath();
+        //存储路径
+        String path = getSession().getServletContext().getRealPath(Preference._PATH);
+        UploadFile file = getFile("file");
+        System.out.println(path);
+        String fileName = "";
+        if(file.getFile().length() > 200*1024*1024) {
+            System.err.println("文件长度超过限制，必须小于200M");
+        }else{
+            //上传文件
+            String type = file.getFileName().substring(file.getFileName().lastIndexOf(".")); // 获取文件的后缀
+            fileName = System.currentTimeMillis() + type; // 对文件重命名取得的文件名+后缀
+            String dest = path + "\\" + fileName;
+            file.getFile().renameTo(new File(dest));
+            String realFile = basePath + "/" + Preference._PATH +  fileName;
+            String fName="\\"+fileName;
+            setAttr("fName", fName);
+            setAttr("url", realFile);
+
+        }
+
+        renderJson();
+
         renderJson("{\"code\":1,\n" + "\"message\":\"上传成功\",\n" + "\"data\":\n" + "    {\"id\":\"cjlkh8gye000aj8g7cgvvwliv\",\"filePath\":\"pdf路径\"}\n" + "}\n");
     }
 
