@@ -336,7 +336,7 @@ public class StaffCtrl extends BaseCtrl {
                     String empNum= StaffNumberGenerator.getStaffOrderNumber();
                     staff.set("id", id);
                     staff.set("pinyin", pinyin);
-                    staff.set("username",username);
+                    staff.set("username",phone);
                     staff.set("password","123456");
                     staff.set("kind", new String(kind));
                     staff.set("phone", phone);
@@ -656,6 +656,7 @@ public class StaffCtrl extends BaseCtrl {
                     String empNum = staff.getStr("emp_num").replace(" ", "");
                     staff.set("pinyin", pinyin);
                     staff.set("kind", new String(kind));
+                    staff.set("username", phone);
                     staff.set("phone", phone);
                     staff.set("emp_num", empNum);
                     staff.set("id_num", idNum);

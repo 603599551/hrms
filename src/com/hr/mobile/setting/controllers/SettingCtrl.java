@@ -70,7 +70,7 @@ public class SettingCtrl  extends BaseCtrl{
             }
         }else{
             try{
-                int i=Db.update("update h_staff set phone=? where id=?",newphone,staffId);
+                int i=Db.update("update h_staff set username=?,phone=? where id=?",newphone,newphone,staffId);
                 if(i>0){
                     jhm.putCode(1).putMessage("修改成功！");
                 }else{
