@@ -85,9 +85,7 @@ public class ExamCtrl extends BaseCtrl {
             List<Object> params = new ArrayList<>();
             //获取当前登录人的id和门店id
             String id=usu.getUserId();
-            String sqlStore="select s.dept_id storeId from h_staff s where s.id=?";
-            Record r=Db.findFirst(sqlStore,id);
-            String storeId=r.getStr("storeId");
+            String storeId=usu.getUserBean().getDeptId();
             //当前登录人不是admin
             if(!StringUtils.equals(id,"1")){
                 sql.append(" and hs.dept_id=? ");
