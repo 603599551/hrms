@@ -252,10 +252,6 @@ public class ApplyCtrl extends BaseCtrl {
     public void getFromStoreDict() {
         //当前登录人信息
         UserSessionUtil usu = new UserSessionUtil(getRequest());
-        //登录人id
-        String staffId = usu.getUserId();
-        //根据登录人id查询staff表得deptId
-        String deptId = Db.findFirst("SELECT dept_id FROM h_staff WHERE id=?", staffId).getStr("dept_id");
         String sql = "";
         List<Record> list = new ArrayList<>();
         if (StringUtils.equals(usu.getUsername(), "admin")) {
@@ -263,6 +259,9 @@ public class ApplyCtrl extends BaseCtrl {
             list = Db.find(sql);
         } else {
             sql = "select name name, id value from h_store where status = '1'and id!=? order by sort";
+
+            //根据登录人id查询staff表得deptId
+            String deptId = usu.getUserBean().getDeptId();
             list = Db.find(sql, deptId);
 
         }
