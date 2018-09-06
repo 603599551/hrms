@@ -16,9 +16,16 @@ import utils.bean.JsonHashMap;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ArticleCtrl extends BaseCtrl {
+    /**
+     * 上传PDF
+     * URL	http://localhost:8081/mgr/train/article/uploadPDF
+     */
+    public static String PDF_PATH = "upload/pdf/";
     /**
      * 15.7.	文章列表
      * 名称	文章列表
@@ -122,40 +129,54 @@ public class ArticleCtrl extends BaseCtrl {
         renderJson(jhm);
     }
 
-    /**
-     * 上传PDF
-     * URL	http://localhost:8081/mgr/train/article/uploadPDF
-     */
-    static class Preference {
-        public static String _PATH = "upload\\pdf\\";
-    }
+
+
 
     public void uploadPDF(){
+        JsonHashMap jhm=new JsonHashMap();
         HttpServletRequest request = getRequest();
         String basePath = request.getContextPath();
         //存储路径
-        String path = getSession().getServletContext().getRealPath(Preference._PATH);
+        String path = getSession().getServletContext().getRealPath(PDF_PATH);
+        File pathFile=new File(path);
+        if(!pathFile.exists()){
+            pathFile.mkdirs();
+        }
         UploadFile file = getFile("file");
         System.out.println(path);
         String fileName = "";
         if(file.getFile().length() > 200*1024*1024) {
-            System.err.println("文件长度超过限制，必须小于200M");
-        }else{
-            //上传文件
-            String type = file.getFileName().substring(file.getFileName().lastIndexOf(".")); // 获取文件的后缀
-            fileName = System.currentTimeMillis() + type; // 对文件重命名取得的文件名+后缀
-            String dest = path + "\\" + fileName;
-            file.getFile().renameTo(new File(dest));
-            String realFile = basePath + "/" + Preference._PATH +  fileName;
-            String fName="\\"+fileName;
-            setAttr("fName", fName);
-            setAttr("url", realFile);
-
+            jhm.putCode(0).putMessage("文件长度超过限制，必须小于200M");
+            renderJson(jhm);
+            return;
+        }
+        if(!file.getOriginalFileName().toLowerCase().endsWith(".pdf")){
+            jhm.putCode(0).putMessage("请上传pdf格式的文件！");
+            renderJson(jhm);
+            return;
         }
 
-        renderJson();
+        //上传文件
+        String type = file.getFileName().substring(file.getFileName().lastIndexOf(".")); // 获取文件的后缀
+        fileName = UUIDTool.getUUID() + type; // 对文件重命名取得的文件名+后缀
+        String dest = path + "\\" + fileName;
+        boolean b=file.getFile().renameTo(new File(dest));
+        if(!b){
+            jhm.putCode(0).putMessage("上传文件失败！");
+            renderJson(jhm);
+            return;
+        }
+        String realFile =  "/" + PDF_PATH +  fileName;
+//        String fName="\\"+fileName;
+//        setAttr("fName", file.getOriginalFileName());
+//        setAttr("url", realFile);
+        jhm.putCode(1).putMessage("上传成功！");
+        Map dataMap=new HashMap();
+        dataMap.put("org_name",file.getOriginalFileName());
+        dataMap.put("url",realFile);
+        jhm.put("data",dataMap);
 
-        renderJson("{\"code\":1,\n" + "\"message\":\"上传成功\",\n" + "\"data\":\n" + "    {\"id\":\"cjlkh8gye000aj8g7cgvvwliv\",\"filePath\":\"pdf路径\"}\n" + "}\n");
+        renderJson(jhm);
     }
 
     /**
@@ -202,6 +223,8 @@ public class ArticleCtrl extends BaseCtrl {
         String title = getPara("title").trim();
         String content = getPara("pdf_path");
         String class_id = getPara("class_id");
+        String orgName = getPara("org_name");
+        String url = getPara("url");
         UserSessionUtil usu = new UserSessionUtil(getRequest());
 
         //进行非空验证
@@ -246,6 +269,8 @@ public class ArticleCtrl extends BaseCtrl {
                         type.set("create_time", time);
                         type.set("modify_time", time);
                         type.set("video",video);
+                        type.set("pdf_org_name",orgName);
+                        type.set("pdf_path",content);
 
                         Record grandparentRecord = Db.findFirst("select parent_id , name from h_train_type t where t.id = ?", parent_type);
                         if (StringUtils.equals("-1", grandparentRecord.getStr("parent_id"))  ) {
@@ -325,6 +350,8 @@ public class ArticleCtrl extends BaseCtrl {
         String class_id = getPara("class_id");
         String content = getPara("pdf_path");
         String video = getPara("video");
+        String orgName = getPara("org_name");
+        String url = getPara("url");
         UserSessionUtil usu = new UserSessionUtil(getRequest());
 
         //进行非空验证
@@ -371,6 +398,8 @@ public class ArticleCtrl extends BaseCtrl {
                         String time = DateTool.GetDateTime();
                         type.set("modify_time", time);
                         type.set("video",video);
+                        type.set("pdf_org_name",orgName);
+                        type.set("pdf_path",content);
 
                         Record grandparentRecord = Db.findFirst("select parent_id , name from h_train_type t where t.id = ?", parent_type);
                         if (StringUtils.equals("-1", grandparentRecord.getStr("parent_id"))  ) {
@@ -444,7 +473,7 @@ public class ArticleCtrl extends BaseCtrl {
 //        renderJson("{\"code\":1,\"data\":{\"id\":\"134adjfwe\",\"title\":\"餐具的摆放\",\"class_id\":\"234k5jl234j5lkj24l35j423l5j\",\"content\":\"<hr><h1>sdfsdfd</h1>\",\"create_time\":\"2018-06-28\",\"author\":\"作者\"}}");
         JsonHashMap jhm = new JsonHashMap();
         Record record = this.getParaRecord();
-
+        String basePath = getRequest().getContextPath();
         //进行非空验证
         if (StringUtils.isEmpty(record.getStr("id"))) {
             jhm.putCode(0).putMessage("id不能为空！");
@@ -455,7 +484,10 @@ public class ArticleCtrl extends BaseCtrl {
         try {
             Record r = Db.findById("h_train_article", record.getStr("id"));
             if (r != null) {
-                Record nameR = Db.findFirst("SELECT name FROM h_staff WHERE id=?", r.getStr("creater_id"));
+                String createrId=r.getStr("creater_id");
+                Record nameR = Db.findFirst("SELECT name FROM h_staff WHERE id=? union all SELECT name FROM h_admin WHERE id=?", createrId,createrId);
+                String pdfPath=r.getStr("pdf_path");
+                pdfPath=basePath+pdfPath;
                 r.set("author", nameR.getStr("name"));
                 r.remove("creater_id");
                 r.remove("modifier_id");
@@ -463,6 +495,7 @@ public class ArticleCtrl extends BaseCtrl {
                 r.remove("type_1");
                 r.set("class_id", r.getStr("type_2"));
                 r.remove("type_2");
+                r.set("pdf_path",pdfPath);
                 jhm.putCode(1).put("data", r);
             } else {
                 jhm.putCode(0).putMessage("文章不存在！");
