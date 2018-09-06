@@ -79,7 +79,8 @@ public class SchedulingCtrl extends BaseCtrl {
             return;
         }
 
-        String select = "SELECT  p.content , p.app_content FROM h_staff_paiban p WHERE p.staff_id = ? and p.date = ?";
+//        String select = "SELECT  p.content , p.app_content FROM h_staff_paiban p WHERE p.staff_id = ? and p.date = ?";
+        String select = "SELECT  p.content , p.app_content,a.area_name FROM h_staff_paiban p,h_area_staff a WHERE p.store_id=a.store_id and p.staff_id=a.staff_id and p.date=a.date and p.staff_id = ? and p.date = ? ";
         String selectLeave = "SELECT DISTINCT l.leave_start_time as start FROM h_staff_leave l WHERE  (SELECT i.status FROM h_staff_leave_info i WHERE i.id = l.leave_info_id) = '1' AND l.staff_id = ?  AND l.date = ?";
         String[] params = {id, date};
         String selectStaff = "SELECT count(*) c FROM h_staff s WHERE s.id = ? ";
