@@ -169,9 +169,16 @@ public class AreaCtrl extends BaseCtrl{
             List<Record> list = Db.find(select, storeId, date);
             String colorSelect = "select color from h_store_color";
             List<Record> colorList = Db.find(colorSelect);
+            String selectArea = "select * from h_area where store_id=?";
+            List<Record> areaList = Db.find(selectArea, storeId);
             Map<String, List<Record>> areaStaffListMap = new HashMap<>();
             Map<String, Record> areaStaffMap = new HashMap<>();
             Map<String, Record> staffMap = new HashMap<>();
+            if(areaList != null && areaList.size() > 0){
+                for(Record r : areaList){
+                    areaStaffMap.put(r.getStr("id"), r);
+                }
+            }
             int index = 0;
             if(list != null && list.size() > 0){
                 for(Record r : list){
@@ -182,6 +189,8 @@ public class AreaCtrl extends BaseCtrl{
                     List<Record> staffList = areaStaffListMap.computeIfAbsent(r.getStr("id"), k -> new ArrayList<>());
                     staffList.add(staffMap.get(r.getStr("sid")));
                     r.set("workers", staffList);
+                    Record areaStaff = areaStaffMap.get(r.getStr("id"));
+                    r.set("sort", areaStaff.getInt("sort"));
                     areaStaffMap.put(r.getStr("id"), r);
                 }
             }
@@ -194,6 +203,7 @@ public class AreaCtrl extends BaseCtrl{
             Collections.sort(result, new Comparator<Record>() {
                 @Override
                 public int compare(Record o1, Record o2) {
+                    //int o1I = o1 != null ? o1.getInt("sort") : 0;
                     return o1.getInt("sort").compareTo(o2.getInt("sort"));
                 }
             });
@@ -208,8 +218,6 @@ public class AreaCtrl extends BaseCtrl{
 
     public void edit(){
         String id = getPara("id");
-        String name = getPara("name");
-        //TODO 前端好像没有传日期
         String date = getPara("date");
         String[] workers = getParaValues("workers");
         JsonHashMap jhm = new JsonHashMap();
