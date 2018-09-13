@@ -10,7 +10,9 @@ import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class SchedulingCtrl extends BaseCtrl {
@@ -78,79 +80,92 @@ public class SchedulingCtrl extends BaseCtrl {
             renderJson(jhm);
             return;
         }
-
-//        String select = "SELECT  p.content , p.app_content FROM h_staff_paiban p WHERE p.staff_id = ? and p.date = ?";
-        String select = "SELECT  p.content , p.app_content,a.area_name FROM h_staff_paiban p,h_area_staff a WHERE p.store_id=a.store_id and p.staff_id=a.staff_id and p.date=a.date and p.staff_id = ? and p.date = ? ";
-        String selectLeave = "SELECT DISTINCT l.leave_start_time as start FROM h_staff_leave l WHERE  (SELECT i.status FROM h_staff_leave_info i WHERE i.id = l.leave_info_id) = '1' AND l.staff_id = ?  AND l.date = ?";
-        String[] params = {id, date};
+        //判断是否存在该员工
         String selectStaff = "SELECT count(*) c FROM h_staff s WHERE s.id = ? ";
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        Record record = Db.findFirst(selectStaff, id);
+        if (record.getInt("c") <= 0) {
+            jhm.putCode(0).putMessage("员工不存在");
+            renderJson(jhm);
+            return;
+        }
 
+        //查询排班信息
+        String select = "SELECT  p.content , p.app_area_content FROM h_staff_paiban p WHERE p.staff_id = ? and p.date = ?";
+        String[] params = {id, date};
+        Record timeRecord = Db.findFirst(select, params);
+        if(timeRecord==null){
+            jhm.putCode(2).putMessage("未排班!");
+            jhm.put("staff_id", id);
+            jhm.put("date", date);
+            renderJson(jhm);
+            return;
+        }
+//        String content = timeRecord.getStr("content");
+        String appContent = timeRecord.getStr("app_area_content");
+        if (appContent == null && appContent.trim().length() == 0) {
+            jhm.putCode(2).putMessage("未排班！");
+            jhm.put("staff_id", id);
+            jhm.put("date", date);
+            renderJson(jhm);
+            return;
+        }
+
+        //查询请假信息
+        String selectLeave = "SELECT DISTINCT l.leave_start_time as start FROM h_staff_leave l,h_staff_leave_info i WHERE i.id = l.leave_info_id and l.staff_id = ? and i.status='1' AND l.date = ? order by l.leave_start_time";
+        List<Record> leaveTime = Db.find(selectLeave, id, date);
+
+        //查询岗位数据字典，并放入到map中，便于后面翻译岗位
+        List<Record> kindList=Db.find("select name,value from h_dictionary where parent_id=?",3000);
+        Map<String,String> kindMap=new HashMap();
+        for(Record r:kindList){
+            String name=r.get("name");
+            String value=r.get("value");
+            kindMap.put(value,name);
+        }
         try {
-            //寻找有没有该员工
-            Record record = Db.findFirst(selectStaff, id);
-            if (record.getInt("c") <= 0) {
-                jhm.putCode(0).putMessage("员工不存在");
-            } else {
-                //转为Json
-                Record timeRecord = Db.findFirst(select, params);
-                List<Record> leaveTime = Db.find(selectLeave, params);
 
-                if (timeRecord != null) {
-                    //玄学职位
-                    String content = timeRecord.getStr("content");
-                    String[] jobStr = content.split(",");
-                    String job = jobStr[3].substring(17,jobStr[3].length() - 1);
-                    Record jobName = Db.findFirst("SELECT d.`name` as name FROM h_dictionary d WHERE d.`value` = ? AND d.parent_id = 3000",job);
-                    jhm.put("job", jobName.getStr("name"));
-                    if ( leaveTime != null && leaveTime.size() > 0 ) {
-                        String appContent = timeRecord.getStr("app_content");
-                        //是否存在排班信息
-                        if (appContent != null && appContent.trim().length() > 0) {
-                            JSONArray jsonArray = JSONArray.fromObject(appContent);
-                            for (int i = 0; i < jsonArray.size(); ++i) {
-                                //找请假表
-                                JSONObject jsonObj = jsonArray.getJSONObject(i);
-                                for (int j = 0; j < leaveTime.size(); ++j) {
-                                    if(sdf.parse(jsonObj.getString("start")).getTime() == sdf.parse(leaveTime.get(j).getStr("start")).getTime()) {
-                                        jsonObj.put("flag", "1");
-                                        break;
-                                    } else {
-                                        jsonObj.put("flag", "0");
-                                    }
-                                }
-                            }
-                            jhm.put("list", jsonArray);
+            if ( leaveTime != null && leaveTime.size() > 0 ) {
+                //是否存在排班信息
+                JSONArray jsonArray = JSONArray.fromObject(appContent);
+                for (int i = 0; i < jsonArray.size(); ++i) {
+                    //找请假表
+                    JSONObject jsonObj = jsonArray.getJSONObject(i);
+                    String startTime=jsonObj.getString("start");
+                    String kind=jsonObj.getString("kind");
+                    String kindText=kindMap.get(kind);
+                    jsonObj.put("kind_text",kindText);
+                    for (int j = 0; j < leaveTime.size(); ++j) {
+                        String startLeaveTime=leaveTime.get(j).getStr("start");
+                        if(startTime.equals(startLeaveTime )) {
+                            jsonObj.put("flag", "1");
+                            break;
                         } else {
-                            jhm.putCode(2).putMessage("未排班！");
-                        }
-                    } else {
-                        //不存在请假信息
-                        String appContent = timeRecord.getStr("app_content");
-                        if (appContent != null && appContent.trim().length() > 0) {
-                            //是否存在排班信息
-                            JSONArray jsonArray = JSONArray.fromObject(appContent);
-                            for (int i = 0; i < jsonArray.size(); ++i) {
-                                //找请假表
-                                JSONObject jsonObj = jsonArray.getJSONObject(i);
-                                jsonObj.put("flag", "0");
-                            }
-                            jhm.put("list", jsonArray);
-                        } else {
-                            jhm.putCode(2).putMessage("未排班！");
+                            jsonObj.put("flag", "0");
                         }
                     }
-                    //存在请假信息
-                    jhm.put("staff_id", id);
-                    jhm.put("date", date);
-                } else {
-                    jhm.putCode(2).putMessage("未排班!");
-                    jhm.put("staff_id", id);
-                    jhm.put("date", date);
                 }
+                jhm.put("list", jsonArray);
+            } else {
+                //不存在请假信息
+                JSONArray jsonArray = JSONArray.fromObject(appContent);
+                for (int i = 0; i < jsonArray.size(); ++i) {
+                    //找请假表
+                    JSONObject jsonObj = jsonArray.getJSONObject(i);
+                    jsonObj.put("flag", "0");
 
-
+                    String kind=jsonObj.getString("kind");
+                    String kindText=kindMap.get(kind);
+                    jsonObj.put("kind_text",kindText);
+                }
+                jhm.put("list", jsonArray);
             }
+            //存在请假信息
+            jhm.put("staff_id", id);
+            jhm.put("date", date);
+
+
+
+
         } catch (Exception e) {
             e.printStackTrace();
             jhm.putCode(-1).putMessage("服务器发生异常！");
