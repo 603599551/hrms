@@ -1,5 +1,6 @@
 package utils;
 
+import com.jfinal.plugin.activerecord.Record;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import easy.util.DateTool;
@@ -9,6 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ContentTransformationUtil {
+
+    private static final String[] posts = {"waiter", "passed", "band", "cleanup", "inputorder", "cashier", "preparation_xj", "preparation_lb", "pickle_xj", "pickle_lb", "Noodle", "pendulum", "preparation", "fried_noodles", "drink"};
 
     /**
      * @author wangze
@@ -498,6 +501,51 @@ public class ContentTransformationUtil {
                 resultMap.add(map);
             }
             result = JSONArray.fromObject(resultMap).toString();
+        }
+        return result;
+    }
+
+    public static String Pc2AppKindAreaContentEvery15M4Paiban(String pcContent, Map<String, Record> kindAreaMap){
+        String result = "";
+        if(pcContent == null || pcContent.trim().length() == 0){
+            return "";
+        }
+        JSONObject pc = JSONObject.fromObject(pcContent);
+        JSONArray works = pc.getJSONArray("work");
+        if(works != null && works.size() > 0){
+            List<Map<String, String>> resultMap = new ArrayList<>();
+            for(int i = 0; i < works.size(); i++){
+                JSONObject work = works.getJSONObject(i);
+                String time = work.getJSONArray("pos").getString(0);
+                int kindIndex = work.getJSONArray("pos").getInt(1);
+                String kind = posts[kindIndex];
+                Record areaRecord = getAreaRecord(kind, kindAreaMap);
+                Map<String, String> map = new HashMap<>();
+                map.put("start", timePc_App_begin.get(time));
+                map.put("end", timePc_App_end.get(time));
+                map.put("kind", kind);
+                map.put("areaName", areaRecord.getStr("area_name"));
+                resultMap.add(map);
+            }
+            result = JSONArray.fromObject(resultMap).toString();
+        }
+        return result;
+    }
+
+    public static Record getAreaRecord(String kind, Map<String, Record> kindAreaMap){
+        Record result = new Record();
+        if(kindAreaMap != null){
+            Set<String> keySet = kindAreaMap.keySet();
+            for(String s : keySet){
+                if(s.indexOf(kind) >= 0){
+                    return kindAreaMap.get(s);
+                }
+            }
+            result.set("kind", "");
+            result.set("area_name", "");
+        }else{
+            result.set("area_name", "");
+            result.set("kind", "");
         }
         return result;
     }
