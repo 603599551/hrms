@@ -300,10 +300,17 @@ public class TrainCtrl extends BaseCtrl {
                     renderJson(jhm);
                     return;
                 }
+                String content=record.getStr("content");
+                if(content==null)content="";
+                String video=record.getStr("video");
+                if(video==null)video="";
+                String pdfPath=record.getStr("pdf_path");
+                if(pdfPath==null)pdfPath="";
+
                 jhm.putCode(1);
-                jhm.put("content", record.getStr("content"));
-                jhm.put("video", record.getStr("video"));
-                jhm.put("pdf_path", record.getStr("pdf_path"));
+                jhm.put("content",content );
+                jhm.put("video", video);
+                jhm.put("pdf_path",pdfPath );
             } else {
                 jhm.putCode(0).putMessage("员工不存在！");
             }
