@@ -134,8 +134,6 @@ public class ArticleCtrl extends BaseCtrl {
 
     public void uploadPDF(){
         JsonHashMap jhm=new JsonHashMap();
-        HttpServletRequest request = getRequest();
-        String basePath = request.getContextPath();
         //存储路径
         String path = getSession().getServletContext().getRealPath(PDF_PATH);
         File pathFile=new File(path);
@@ -143,7 +141,6 @@ public class ArticleCtrl extends BaseCtrl {
             pathFile.mkdirs();
         }
         UploadFile file = getFile("file");
-        System.out.println(path);
         String fileName = "";
         if(file.getFile().length() > 200*1024*1024) {
             jhm.putCode(0).putMessage("文件长度超过限制，必须小于200M");
