@@ -7,9 +7,14 @@ import com.jfinal.plugin.activerecord.Record;
 import com.utils.UserSessionUtil;
 import easy.util.DateTool;
 import easy.util.NumberUtils;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -485,4 +490,119 @@ public class LeaveCtrl extends BaseCtrl {
         renderJson(jhm);
     }
 
+    /**
+     * 显示某员工某日期内，可请假的时间段
+     * 假如传入的时间是2018-09-15，当前时间是2018-09-15 12:07，
+     * 1.查询该登录人2018-09-15这天的排班时间段（以下简称“排班时间段”）
+     * 2.如果请假的日期，与当前日期相同，将“排班时间段”与当前日期时间（即12:07）做比较，
+     *   排除掉当前时间之前的时间段（12:07之前的时间段排除掉，剩下的时间段简称“排班时间段2”）
+     * 3.查询该登录人在2018-09-15这天的请假信息（店长审核同意），将“排班时间段2”与请假时间段比较，
+     *   从“排班时间段2”排除相同的时间段（剩下的时间段简称“排班时间段3”）
+     * 4.“排班时间段3”，就是今天可请假的时间段，返回该时间段
+     */
+    public void showLeaveTime(){
+        String userId=getPara("id");
+        String date=getPara("date");
+
+        JsonHashMap jhm=new JsonHashMap();
+        /*
+        如果userId为空，表示当前登录人
+         */
+        if(userId==null || "".equals(userId)){
+            UserSessionUtil usu=new UserSessionUtil(getRequest());
+            userId=usu.getUserId();
+        }
+        /*
+        如果日期为空，表示当前日期
+         */
+        if(date==null || "".equals(date)){
+            jhm.putCode(0).putMessage("请输入请假日期！");
+            renderJson(jhm);
+            return;
+        }
+
+
+        //查询排班信息
+        String select = "SELECT  p.content , p.app_area_content FROM h_staff_paiban p WHERE p.staff_id = ? and p.date = ?";
+        String[] params = {userId, date};
+        Record timeRecord = Db.findFirst(select, params);
+        if(timeRecord==null){
+            jhm.putCode(2).putMessage("未排班!");
+            jhm.put("staff_id", userId);
+            jhm.put("date", date);
+            renderJson(jhm);
+            return;
+        }
+        String appContent = timeRecord.getStr("app_area_content");
+        if (appContent == null && appContent.trim().length() == 0) {
+            jhm.putCode(2).putMessage("未排班！");
+            jhm.put("staff_id", userId);
+            jhm.put("date", date);
+            renderJson(jhm);
+            return;
+        }
+
+        JSONArray paiBanJsonArray = JSONArray.fromObject(appContent);
+
+        /*
+        如果请假的日期，与当前日期相同，
+        将“排班时间段”与当前时间做比较，排除掉之前的时间段
+         */
+        Date currentDate=new Date();
+        String currentDateStr=DateTool.getDate(currentDate,"yyyy-MM-dd");
+        if(date.equals(currentDateStr)){
+            SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            for (int i = 0; i < paiBanJsonArray.size(); ++i) {
+                JSONObject jsonObj = paiBanJsonArray.getJSONObject(i);
+                String startTime=jsonObj.getString("start");
+                String dateTime=date+" "+startTime+":00";
+                try {
+                    Date paiBanDate=sdf.parse(dateTime);
+                    if(paiBanDate.getTime()<=currentDate.getTime()){
+                        boolean b=paiBanJsonArray.remove(jsonObj);
+                        i--;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        /*
+        查询请假信息，将“排班时间段2”与请假时间段比较，
+        从“排班时间段”排除相同的时间段
+         */
+        String selectLeave = "SELECT DISTINCT l.leave_start_time as start FROM h_staff_leave l,h_staff_leave_info i WHERE i.id = l.leave_info_id and l.staff_id = ? and i.status='1' AND l.date = ? order by l.leave_start_time";
+        List<Record> leaveTime = Db.find(selectLeave, userId, date);
+
+        if ( leaveTime != null && leaveTime.size() > 0 ) {
+            //是否存在排班信息
+            for (int i = 0; i < paiBanJsonArray.size(); ++i) {
+                //找请假表
+                JSONObject jsonObj = paiBanJsonArray.getJSONObject(i);
+                String startTime=jsonObj.getString("start");
+                for (int j = 0; j < leaveTime.size(); ++j) {
+                    String startLeaveTime=leaveTime.get(j).getStr("start");
+                    if(startTime.equals(startLeaveTime )) {
+                        jsonObj.put("flag", "1");
+                        break;
+                    } else {
+                        jsonObj.put("flag", "0");
+                    }
+                }
+            }
+        }else {
+            //不存在请假信息
+            for (int i = 0; i < paiBanJsonArray.size(); ++i) {
+                //找请假表
+                JSONObject jsonObj = paiBanJsonArray.getJSONObject(i);
+                jsonObj.put("flag", "0");
+            }
+        }
+        jhm.put("list", paiBanJsonArray);
+        //存在请假信息
+        jhm.put("staff_id", userId);
+        jhm.put("date", date);
+
+        renderJson(jhm);
+    }
 }
