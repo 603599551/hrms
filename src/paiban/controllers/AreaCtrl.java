@@ -109,13 +109,8 @@ public class AreaCtrl extends BaseCtrl{
         area.set("modifier_id", usu.getUserId());
         area.set("modify_time", time);
         try{
-            boolean flag = Db.update("h_area", area);
-            if(flag){
-                jhm.putMessage("修改成功！");
-            }else{
-                jhm.putCode(0);
-                jhm.putMessage("修改失败！");
-            }
+            service.update(area);
+            jhm.putMessage("修改成功！");
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(0);

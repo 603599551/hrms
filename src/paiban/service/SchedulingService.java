@@ -289,7 +289,7 @@ public class SchedulingService extends BaseService {
             String deleteStaffPaiBanSql = "delete from h_staff_paiban where store_id=? and date between ? and ?";
             Db.delete(deleteStaffPaiBanSql, usu.getUserBean().get("store_id"), dateArr[0], dateArr[6]);
             Db.batchSave("h_staff_paiban", saveList, saveList.size());
-            saveStaffClock(saveList, usu, dateArr);
+            saveStaffClock(saveList, usu, dateArr, staffKindAreaMap);
             saveWorkTime(saveList, usu, dateArr);
         }
     }
@@ -366,8 +366,9 @@ public class SchedulingService extends BaseService {
      * @param staffPaibanList
      * @param usu
      * @param dateArr
+     * @param staffKindAreaMap Map<staff_id,Map<kind,area>>
      */
-    private void saveStaffClock(List<Record> staffPaibanList, UserSessionUtil usu, String[] dateArr){
+    private void saveStaffClock(List<Record> staffPaibanList, UserSessionUtil usu, String[] dateArr, Map<String, Map<String, Record>> staffKindAreaMap){
         if(staffPaibanList != null && staffPaibanList.size() > 0){
             String userId = usu.getUserId();
             String time = DateTool.GetDateTime();
@@ -392,6 +393,8 @@ public class SchedulingService extends BaseService {
                         save.set("sign_in_time", "");
                         save.set("sign_back_time", "");
                         save.set("kind", kind);
+                        Record areaRecord = ContentTransformationUtil.getAreaRecord(kind, staffKindAreaMap.get(r.get("staff_id")));
+                        save.set("area_name", areaRecord.getStr("area_name"));
                         save.set("slary", salary);
                         save.set("is_leave", 0);
                         save.set("creater_id", userId);
@@ -735,8 +738,17 @@ staff_idle_time里面app_content也是15分钟时间段  没有秒
      */
     public void update(JSONObject object, UserSessionUtil usu){
         String date = object.getString("date");
+        String storeId = object.getString("dept");
+        List<Record> kindAreaList = Db.find("select has.*, ha.kind kind from h_area_staff has, h_area ha where has.area_id=ha.id and has.store_id=?", storeId);
+        Map<String, Map<String, Record>> staffKindAreaMap = new HashMap<>();
+        if(kindAreaList != null && kindAreaList.size() > 0){
+            for(Record r : kindAreaList){
+                Map<String, Record> kindAreaMap = staffKindAreaMap.computeIfAbsent(r.getStr("staff_id"), k -> new HashMap());
+                kindAreaMap.put(r.getStr("kind"), r);
+            }
+        }
         List<Record> staffPaibanList = update_h_staff_paiban(object, usu);
-        update_h_staff_clock(staffPaibanList, usu, date);
+        update_h_staff_clock(staffPaibanList, usu, date, staffKindAreaMap);
         update_h_work_time(staffPaibanList, usu, date);
         update_h_paiban_problem(object, staffPaibanList, usu);
     }
@@ -795,10 +807,10 @@ staff_idle_time里面app_content也是15分钟时间段  没有秒
      * @param usu
      * @param date
      */
-    private void update_h_staff_clock(List<Record> staffPainbanList, UserSessionUtil usu, String date){
+    private void update_h_staff_clock(List<Record> staffPainbanList, UserSessionUtil usu, String date, Map<String, Map<String, Record>> staffKindAreaMap){
         String[] dateArr = new String[1];
         dateArr[0] = date;
-        saveStaffClock(staffPainbanList, usu, dateArr);
+        saveStaffClock(staffPainbanList, usu, dateArr, staffKindAreaMap);
     }
 
     /**

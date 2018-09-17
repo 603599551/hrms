@@ -36,4 +36,11 @@ public class AreaService extends BaseService {
         Db.batchSave("h_area_staff", areaStaffList, areaStaffList.size());
     }
 
+    public void update(Record area){
+        Db.update("h_area", area);
+        String update = "update h_area_staff set area_name=? where area_id=?";
+        Object[] params = {area.get("name"), area.get("id")};
+        Db.update(update, params);
+    }
+
 }
