@@ -183,6 +183,7 @@ public class AddressListCtrl extends BaseCtrl {
                 }
             }
 
+
             //存放相同首字母的list
             List<Record> l=new ArrayList<>();
             //存放分组了的list
