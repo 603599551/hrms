@@ -300,6 +300,7 @@ public class NoticeCtrl extends BaseCtrl{
             jhm.put("sign",count5);
 
         }catch (Exception e){
+            e.printStackTrace();
             jhm.putCode(-1);
             jhm.putMessage("服务器发生异常！");
         }

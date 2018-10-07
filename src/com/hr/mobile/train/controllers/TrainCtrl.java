@@ -287,12 +287,12 @@ public class TrainCtrl extends BaseCtrl {
         try {
             String search = "select count(*) as c from h_staff s where s.id = ? ";
             Record countR = Db.findFirst(search, staff_id);
-            String sql;
+            String sql=" select a.content as content,video,pdf_path from h_train_article a ";
             if (countR.getInt("c") != 0) {
                 if (StringUtils.equals(flag, "product")) {
-                    sql = "select a.content as content,video from h_train_article a where a.type_3 = ? ";
+                    sql = sql+" where a.type_3 = ? ";
                 } else {
-                    sql = "select a.content as content,video from h_train_article a where a.type_2 = ? ";
+                    sql = sql+" where a.type_2 = ? ";
                 }
                 Record record = Db.findFirst(sql, type_id);
                 if (record == null) {
@@ -300,9 +300,17 @@ public class TrainCtrl extends BaseCtrl {
                     renderJson(jhm);
                     return;
                 }
+                String content=record.getStr("content");
+                if(content==null)content="";
+                String video=record.getStr("video");
+                if(video==null)video="";
+                String pdfPath=record.getStr("pdf_path");
+                if(pdfPath==null)pdfPath="";
+
                 jhm.putCode(1);
-                jhm.put("content", record.getStr("content"));
-                jhm.put("video", record.getStr("video"));
+                jhm.put("content",content );
+                jhm.put("video", video);
+                jhm.put("pdf_path",pdfPath );
             } else {
                 jhm.putCode(0).putMessage("员工不存在！");
             }
