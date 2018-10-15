@@ -3,7 +3,10 @@ package com.hr.wxapplet.common;
 import com.common.controllers.BaseCtrl;
 
 import com.google.gson.Gson;
+import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Record;
 import io.netty.handler.codec.http.HttpMethod;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import utils.bean.JsonHashMap;
 import org.apache.http.HttpEntity;
@@ -58,17 +61,34 @@ public class CommonCtrl extends BaseCtrl{
      * 1005.C.登录
      */
     public void login(){
-//        JsonHashMap jhm=new JsonHashMap();
-//        String phone=getPara("phone");
-//
-//        try{
-//
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            jhm.putCode(-1).putMessage(e.toString());
-//        }
-//        renderJson(jhm);
-        renderJson("{\"code\":1,\"message\":\"验证成功！\"}");
+        JsonHashMap jhm=new JsonHashMap();
+        /**
+         * 接收前端参数
+         */
+        String phone=getPara("phone");
+
+        //非空验证
+        if(StringUtils.isEmpty(phone)){
+            jhm.putCode(0).putMessage("手机号不能为空！");
+            renderJson(jhm);
+            return;
+        }
+
+        try{
+            String sql = "SELECT phone FROM h_staff WHERE phone=?";
+            Record info = Db.findFirst(sql,phone);
+            if (info==null){
+                jhm.putCode(0).putMessage("验证失败！");
+            }else{
+                jhm.putCode(1).putMessage("验证成功！");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jhm);
+        //renderJson("{\"code\":1,\"message\":\"验证成功！\"}");
+
     }
 
     /**

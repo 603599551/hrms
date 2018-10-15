@@ -8,6 +8,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
+import org.apache.commons.lang.StringUtils;
 
 
 import java.util.Map;
@@ -115,5 +116,67 @@ public class ManageSrv extends BaseService {
         }catch (ActiveRecordException e){
             throw new ActiveRecordException("Fail to add notice!");
         }
+    }
+
+    @Before(Tx.class)
+    public void applyCheckResult(Map paraMap){
+        //经理id
+        String userId=(String)paraMap.get("userId");
+        //考核记录id
+        String checkId=(String)paraMap.get("checkId");
+        //考核结果
+        String status=(String)paraMap.get("status");
+
+        //提交考核结果
+        Record result = new Record();
+        result.set("examiner_id",userId);
+        result.set("id",checkId);
+        result.set("result",status);
+
+        try{
+            Db.update("h_exam",result);
+        }catch (ActiveRecordException e){
+            throw new ActiveRecordException("提交失败！");
+        }
+
+        String sql="SELECT d.name AS title,e.id AS fid,e.staff_id AS receiver_id FROM h_exam e,h_dictionary d WHERE e.id=? AND e.kind_id=d.value";
+
+        String title;
+        String fid;
+        String receiverId;
+        try{
+            Record info=Db.findFirst(sql,checkId);
+            title=info.getStr("title");
+            fid=info.getStr("fid");
+            receiverId=info.getStr("receiver_id");
+        }catch (ActiveRecordException e){
+            throw new ActiveRecordException("获取考核信息失败！");
+        }
+
+        String time=DateTool.GetDateTime();
+
+
+        Record notice=new Record();
+        notice.set("id",UUIDTool.getUUID());
+        notice.set("title",title);
+        notice.set("sender_id",userId);
+        notice.set("receiver_id",receiverId);
+        notice.set("create_time",time);
+        notice.set("modify_time",time);
+        notice.set("type","examine");
+        notice.set("fid",fid);
+        //考核通过
+        if (StringUtils.equals(status,"0")){
+            notice.set("status","3");
+        }else {
+            //未通过
+            notice.set("status","4");
+        }
+        try{
+            Db.save("h_notice",notice);
+        }catch (ActiveRecordException e){
+            throw new ActiveRecordException("通知失败");
+        }
+
     }
 }
