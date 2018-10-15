@@ -2,6 +2,7 @@ package com.hr.wxapplet.manager.controller;
 
 import com.common.controllers.BaseCtrl;
 import com.hr.wxapplet.manager.service.ManageSrv;
+import com.jfinal.plugin.activerecord.ActiveRecordException;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import easy.util.DateTool;
@@ -98,11 +99,16 @@ public class ManageCtrl extends BaseCtrl{
                 renderJson(jhm);
                 return;
             }
-
-            paraMap.put("time",time);
-            paraMap.put("address",address);
-            ManageSrv srv=enhance(ManageSrv.class);
-            jhm=srv.saveAgreeCheck(paraMap);
+            try{
+                paraMap.put("time",time);
+                paraMap.put("address",address);
+                ManageSrv srv=enhance(ManageSrv.class);
+                srv.agreeCheck(paraMap);
+                jhm.putCode(1).putMessage("回复成功！");
+            }catch (ActiveRecordException e){
+                e.printStackTrace();
+                jhm.putCode(-1).putMessage(e.getMessage());
+            }
 
         }else if(StringUtils.equals(status,"1")){
             //拒绝情况
@@ -111,13 +117,17 @@ public class ManageCtrl extends BaseCtrl{
                 renderJson(jhm);
                 return;
             }
-
-            paraMap.put("reason",reason);
-            ManageSrv srv=enhance(ManageSrv.class);
-            jhm=srv.saveRefuseCheck(paraMap);
+            try{
+                paraMap.put("reason",reason);
+                ManageSrv srv=enhance(ManageSrv.class);
+                srv.refuseCheck(paraMap);
+                jhm.putCode(1).putMessage("回复成功！");
+            }catch (ActiveRecordException e){
+                e.printStackTrace();
+                jhm.putCode(-1).putMessage(e.getMessage());
+            }
         }
         renderJson(jhm);
-//        renderJson("{\"code\":1,\"message\":\"回复成功！\"}");
     }
 
     /**
