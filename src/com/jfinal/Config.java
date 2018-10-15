@@ -21,6 +21,7 @@ import com.hr.train.controllers.TypeCtrl;
 import com.hr.workTime.controllers.WorkTimeCtrl;
 import com.hr.workTime.controllers.WorkTimeDetailCtrl;
 import com.jfinal.config.*;
+import com.jfinal.kit.PropKit;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
@@ -29,7 +30,11 @@ import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.plugin.ehcache.EhCachePlugin;
 import com.jfinal.render.ViewType;
 import com.jfinal.template.Engine;
+import com.jfinal.weixin.demo.WeixinApiController;
+import com.jfinal.weixin.sdk.api.ApiConfig;
+import com.jfinal.weixin.sdk.api.ApiConfigKit;
 import easy.util.FileUploadPath;
+import org.apache.commons.lang.StringUtils;
 import paiban.controllers.*;
 import utils.DictionaryConstants;
 
@@ -39,11 +44,34 @@ import java.util.*;
 
 public class Config extends JFinalConfig {
 
-	public static boolean devMode=false;
+	/*微信配置*/
+	// 本地开发模式
+	private boolean isLocalDev = false;
+	public static String DOMAIN="";
+	//商户相关资料
+	public static String appid = "";
+	public static String partner = "";
+	public static String paternerKey = "";
+
 	/**
-	 *
+	 * 如果生产环境配置文件存在，则优先加载该配置，否则加载开发环境配置文件
+	 * @param pro 生产环境配置文件
+	 * @param dev 开发环境配置文件
 	 */
+	public void loadProp(String pro, String dev) {
+		try {
+			PropKit.use(pro);
+		}
+		catch (Exception e) {
+			PropKit.use(dev);
+			isLocalDev = true;
+		}
+	}
+
+
+	public static boolean devMode=false;
 	public static File web_inf_path=null;
+
 	@Override
 	public void configConstant(Constants constants) {
 		String path=Thread.currentThread().getContextClassLoader().getResource("/").getPath();
@@ -56,6 +84,11 @@ public class Config extends JFinalConfig {
 		constants.setViewType(ViewType.JSP);
 //		arg0.setError404View("/white.jsp");
 //		arg0.setError500View("/500.jsp");
+
+		/*微信配置*/
+		loadProp("a_little_config_pro.txt", "a_little_config.txt");
+		// ApiConfigKit 设为开发模式可以在开发阶段输出请求交互的 xml 与 json 数据
+		ApiConfigKit.setDevMode(constants.getDevMode());
 	}
 
 	@Override
@@ -121,6 +154,10 @@ public class Config extends JFinalConfig {
 		//员工端培训
 		routes.add("mgr/mobile/train", com.hr.mobile.train.controllers.TrainCtrl.class);
 
+		//微信小程序
+		routes.add("/wx/staff", com.hr.wxapplet.staff.controller.StaffCtrl.class);
+		routes.add("/wx/manager", com.hr.wxapplet.manager.controller.ManageCtrl.class);
+		routes.add("/wx/common", com.hr.wxapplet.common.CommonCtrl.class);
 	}
 
 	@Override
@@ -171,6 +208,91 @@ public class Config extends JFinalConfig {
 		String sDate = sdf.format(new Date());
 		System.out.println("当前时间："+sDate);
 		loadDictionary();
+	}
+
+	/**
+	 * 初始化微信
+	 */
+	public void wxInit(){
+
+		DOMAIN=PropKit.get("domain");
+		appid=PropKit.get("appId");
+		partner=PropKit.get("mch_id");
+		paternerKey=PropKit.get("paternerKey");
+
+		if(StringUtils.isBlank(DOMAIN)){
+			System.out.println("请在配置文件中设置domain！");
+		}
+		if(StringUtils.isBlank(appid)){
+			System.out.println("请在配置文件中设置appid！");
+		}
+		if(StringUtils.isBlank(partner)){
+			System.out.println("请在配置文件中设置partner！");
+		}
+		if(StringUtils.isBlank(paternerKey)){
+			System.out.println("请在配置文件中设置paternerKey！");
+		}
+
+		// 1.5 之后支持redis存储access_token、js_ticket，需要先启动RedisPlugin
+//        ApiConfigKit.setAccessTokenCache(new RedisAccessTokenCache());
+		// 1.6新增的2种初始化
+//        ApiConfigKit.setAccessTokenCache(new RedisAccessTokenCache(Redis.use("weixin")));
+//        ApiConfigKit.setAccessTokenCache(new RedisAccessTokenCache("weixin"));
+
+		ApiConfig ac = new ApiConfig();
+		// 配置微信 API 相关参数
+		ac.setToken(PropKit.get("token"));
+		ac.setAppId(PropKit.get("appId"));
+		ac.setAppSecret(PropKit.get("appSecret"));
+
+
+
+		/**
+		 *  是否对消息进行加密，对应于微信平台的消息加解密方式：
+		 *  1：true进行加密且必须配置 encodingAesKey
+		 *  2：false采用明文模式，同时也支持混合模式
+		 */
+		ac.setEncryptMessage(PropKit.getBoolean("encryptMessage", false));
+		ac.setEncodingAesKey(PropKit.get("encodingAesKey", "setting it in config file"));
+
+		/**
+		 * 多个公众号时，重复调用ApiConfigKit.putApiConfig(ac)依次添加即可，第一个添加的是默认。
+		 */
+		ApiConfigKit.putApiConfig(ac);
+
+		/**
+		 * 1.9 新增LocalTestTokenCache用于本地和线上同时使用一套appId时避免本地将线上AccessToken冲掉
+		 *
+		 * 设计初衷：https://www.oschina.net/question/2702126_2237352
+		 *
+		 * 注意：
+		 * 1. 上线时应保证此处isLocalDev为false，或者注释掉该不分代码！
+		 *
+		 * 2. 为了安全起见，此处可以自己添加密钥之类的参数，例如：
+		 * http://localhost/weixin/api/getToken?secret=xxxx
+		 * 然后在WeixinApiController#getToken()方法中判断secret
+		 *
+		 * @see WeixinApiController#getToken()
+		 */
+//        if (isLocalDev) {
+//            String onLineTokenUrl = "http://localhost/weixin/api/getToken";
+//            ApiConfigKit.setAccessTokenCache(new LocalTestTokenCache(onLineTokenUrl));
+//        }
+        /*
+        微信小程序
+         */
+//        WxaConfig wc = new WxaConfig();
+//        wc.setAppId("wx4f53594f9a6b3dcb");
+//        wc.setAppSecret("eec6482ba3804df05bd10895bace0579");
+//        WxaConfigKit.setWxaConfig(wc);
+
+//        Timer timer=new Timer();
+//        TimerTask tt=new TimerTask() {
+//            @Override
+//            public void run() {
+//                AccessTokenApi.
+//            }
+//        };
 	}
 
 	private void loadDictionary(){

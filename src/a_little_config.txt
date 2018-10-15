@@ -1,0 +1,25 @@
+#jdbcUrl = jdbc:mysql://127.0.0.1/jfinal_weixin?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull
+#user = root
+#password =
+#devMode = true
+
+# 微信服务器回调所用的 token
+token=asfjoaweijfo99009h23lkejfou89384
+
+# 测试用的账号
+appId=wx4d3bae432c576379
+appSecret=575ab8e1bd8d542837fbb62ee29bc58e
+
+#是否对消息进行加密，是否对消息进行加密，对应于微信平台的消息加解密方式，false支持明文模式及兼容模式，true支持安全模式及兼容模式
+#encryptMessage=true
+#encodingAesKey=yourEncodingAesKey
+
+#商户号（支付用）
+mch_id=1514710491
+#支付密钥
+paternerKey=e377709a22bb4fd0aeed42d0a8751b1c
+
+#域名，后面如果有上下文，要写上下文，最后没有/
+domain=http://wx.order.jlmdm.com/wxapi
+#微信端首页
+wx_home=/html/index.html
