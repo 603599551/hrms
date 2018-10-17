@@ -315,7 +315,7 @@ public class StaffCtrl extends BaseCtrl {
             notice.set("create_time", time);
             notice.set("modify_time", time);
             notice.set("status", "0");
-            notice.set("type", "examine");
+            notice.set("type", "check");
 
             boolean flag = Db.save("h_notice", notice);
             if (flag) {
@@ -344,7 +344,7 @@ public class StaffCtrl extends BaseCtrl {
             return;
         }
 
-        String sql = "SELECT n.title AS job,n.content AS address,n.create_time AS `time`,n.`status` FROM h_notice n WHERE receiver_id=? AND `type`='examine'  ORDER BY n.create_time DESC LIMIT 50";
+        String sql = "SELECT n.title AS job,n.content AS address,n.create_time AS `time`,n.`status` FROM h_notice n WHERE receiver_id=? AND `type`='check'  ORDER BY n.create_time DESC LIMIT 50";
 
         try {
             List<Record> list = Db.find(sql, id);

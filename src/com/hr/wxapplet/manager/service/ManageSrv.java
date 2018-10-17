@@ -71,7 +71,7 @@ public class ManageSrv extends BaseService {
         sNotice.set("create_time",createTime);
         sNotice.set("modify_time",createTime);
         sNotice.set("status","1");
-        sNotice.set("type","examine");
+        sNotice.set("type","check");
         sNotice.set("fid",examId);
 
         try{
@@ -109,7 +109,7 @@ public class ManageSrv extends BaseService {
         sNotice.set("create_time",createTime);
         sNotice.set("modify_time",createTime);
         sNotice.set("status","2");
-        sNotice.set("type","examine");
+        sNotice.set("type","check");
 
         try{
             Db.save("h_notice",sNotice);
@@ -163,7 +163,7 @@ public class ManageSrv extends BaseService {
         notice.set("receiver_id",receiverId);
         notice.set("create_time",time);
         notice.set("modify_time",time);
-        notice.set("type","examine");
+        notice.set("type","check");
         notice.set("fid",fid);
         //考核通过
         if (StringUtils.equals(status,"0")){

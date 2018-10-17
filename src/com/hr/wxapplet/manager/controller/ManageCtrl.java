@@ -25,7 +25,7 @@ public class ManageCtrl extends BaseCtrl{
             return;
         }
 
-        String sql="SELECT n.id, n.title AS job,s.name,n.create_time AS `time`,n.`status` FROM h_notice n,h_staff s WHERE receiver_id=? AND `type`='examine' AND n.sender_id=s.id AND n.`status` IN('0','1','2')  ORDER BY n.create_time DESC  LIMIT 50";
+        String sql="SELECT n.id, n.title AS job,s.name,n.create_time AS `time`,n.`status` FROM h_notice n,h_staff s WHERE receiver_id=? AND `type`='check' AND n.sender_id=s.id AND n.`status` IN('0','1','2')  ORDER BY n.create_time DESC  LIMIT 50";
 
         try{
             List<Record> list=Db.find(sql,id);
