@@ -296,5 +296,84 @@ public class ManageCtrl extends BaseCtrl{
 
     }
 
+    /**
+     * url:https://ip:port/context/wx/manager/getAddressbookList
+     * 2005.A 通讯录列表回显
+     */
+    public void getAddressbookList(){
+        JsonHashMap jhm=new JsonHashMap();
+        /*
+        * 接收前台参数
+        * */
+        //经理的id
+       String  managerId = getPara("managerId");
+
+       //非空验证
+        if(StringUtils.isEmpty(managerId)){
+            jhm.putCode(0).putMessage("管理端用户Id不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        try{
+            //通过经理的id，查询是哪个门店的，并把门店的员工都查询出来并按拼音排序
+            String sql = "select name,kind,phone,pinyin from h_staff where dept_id = (select dept_id from h_staff where id = ?) ORDER BY pinyin ";
+            List<Record> staffList = Db.find(sql,managerId);
+            //将员工的岗位从英文转成中文
+            String transforChinese = "select name as job from h_dictionary where value = ? and parent_id = 3000";
+
+            char groupNameLowerCase = staffList.get(0).getStr("pinyin").charAt(0);
+            char groupName = Character.toUpperCase(groupNameLowerCase);
+            //定义map,存储A-Z通讯录的内容
+            Map groupNameMap = new HashMap();
+            List groupNameList = new ArrayList();
+            List<Map> list = new ArrayList();
+            int size = 1;
+            //获得员工岗位的英文字符串,转成中文字符串，并将英文字符串移除
+            for(Record r : staffList){
+                String kindEnglish = r.getStr("kind");
+                String[] kindEnglishArray = kindEnglish.split(",");
+                //定义接收中文的字符串
+                String job = "";
+                for(int i = 0, length = kindEnglishArray.length; i < length; i++){
+                    Record kind  = Db.findFirst(transforChinese,kindEnglishArray[i]);
+                    job += kind.getStr("job") + ",";
+                }
+                char pinyinChar = r.getStr("pinyin").charAt(0);
+                r.remove("kind");
+                r.remove("pinyin");
+                r.set("job",job);
+                //判断员工的首字母与定义的是否相同
+                if(groupNameLowerCase != pinyinChar){
+                    groupNameMap.put("groupName",String.valueOf(groupName));
+                    groupNameLowerCase = pinyinChar;
+                    groupName = Character.toUpperCase(groupNameLowerCase);
+                    groupNameMap.put("users",groupNameList);
+                    list.add(groupNameMap);
+                    groupNameMap=new HashMap();
+                    groupNameList=new ArrayList();
+                    groupNameList.add(r);
+                }else{
+                    groupNameList.add(r);
+                }
+                if(size == staffList.size()){
+                    groupNameMap.put("groupName",String.valueOf(groupName));
+                    groupNameMap.put("users",groupNameList);
+                    list.add(groupNameMap);
+                    //System.err.println(list);
+                }
+                size++;
+            }
+            jhm.put("list",list);
+
+
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+
+        renderJson(jhm);
+
+    }
+
 
 }
