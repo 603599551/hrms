@@ -6,6 +6,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.oreilly.servlet.DaemonHttpServlet;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
@@ -160,6 +161,13 @@ public class StaffCtrl extends BaseCtrl {
         }
     }
 
+    public static String md5(String text, String key) throws Exception {
+        //加密后的字符串
+        String encodeStr= DigestUtils.md5Hex(text + key);
+        return encodeStr;
+    }
+
+
     /**
      * url:https://ip:port/context/wx/staff/queryTrainGoods
      * 1001.A.查询类别下的产品列表及详情
@@ -170,9 +178,29 @@ public class StaffCtrl extends BaseCtrl {
         String id=getPara("id");
         //类别名
         String name=getPara("name");
+        //员工id
+        String staffId=getPara("staffId");
+
+        if (StringUtils.isEmpty(id)){
+            jhm.putCode(0).putMessage("类别id不能为空!");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(name)){
+            jhm.putCode(0).putMessage("类别名不能为空!");
+            renderJson(jhm);
+            return;
+        }
+//        if (StringUtils.isEmpty(staffId)){
+//            jhm.putCode(0).putMessage("员工id不能为空!");
+//            renderJson(jhm);
+//            return;
+//        }
 
         //单表查询h_train_article
-        String sql1="SELECT ta.id,ta.title AS name,ta.video,ta.pdf_path,ta.pdf_org_name FROM h_train_article ta WHERE ta.type_1=?";
+        String sql1="SELECT ta.id,ta.type_2,ta.title AS name,ta.video,ta.pdf_path,ta.pdf_org_name FROM h_train_article ta WHERE ta.type_1=?";
+        //根据员工id和培训id查询是否考核和考核状态
+        String sql2="SELECT result FROM h_exam WHERE staff_id=? AND kind_id=(SELECT value FROM h_dictionary WHERE name=(SELECT name FROM h_train_type WHERE id=?)) ORDER BY create_time DESC LIMIT 1";
 
         try{
             List<Record> trainList=Db.find(sql1,id);
@@ -192,19 +220,56 @@ public class StaffCtrl extends BaseCtrl {
                 train.set("fileSum",pLen);
 
                 Record detail=new Record();
-                List<Record> videoList=Db.find(sql1,id);
-                List<Record> pdfList=Db.find(sql1,id);
+                List<Record> videoList=new ArrayList<>();
+                List<Record> pdfList=new ArrayList<>();
                 for (int i=0;i<vLen;i++){
-
+                    Record video=new Record();
+                    String videoName="培训视频"+i+1;
+                    video.set("title",videoName);
+                    video.set("url",videos[i]);
+                    //这里的id=培训记录id+videoName
+                    video.set("id",md5(train.getStr("id"),videoName));
+                    videoList.add(video);
                 }
+
                 for (int j=0;j<pLen;j++){
                     Record pdf=new Record();
                     pdf.set("title",pdfsName[j]);
                     pdf.set("url",pdfs[j]);
                     //这里的id=培训记录id+pdfName
-                    pdf.set("id",train.getStr("id")+pdfsName[j]);
+                    pdf.set("id",md5(train.getStr("id"),pdfsName[j]));
+                    pdfList.add(pdf);
                 }
+                detail.set("video",videoList);
+                detail.set("file",pdfList);
+                train.set("detail",detail);
+                train.remove("video");
+                train.remove("pdf_path");
+                train.remove("pdf_org_name");
+                if (StringUtils.equals(name,"岗位培训")){
+                    Record r=Db.findFirst(sql2,staffId,train.getStr("type_2"));
+                    if (r==null){
+                        train.set("status","2");
+                        train.set("status_text","未审核");
+                    }else {
+                        String result=r.getStr("result");
+                        if (StringUtils.isEmpty(result)){
+                            train.set("status","1");
+                            train.set("status_text","待审核");
+                        }else {
+                            if (StringUtils.equals(result,"1")){
+                                train.set("status","1");
+                                train.set("status_text","已通过");
+                            }else if (StringUtils.equals(result,"0")){
+                                train.set("status","2");
+                                train.set("status_text","未审核");
+                            }
+                        }
+                    }
+                }
+                train.remove("type_2");
             }
+            jhm.put("list",trainList);
             if (!StringUtils.equals(name,"岗位培训")){
                 jhm.put("isGoods","0");
             }else {

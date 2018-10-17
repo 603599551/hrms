@@ -66,7 +66,7 @@ public class ManageCtrl extends BaseCtrl{
         }
 
         //staff、exam、dictionary、question_type、question 五表查询
-        String sql="SELECT e.id,s.name,s.phone,d.name AS job,e.result AS `status`,s.hiredate AS entryTime,e.create_time AS applyTime,e.review_time AS checkTime,qt.name AS `type`,q.title,q.content AS des FROM h_exam e,h_staff s,h_dictionary d,h_question_type qt,h_question q WHERE e.examiner_id=? AND e.staff_id=s.id AND d.value=e.kind_id AND e.kind_id=qt.kind_id AND q.type_id=qt.id ORDER BY e.create_time DESC ,qt.name DESC";
+        String sql="SELECT s.dept_id AS department,e.id,s.name,s.phone,d.name AS job,e.result AS `status`,s.hiredate AS entryTime,e.create_time AS applyTime,e.review_time AS checkTime,qt.name AS `type`,q.title,q.content AS des FROM h_exam e,h_staff s,h_dictionary d,h_question_type qt,h_question q WHERE e.examiner_id=? AND e.staff_id=s.id AND d.value=e.kind_id AND e.kind_id=qt.kind_id AND q.type_id=qt.id ORDER BY e.create_time DESC ,qt.name DESC";
 
         try{
             List<Record> initialList=Db.find(sql,id);
@@ -88,10 +88,16 @@ public class ManageCtrl extends BaseCtrl{
                     String status=examR.getStr("status");
                     String applyTime=examR.getStr("applyTime");
                     String name=examR.getStr("name");
-                    Record lastExamR=initialList.get(i-1);
-                    String lastName=lastExamR.getStr("name");
-                    String lastApplyTime=lastExamR.getStr("applyTime");
-                    String lastType=lastExamR.getStr("type");
+                    Record lastExamR=new Record();
+                    String lastName=new String();
+                    String lastApplyTime=new String();
+                    String lastType=new String();
+                    if (i!=0){
+                        lastExamR=initialList.get(i-1);
+                        lastName=lastExamR.getStr("name");
+                        lastApplyTime=lastExamR.getStr("applyTime");
+                        lastType=lastExamR.getStr("type");
+                    }
 
                     //首条记录
                     if (i==0){
