@@ -165,17 +165,57 @@ public class StaffCtrl extends BaseCtrl {
      * 1001.A.查询类别下的产品列表及详情
      */
     public void queryTrainGoods() {
-//        JsonHashMap jhm=new JsonHashMap();
-//        String id=getPara("id");
-//
-//        try{
-//
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            jhm.putCode(-1).putMessage(e.toString());
-//        }
-//        renderJson(jhm);
-        renderJson("{\"code\":1,\"list\":[{\"id\":\"123\",\"name\":\"口水鸡\",\"videoSum\":5,\"fileSum\":5,\"status\":\"0\",\"status_text\":\"已通过\",\"detail\":{\"video\":[{\"id\":\"abc\",\"url\":\"\"},{\"id\":\"abc\",\"url\":\"\"}],\"file\":[{\"id\":\"abc\",\"url\":\"\"},{\"id\":\"abc\",\"url\":\"\"}]}}]}");
+        JsonHashMap jhm=new JsonHashMap();
+        //类别id
+        String id=getPara("id");
+        //类别名
+        String name=getPara("name");
+
+        //单表查询h_train_article
+        String sql1="SELECT ta.id,ta.title AS name,ta.video,ta.pdf_path,ta.pdf_org_name FROM h_train_article ta WHERE ta.type_1=?";
+
+        try{
+            List<Record> trainList=Db.find(sql1,id);
+            if (trainList==null){
+                jhm.putCode(0).putMessage("培训内容为空！");
+                renderJson(jhm);
+                return;
+            }
+            for (Record train:trainList){
+                //将多个视频/pdf地址以逗号为分隔符拆分开来
+                String []videos=train.getStr("video").split(",");
+                String []pdfs=train.getStr("pdf_path").split(",");
+                String []pdfsName=train.getStr("pdf_org_name").split(",");
+                int vLen=videos.length;
+                int pLen=pdfs.length;
+                train.set("videoSum",vLen);
+                train.set("fileSum",pLen);
+
+                Record detail=new Record();
+                List<Record> videoList=Db.find(sql1,id);
+                List<Record> pdfList=Db.find(sql1,id);
+                for (int i=0;i<vLen;i++){
+
+                }
+                for (int j=0;j<pLen;j++){
+                    Record pdf=new Record();
+                    pdf.set("title",pdfsName[j]);
+                    pdf.set("url",pdfs[j]);
+                    //这里的id=培训记录id+pdfName
+                    pdf.set("id",train.getStr("id")+pdfsName[j]);
+                }
+            }
+            if (!StringUtils.equals(name,"岗位培训")){
+                jhm.put("isGoods","0");
+            }else {
+                jhm.put("isGoods","1");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jhm);
+//        renderJson("{\"code\":1,\"list\":[{\"id\":\"123\",\"name\":\"口水鸡\",\"videoSum\":5,\"fileSum\":5,\"status\":\"0\",\"status_text\":\"已通过\",\"detail\":{\"video\":[{\"title\":\"培训视频1\",\"id\":\"abc4\",\"url\":\"http://7o50kb.com2.z0.glb.qiniucdn.com/c1.1.mp4\"},{\"title\":\"培训视频2\",\"id\":\"abc3\",\"url\":\"http://7o50kb.com2.z0.glb.qiniucdn.com/c1.1.mp4\"}],\"file\":[{\"title\":\"培训文档1\",\"id\":\"abc2\",\"url\":\"http://192.168.1.117:8080/hrms/upload/pdf/52c5c23fa98c448db5544d4f11e281ad.pdf\"},{\"title\":\"培训文档2\",\"id\":\"abc1\",\"url\":\"http://192.168.1.117:8080/hrms/upload/pdf/52c5c23fa98c448db5544d4f11e281ad.pdf\"}]}}]}");
     }
 
     /**
@@ -231,18 +271,39 @@ public class StaffCtrl extends BaseCtrl {
      * 1004.B.消息查询（最新50条）
      */
     public void queryNotice() {
-//        JsonHashMap jhm=new JsonHashMap();
-//        String userId=getPara("userId");
-//
-//        try{
-//
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            jhm.putCode(-1).putMessage(e.toString());
-//        }
-//        renderJson(jhm);
-        renderJson("{\"code\":1,\"list\":[{\"status\":\"0\",\"status_text\":\"已通过\",\"job\":\"传菜员\",\"time\":\"2018-01-01 10:20\",\"address\":\"面对面长大店\"},{\"status\":\"1\",\"status_text\":\"已同意\",\"job\":\"传菜员\",\"time\":\"2018-01-01 10:20\",\"address\":\"面对面长大店\"},{\"status\":\"2\",\"status_text\":\"未通过\",\"job\":\"传菜员\",\"time\":\"2018-01-01 10:20\",\"address\":\"面对面长大店\"},{\"status\":\"3\",\"status_text\":\"被拒绝\",\"job\":\"传菜员\",\"time\":\"2018-01-01 10:20\",\"reason\":\"没空\"}]}");
-    }
+        JsonHashMap jhm = new JsonHashMap();
+        String id = getPara("userId");
+        if (StringUtils.isEmpty(id)) {
+            jhm.putCode(0).putMessage("员工id不能为空!");
+            renderJson(jhm);
+            return;
+        }
 
+        String sql = "SELECT n.title AS job,n.content AS address,n.create_time AS `time`,n.`status` FROM h_notice n WHERE receiver_id=? AND `type`='examine'  ORDER BY n.create_time DESC LIMIT 50";
+
+        try {
+            List<Record> list = Db.find(sql, id);
+            if (list != null) {
+                for (Record r : list) {
+                    String status = r.getStr("status");
+                    if (StringUtils.equals(status, "3")) {
+                        r.set("status_text", "已通过");
+                    } else if (StringUtils.equals(status, "1")) {
+                        r.set("status_text", "已同意");
+                    } else if (StringUtils.equals(status, "2")) {
+                        r.set("status_text", "被拒绝");
+                    } else if (StringUtils.equals(status, "4")) {
+                        r.set("status_text", "未通过");
+                    }
+                }
+            }
+            jhm.putCode(1);
+            jhm.put("list", list);
+        } catch (Exception e) {
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jhm);
+    }
 
 }

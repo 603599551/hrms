@@ -12,41 +12,6 @@ import java.util.*;
 
 public class ManageCtrl extends BaseCtrl{
 
-    public void queryNotice2(){
-        JsonHashMap jhm=new JsonHashMap();
-        String id=getPara("id");
-        if (StringUtils.isEmpty(id)){
-            jhm.putCode(0).putMessage("经理id不能为空!");
-            renderJson(jhm);
-            return;
-        }
-
-        String sql="SELECT n.title AS job,n.content AS address,n.create_time AS `time`,n.`status` FROM h_notice n WHERE receiver_id=? AND `type`='examine'  ORDER BY n.create_time DESC LIMIT 50";
-
-        try{
-            List<Record> list=Db.find(sql,id);
-            if (list!=null){
-                for (Record r:list){
-                    String status=r.getStr("status");
-                    if (StringUtils.equals(status,"3")){
-                        r.set("status_text","已通过");
-                    }else if (StringUtils.equals(status,"1")){
-                        r.set("status_text","已同意");
-                    }else if (StringUtils.equals(status,"2")){
-                        r.set("status_text","被拒绝");
-                    }else if (StringUtils.equals(status,"4")){
-                        r.set("status_text","未通过");
-                    }
-                }
-            }
-            jhm.putCode(1);
-            jhm.put("list",list);
-        }catch (Exception e){
-            e.printStackTrace();
-            jhm.putCode(-1).putMessage(e.toString());
-        }
-        renderJson(jhm);
-    }
     /**
      * url:https://ip:port/context/wx/manager/queryNotice
      * 2000.A.消息回显（最新50条）
