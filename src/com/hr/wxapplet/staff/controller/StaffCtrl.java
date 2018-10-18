@@ -161,9 +161,9 @@ public class StaffCtrl extends BaseCtrl {
         }
     }
 
-    public static String md5(String text, String key) throws Exception {
+    public static String md5(String text) throws Exception {
         //加密后的字符串
-        String encodeStr= DigestUtils.md5Hex(text + key);
+        String encodeStr= DigestUtils.md5Hex(text);
         return encodeStr;
     }
 
@@ -202,7 +202,7 @@ public class StaffCtrl extends BaseCtrl {
         }
 
         //单表查询h_train_article
-        String sql1="SELECT ta.id,ta.type_2,ta.title AS name,ta.video,ta.pdf_path,ta.pdf_org_name FROM h_train_article ta WHERE ta.type_1=?";
+        String sql1="SELECT ta.id,ta.type_2,ta.title AS name,ta.video,ta.pdf_path FROM h_train_article ta WHERE ta.type_1=?";
         //根据员工id和培训id查询是否考核和考核状态
         String sql2="SELECT result FROM h_exam WHERE staff_id=? AND kind_id=(SELECT value FROM h_dictionary WHERE name=(SELECT name FROM h_train_type WHERE id=?)) ORDER BY create_time DESC LIMIT 1";
 
@@ -223,7 +223,6 @@ public class StaffCtrl extends BaseCtrl {
                 //将多个视频/pdf地址以逗号为分隔符拆分开来
                 String []videos=train.getStr("video").split(",");
                 String []pdfs=train.getStr("pdf_path").split(",");
-                String []pdfsName=train.getStr("pdf_org_name").split(",");
                 int vLen=videos.length;
                 int pLen=pdfs.length;
                 train.set("videoSum",vLen);
@@ -232,22 +231,26 @@ public class StaffCtrl extends BaseCtrl {
                 Record detail=new Record();
                 List<Record> videoList=new ArrayList<>();
                 List<Record> pdfList=new ArrayList<>();
+                int k=0;
                 for (int i=0;i<vLen;i++){
                     Record video=new Record();
-                    String videoName="培训视频"+i+1;
+                    k=i+1;
+                    String videoName="培训视频"+k;
                     video.set("title",videoName);
                     video.set("url",videos[i]);
                     //这里的id=培训记录id+videoName
-                    video.set("id",md5(train.getStr("id"),videoName));
+                    video.set("id",md5(videos[i]));
                     videoList.add(video);
                 }
 
                 for (int j=0;j<pLen;j++){
                     Record pdf=new Record();
-                    pdf.set("title",pdfsName[j]);
+                    k=j+1;
+                    String pdfName="培训文档"+k;
+                    pdf.set("title",pdfName);
                     pdf.set("url",pdfs[j]);
                     //这里的id=培训记录id+pdfName
-                    pdf.set("id",md5(train.getStr("id"),pdfsName[j]));
+                    pdf.set("id",md5(pdfs[j]));
                     pdfList.add(pdf);
                 }
                 detail.set("video",videoList);
@@ -255,7 +258,6 @@ public class StaffCtrl extends BaseCtrl {
                 train.set("detail",detail);
                 train.remove("video");
                 train.remove("pdf_path");
-                train.remove("pdf_org_name");
                 if (StringUtils.equals(name,"岗位培训")){
                     Record r=Db.findFirst(sql2,staffId,train.getStr("type_2"));
                     if (r==null){
