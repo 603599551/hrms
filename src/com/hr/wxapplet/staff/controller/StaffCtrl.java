@@ -314,7 +314,7 @@ public class StaffCtrl extends BaseCtrl {
             return;
         }
 
-        String kindSql = "SELECT name FROM h_train_type WHERE id=?";
+        String kindSql = "SELECT title FROM h_train_article WHERE id=?";
         String receiverSql = "SELECT id FROM h_staff WHERE dept_id=(SELECT dept_id FROM h_staff WHERE id=?) AND job='store_manager'";
         String time = DateTool.GetDateTime();
         try {
@@ -371,6 +371,8 @@ public class StaffCtrl extends BaseCtrl {
                         r.set("status_text", "被拒绝");
                     } else if (StringUtils.equals(status, "4")) {
                         r.set("status_text", "未通过");
+                    }else if (StringUtils.equals(status, "5")) {
+                        r.set("status_text", "待考核");
                     }
                 }
             }
@@ -382,113 +384,4 @@ public class StaffCtrl extends BaseCtrl {
         }
         renderJson(jhm);
     }
-
-    /**
-     * url:https://ip:port/context/wx/staff/search
-     * 1005.C.查询
-     */
-//    public void search(){
-//        JsonHashMap jhm=new JsonHashMap();
-//        //查询按照分类名称模糊查询
-//        String val=getPara("val");
-//        //分类id
-//        String typeId=getPara("typeId");
-//        //分类名称
-//        String name=getPara("name");
-//
-//        if (StringUtils.isEmpty(val)){
-//            jhm.putCode(0).putMessage("搜索条件不能为空!");
-//            renderJson(jhm);
-//            return;
-//        }
-//        if (StringUtils.isEmpty(typeId)){
-//            jhm.putCode(0).putMessage("分类id不能为空!");
-//            renderJson(jhm);
-//            return;
-//        }
-//
-//        //单表查询h_train_article
-//        String sql1="SELECT ta.id,ta.type_2,ta.title AS name,ta.video,ta.pdf_path,ta.pdf_org_name FROM h_train_article ta WHERE ta.type_1=? AND";
-//        //根据员工id和培训id查询是否考核和考核状态
-//        String sql2="SELECT result FROM h_exam WHERE staff_id=? AND kind_id=(SELECT value FROM h_dictionary WHERE name=(SELECT name FROM h_train_type WHERE id=?)) ORDER BY create_time DESC LIMIT 1";
-//
-//        try{
-//            List<Record> trainList=Db.find(sql1,typeId);
-//            if (trainList==null){
-//                jhm.putCode(0).putMessage("培训内容为空！");
-//                renderJson(jhm);
-//                return;
-//            }
-//            for (Record train:trainList){
-//                //将多个视频/pdf地址以逗号为分隔符拆分开来
-//                String []videos=train.getStr("video").split(",");
-//                String []pdfs=train.getStr("pdf_path").split(",");
-//                String []pdfsName=train.getStr("pdf_org_name").split(",");
-//                int vLen=videos.length;
-//                int pLen=pdfs.length;
-//                train.set("videoSum",vLen);
-//                train.set("fileSum",pLen);
-//
-//                Record detail=new Record();
-//                List<Record> videoList=new ArrayList<>();
-//                List<Record> pdfList=new ArrayList<>();
-//                for (int i=0;i<vLen;i++){
-//                    Record video=new Record();
-//                    String videoName="培训视频"+i+1;
-//                    video.set("title",videoName);
-//                    video.set("url",videos[i]);
-//                    //这里的id=培训记录id+videoName
-//                    video.set("id",md5(train.getStr("id"),videoName));
-//                    videoList.add(video);
-//                }
-//
-//                for (int j=0;j<pLen;j++){
-//                    Record pdf=new Record();
-//                    pdf.set("title",pdfsName[j]);
-//                    pdf.set("url",pdfs[j]);
-//                    //这里的id=培训记录id+pdfName
-//                    pdf.set("id",md5(train.getStr("id"),pdfsName[j]));
-//                    pdfList.add(pdf);
-//                }
-//                detail.set("video",videoList);
-//                detail.set("file",pdfList);
-//                train.set("detail",detail);
-//                train.remove("video");
-//                train.remove("pdf_path");
-//                train.remove("pdf_org_name");
-//                if (StringUtils.equals(name,"岗位培训")){
-//                    Record r=Db.findFirst(sql2,staffId,train.getStr("type_2"));
-//                    if (r==null){
-//                        train.set("status","2");
-//                        train.set("status_text","未审核");
-//                    }else {
-//                        String result=r.getStr("result");
-//                        if (StringUtils.isEmpty(result)){
-//                            train.set("status","1");
-//                            train.set("status_text","待审核");
-//                        }else {
-//                            if (StringUtils.equals(result,"1")){
-//                                train.set("status","1");
-//                                train.set("status_text","已通过");
-//                            }else if (StringUtils.equals(result,"0")){
-//                                train.set("status","2");
-//                                train.set("status_text","未审核");
-//                            }
-//                        }
-//                    }
-//                }
-//                train.remove("type_2");
-//            }
-//            jhm.put("list",trainList);
-//            if (!StringUtils.equals(name,"岗位培训")){
-//                jhm.put("isGoods","0");
-//            }else {
-//                jhm.put("isGoods","1");
-//            }
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            jhm.putCode(-1).putMessage(e.toString());
-//        }
-//        renderJson(jhm);
-//    }
 }

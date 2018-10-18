@@ -5,6 +5,8 @@ import com.hr.wxapplet.manager.service.ManageSrv;
 import com.jfinal.plugin.activerecord.ActiveRecordException;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import easy.util.DateTool;
+import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
 import utils.bean.JsonHashMap;
 
@@ -66,7 +68,7 @@ public class ManageCtrl extends BaseCtrl{
         }
 
         //staff、exam、dictionary、question_type、question 五表查询
-        String sql="SELECT s.dept_id AS department,e.id,s.name,s.phone,d.name AS job,e.result AS `status`,s.hiredate AS entryTime,e.create_time AS applyTime,e.review_time AS checkTime,qt.name AS `type`,q.title,q.content AS des FROM h_exam e,h_staff s,h_dictionary d,h_question_type qt,h_question q WHERE e.examiner_id=? AND e.staff_id=s.id AND d.value=e.kind_id AND e.kind_id=qt.kind_id AND q.type_id=qt.id ORDER BY e.create_time DESC ,qt.name DESC";
+        String sql="SELECT st.name AS department,e.id,s.name,s.phone,d.name AS job,e.result AS `status`,s.hiredate AS entryTime,e.create_time AS applyTime,e.review_time AS checkTime,qt.name AS `type`,q.title,q.content AS des FROM h_exam e,h_staff s,h_dictionary d,h_question_type qt,h_question q,h_store st WHERE e.examiner_id=? AND e.staff_id=s.id AND d.value=e.kind_id AND e.kind_id=qt.kind_id AND q.type_id=qt.id AND s.dept_id=st.id ORDER BY e.create_time DESC ,qt.name DESC";
 
         try{
             List<Record> initialList=Db.find(sql,id);
@@ -322,7 +324,7 @@ public class ManageCtrl extends BaseCtrl{
         }
         try{
             //通过经理的id，查询是哪个门店的，并把门店的员工都查询出来并按拼音排序
-            String sql = "select name,kind,phone,pinyin from h_staff where dept_id = (select dept_id from h_staff where id = ?) ORDER BY pinyin ";
+            String sql = "select id,name,kind,phone,pinyin from h_staff where dept_id = (select dept_id from h_staff where id = ?) ORDER BY pinyin ";
             List<Record> staffList = Db.find(sql,managerId);
             //将员工的岗位从英文转成中文
             String transforChinese = "select name as job from h_dictionary where value = ? and parent_id = 3000";
@@ -381,5 +383,134 @@ public class ManageCtrl extends BaseCtrl{
 
     }
 
+    /**
+     * url:https://ip:port/context/wx/manager/listStore
+     * 2006.C 考核地点回显
+     */
+    public void listStore(){
+        JsonHashMap jhm=new JsonHashMap();
 
+        //员工id
+        String  staffId = getPara("staffId");
+
+        //非空验证
+        if(StringUtils.isEmpty(staffId)){
+            jhm.putCode(0).putMessage("员工id不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        String sql1="SELECT id,name FROM h_store ";
+        String sql2="SELECT dept_id AS deptId FROM h_staff WHERE id=?";
+
+        try{
+            String deptId=Db.findFirst(sql2,staffId).getStr("deptId");
+            List<Record> storeList=Db.find(sql1);
+            if (storeList!=null){
+                for (Record store:storeList){
+                    if (StringUtils.equals(store.getStr("id"),deptId)){
+                        store.set("isDefaultValue","1");
+                    }else {
+                        store.set("isDefaultValue","0");
+                    }
+                }
+                jhm.put("list",storeList);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+
+        renderJson(jhm);
+    }
+
+    /**
+     * url:https://ip:port/context/wx/manager/launchCheck
+     * 2007.A.发起考核
+     */
+    public void launchCheck() {
+        JsonHashMap jhm = new JsonHashMap();
+
+        //经理id
+        String managerId = getPara("managerId");
+        //被考核人id
+        String staffId = getPara("staffId");
+        //考核时间
+        String time = getPara("time");
+        //考核地点
+        String address = getPara("address");
+        //岗位name
+        String name = getPara("name");
+        //岗位value
+        String value = getPara("value");
+
+        if (StringUtils.isEmpty(managerId)) {
+            jhm.putCode(0).putMessage("经理id不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(staffId)) {
+            jhm.putCode(0).putMessage("被考核人id不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(time)) {
+            jhm.putCode(0).putMessage("考核时间不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(address)) {
+            jhm.putCode(0).putMessage("考核地点不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(name)) {
+            jhm.putCode(0).putMessage("岗位name不能为空！");
+            renderJson(jhm);
+            return;
+        }
+        if (StringUtils.isEmpty(value)) {
+            jhm.putCode(0).putMessage("岗位value不能为空！");
+            renderJson(jhm);
+            return;
+        }
+
+        String createTime = DateTool.GetDateTime();
+
+        try {
+            Map paraMap=new HashMap();
+            paraMap.put("managerId",managerId);
+            paraMap.put("staffId",staffId);
+            paraMap.put("time",time);
+            paraMap.put("address",address);
+            paraMap.put("name",name);
+            paraMap.put("value",value);
+            ManageSrv srv=enhance(ManageSrv.class);
+            srv.launchCheck(paraMap);
+            jhm.putCode(1).putMessage("发起考核成功！");
+        } catch (ActiveRecordException e) {
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.getMessage());
+        }
+        renderJson(jhm);
+//        renderJson("{\"code\":1,\"message\":\"申请成功！\"}");
+    }
+
+    /**
+     * url:https://ip:port/context/wx/manager/showJobs
+     * 2008.C 回显岗位列表
+     */
+    public void showJobs(){
+        JsonHashMap jhm=new JsonHashMap();
+
+        String sql1="SELECT name,value FROM h_dictionary WHERE parent_id='3000'";
+
+        try{
+            List<Record> jobList=Db.find(sql1);
+            jhm.put("list",jobList);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage(e.toString());
+        }
+        renderJson(jhm);
+    }
 }

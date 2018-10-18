@@ -154,8 +154,6 @@ public class ManageSrv extends BaseService {
         }
 
         String time=DateTool.GetDateTime();
-
-
         Record notice=new Record();
         notice.set("id",UUIDTool.getUUID());
         notice.set("title",title);
@@ -177,6 +175,62 @@ public class ManageSrv extends BaseService {
         }catch (ActiveRecordException e){
             throw new ActiveRecordException("通知失败");
         }
+    }
 
+    @Before(Tx.class)
+    public void launchCheck(Map paraMap){
+        String managerId = (String) paraMap.get("managerId");
+        String staffId = (String) paraMap.get("staffId");
+        String time = (String) paraMap.get("time");
+        String address = (String) paraMap.get("address");
+        String name = (String) paraMap.get("name");
+        String value = (String) paraMap.get("value");
+
+        String createTime = DateTool.GetDateTime();
+
+        //入职日期
+        String hiredateSql="SELECT s.hiredate FROM h_staff s WHERE s.id=?";
+
+        Record hNotice=Db.findFirst(hiredateSql,staffId);
+        String hiredate=hNotice.getStr("hiredate");
+
+        String examId=UUIDTool.getUUID();
+
+        //向exam表增加考试记录
+        Record exam=new Record();
+        exam.set("id",examId );
+        exam.set("staff_id", staffId);
+        exam.set("create_time", createTime);
+        exam.set("hiredate", hiredate);
+        exam.set("kind_id", value);
+        exam.set("review_time", time);
+        exam.set("examiner_id", managerId);
+        exam.set("type_id", "");
+
+        try{
+            Db.save("h_exam",exam);
+        }catch (ActiveRecordException e){
+            throw new ActiveRecordException("Fail to add examRecord!");
+        }
+
+        //向员工发送考核消息
+        Record notice = new Record();
+        notice.set("id", UUIDTool.getUUID());
+        //title----申请考核的岗位名
+        notice.set("title", name);
+        notice.set("content", address);
+        notice.set("sender_id", managerId);
+        notice.set("receiver_id", staffId);
+        notice.set("create_time", createTime);
+        notice.set("modify_time", createTime);
+        notice.set("status", "5");
+        notice.set("type", "check");
+        notice.set("fid", examId);
+
+        try{
+            Db.save("h_notice", notice);
+        }catch (ActiveRecordException e){
+            throw new ActiveRecordException("Fail to notice staff!");
+        }
     }
 }

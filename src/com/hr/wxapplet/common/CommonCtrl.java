@@ -1,5 +1,6 @@
 package com.hr.wxapplet.common;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.controllers.BaseCtrl;
 
 import com.google.gson.Gson;
@@ -8,50 +9,32 @@ import com.jfinal.plugin.activerecord.Record;
 import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
+import org.jsoup.Jsoup;
 import utils.bean.JsonHashMap;
 import org.apache.http.HttpEntity;
 
+import java.io.IOException;
+
 public class CommonCtrl extends BaseCtrl{
 
-    private static final long serialVersionUID = 1L;
-
-    private static final String APPID = "wx9xxxxxxxxxxx9b4";
-    private static final String SECRET = "685742***************84xs859";
+    private static final String APPID = "wx236db34923f577e3";
+    private static final String SECRET = "7c6869e372b6e8e90da4f010da40db3a";
+    private static final String authorization_code = "authorization_code";
+    public String login_url = "https://api.weixin.qq.com/sns/jscode2session?";
+    public String getAccessToken_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + APPID + "&secret=" + SECRET;
+    public String sendCustomerMessage_url = "https://api.weixin.qq.com/cgi-bin/message/custom/send";
+    public static String templateId = "3JlxvZ61_mey-sNJzseGZA1GNwyY2sG8yLj2mPKza_w";
 
     /**
      * url:https://ip:port/context/wx/common/wxLogin
      * 1006.AIII.微信登录
      */
-    public void wxLogin(){
-        JsonHashMap jhm=new JsonHashMap();
-        String code=getPara("code");
-
-        //微信的接口
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid="+APPID+
-                "&secret="+SECRET+"&js_code="+ code +"&grant_type=authorization_code";
-
-        try{
-//            RestTemplate restTemplate = new RestTemplate();
-//            //进行网络请求,访问url接口
-//            ResponseEntity<String>  responseEntity = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
-//            //根据返回值进行后续操作
-//            if(responseEntity != null && responseEntity.getStatusCode() == HttpStatus.OK)
-//            {
-//                String sessionData = responseEntity.getBody();
-//                Gson gson = new Gson();
-//                //解析从微信服务器获得的openid和session_key;
-//                WeChatSession weChatSession = gson.fromJson(sessionData,WeChatSession.class);
-//                //获取用户的唯一标识
-//                String openid = weChatSession.getOpenid();
-//                //获取会话秘钥
-//                String session_key = weChatSession.getSession_key();
-//                //下面就可以写自己的业务代码了
-//                //最后要返回一个自定义的登录态,用来做后续数据传输的验证
-//            }
-        }catch (Exception e){
-            e.printStackTrace();
-            jhm.putCode(-1).putMessage(e.toString());
-        }
+    public void wxLogin() throws IOException {
+        JsonHashMap jhm = new JsonHashMap();
+        String code = getPara("code");
+        String url = this.login_url + "appid=" + APPID + "&secret=" + SECRET + "&js_code=" + code + "&grant_type=" + authorization_code;
+        String doc = Jsoup.connect(url).execute().body();
+        jhm.put("data", JSONObject.parseObject(doc));
         renderJson(jhm);
     }
 
@@ -66,6 +49,8 @@ public class CommonCtrl extends BaseCtrl{
          * 接收前端参数
          */
         String phone=getPara("phone");
+        String openId=getPara("openId");
+
 
         //非空验证
         if(StringUtils.isEmpty(phone)){
@@ -73,8 +58,19 @@ public class CommonCtrl extends BaseCtrl{
             renderJson(jhm);
             return;
         }
+        if(StringUtils.isEmpty(openId)){
+            jhm.putCode(0).putMessage("openId不能为空！");
+            renderJson(jhm);
+            return;
+        }
 
         try{
+            int flag=Db.update("UPDATE h_staff SET open_id=? WHERE phone=?",openId,phone);
+            if (flag==0){
+                jhm.putCode(0).putMessage("更新失败！");
+            }else {
+                jhm.putCode(1).putMessage("更新成功！");
+            }
             String sql = "SELECT phone FROM h_staff WHERE phone=?";
             Record info = Db.findFirst(sql,phone);
             if (info==null){
