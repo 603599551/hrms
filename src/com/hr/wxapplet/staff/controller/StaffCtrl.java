@@ -312,7 +312,7 @@ public class StaffCtrl extends BaseCtrl {
             return;
         }
 
-        String kindSql = "SELECT name FROM h_dictionary WHERE value=?";
+        String kindSql = "SELECT name FROM h_train_type WHERE id=?";
         String receiverSql = "SELECT id FROM h_staff WHERE dept_id=(SELECT dept_id FROM h_staff WHERE id=?) AND job='store_manager'";
         String time = DateTool.GetDateTime();
         try {
