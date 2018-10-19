@@ -50,6 +50,8 @@ public class CommonCtrl extends BaseCtrl{
          */
         String phone=getPara("phone");
         String openId=getPara("openId");
+        //员工端0 经理端1
+        String type=getPara("type");
 
 
         //非空验证
@@ -63,21 +65,39 @@ public class CommonCtrl extends BaseCtrl{
             renderJson(jhm);
             return;
         }
+        if(StringUtils.isEmpty(type)){
+            jhm.putCode(0).putMessage("type不能为空！");
+            renderJson(jhm);
+            return;
+        }
 
         try{
+            Record userId=Db.findFirst("SELECT id,job FROM h_staff WHERE phone=?",phone);
+            if (StringUtils.equals(type,"0")){
+                if (!StringUtils.equals(userId.getStr("job"),"staff")){
+                    jhm.putCode(0).putMessage("你不是员工,无法登录！");
+                    renderJson(jhm);
+                    return;
+                }
+            }else {
+                if (!StringUtils.equals(userId.getStr("job"),"store_manager")){
+                    jhm.putCode(0).putMessage("你不是经理,无法登录！");
+                    renderJson(jhm);
+                    return;
+                }
+            }
             int flag=Db.update("UPDATE h_staff SET open_id=? WHERE phone=?",openId,phone);
             if (flag==0){
                 jhm.putCode(0).putMessage("更新失败！");
+                renderJson(jhm);
+                return;
             }else {
                 jhm.putCode(1).putMessage("更新成功！");
             }
-            String sql = "SELECT phone FROM h_staff WHERE phone=?";
-            Record info = Db.findFirst(sql,phone);
-            if (info==null){
-                jhm.putCode(0).putMessage("验证失败！");
-            }else{
-                jhm.putCode(1).putMessage("验证成功！");
-            }
+
+
+            jhm.put("userId",userId.getStr("id"));
+
         }catch (Exception e){
             e.printStackTrace();
             jhm.putCode(-1).putMessage(e.toString());

@@ -301,7 +301,9 @@ public class StaffCtrl extends BaseCtrl {
      */
     public void applyCheck() {
         JsonHashMap jhm = new JsonHashMap();
+        //员工id
         String userId = getPara("userId");
+        //培训id
         String typeId = getPara("typeId");
         if (StringUtils.isEmpty(userId)) {
             jhm.putCode(0).putMessage("员工id不能为空！");
@@ -321,7 +323,7 @@ public class StaffCtrl extends BaseCtrl {
             Record notice = new Record();
             notice.set("id", UUIDTool.getUUID());
             //title----申请考核的岗位名
-            notice.set("title", Db.findFirst(kindSql, typeId).getStr("name"));
+            notice.set("title", Db.findFirst(kindSql, typeId).getStr("title"));
             notice.set("sender_id", userId);
             notice.set("receiver_id", Db.findFirst(receiverSql, userId).getStr("id"));
             notice.set("create_time", time);
@@ -356,7 +358,7 @@ public class StaffCtrl extends BaseCtrl {
             return;
         }
 
-        String sql = "SELECT n.title AS job,n.content AS address,n.create_time AS `time`,n.`status` FROM h_notice n WHERE receiver_id=? AND `type`='check'  ORDER BY n.create_time DESC LIMIT 50";
+        String sql = "SELECT n.id,n.title AS job,n.content AS address,n.create_time AS `time`,n.`status` FROM h_notice n WHERE receiver_id=? AND `type`='check' AND `status`!='0' ORDER BY n.create_time DESC LIMIT 50";
 
         try {
             List<Record> list = Db.find(sql, id);

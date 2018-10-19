@@ -126,17 +126,19 @@ public class ManageSrv extends BaseService {
         String checkId=(String)paraMap.get("checkId");
         //考核结果
         String status=(String)paraMap.get("status");
-        if(StringUtils.equals(status,"1")){
-            status="0";
-        }else {
-            status="1";
-        }
+        //考核地点
+        String address=(String)paraMap.get("address");
 
         //提交考核结果
         Record result = new Record();
         result.set("examiner_id",userId);
         result.set("id",checkId);
-        result.set("result",status);
+
+        if(StringUtils.equals(status,"1")){
+            result.set("result","0");
+        }else {
+            result.set("result","1");
+        }
 
         try{
             Db.update("h_exam",result);
@@ -162,6 +164,7 @@ public class ManageSrv extends BaseService {
         Record notice=new Record();
         notice.set("id",UUIDTool.getUUID());
         notice.set("title",title);
+        notice.set("content",address);
         notice.set("sender_id",userId);
         notice.set("receiver_id",receiverId);
         notice.set("create_time",time);
