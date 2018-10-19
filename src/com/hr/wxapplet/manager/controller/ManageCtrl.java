@@ -107,7 +107,11 @@ public class ManageCtrl extends BaseCtrl{
                         if (StringUtils.isEmpty(status)){
                             check.set("status","0");
                         }else {
-                            check.set("status","1");
+                            if(StringUtils.equals(status,"0")){
+                                check.set("status","1");
+                            }else if(StringUtils.equals(status,"1")){
+                                check.set("status","2");
+                            }
                         }
                         detail.set("type",type);
                         question.set("title",title);
@@ -151,7 +155,11 @@ public class ManageCtrl extends BaseCtrl{
                         if (StringUtils.isEmpty(status)){
                             check.set("status","0");
                         }else {
-                            check.set("status","1");
+                            if(StringUtils.equals(status,"0")){
+                                check.set("status","1");
+                            }else if(StringUtils.equals(status,"1")){
+                                check.set("status","2");
+                            }
                         }
                         detail.set("type",type);
                         question.set("title",title);
