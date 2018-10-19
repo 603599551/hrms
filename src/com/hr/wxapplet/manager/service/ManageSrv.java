@@ -126,6 +126,11 @@ public class ManageSrv extends BaseService {
         String checkId=(String)paraMap.get("checkId");
         //考核结果
         String status=(String)paraMap.get("status");
+        if(StringUtils.equals(status,"1")){
+            status="0";
+        }else {
+            status="1";
+        }
 
         //提交考核结果
         Record result = new Record();
