@@ -149,7 +149,7 @@ public class SchedulingCtrl extends BaseCtrl {
         String startTime = (String) timeObject.get("start");
         String endTime = (String) timeObject.get("end");
         try {
-            String sql = "select d.start_time start ,d.end_time end,d.status status from h_work_time_detail d where  d.staff_id=? and d.date=? and d.start_time>=? and d.end_time<=? order by d.start_time";
+            String sql = "SELECT d.start_time start, d.end_time end, d.STATUS status, d.area_name areaName FROM h_work_time_detail d WHERE d.staff_id =? AND d.date =? AND d.start_time >=? AND d.end_time <=? ORDER BY d.start_time";
             List<Record> list = Db.find(sql, staffId, date, startTime, endTime);
             if (list != null && list.size() > 0) {
                 jhm.put("list", list);

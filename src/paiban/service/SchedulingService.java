@@ -313,18 +313,18 @@ public class SchedulingService extends BaseService {
                 workTime.set("staff_id", r.get("staff_id"));
                 workTime.set("store_id", r.get("store_id"));
                 workTime.set("date", r.get("date"));
-                String pcContent = r.getStr("content");
-                JSONObject pcContentObj = JSONObject.parseObject(pcContent);
-                JSONArray workArr = pcContentObj.getJSONArray("work");
-                workTime.set("number", workArr.size());
+                String app_area_content = r.getStr("app_area_content");
+                JSONArray appAreaContentObj = JSONArray.parseArray(app_area_content);
+                workTime.set("number", 0);
                 workTime.set("real_number", 0);
                 workTimeList.add(workTime);
 
-                String timeArr = ContentTransformationUtil.PcToAppXianShi(ContentTransformationUtil.PcPaibanToPcXianShi(pcContent));
-                JSONArray timeJsonArr = JSONArray.parseArray(timeArr);
-                if(timeJsonArr != null && timeJsonArr.size() > 0){
-                    for(int i = 0; i < timeJsonArr.size(); i++){
-                        JSONObject timeObj = timeJsonArr.getJSONObject(i);
+//                String timeArr = ContentTransformationUtil.PcToAppXianShi(ContentTransformationUtil.PcPaibanToPcXianShi(pcContent));
+//                JSONArray timeJsonArr = JSONArray.parseArray(timeArr);
+                if(appAreaContentObj != null && appAreaContentObj.size() > 0){
+                    workTime.set("number", appAreaContentObj.size());
+                    for(int i = 0; i < appAreaContentObj.size(); i++){
+                        JSONObject timeObj = appAreaContentObj.getJSONObject(i);
                         Record workTimeDetail = new Record();
                         workTimeDetail.set("id", UUIDTool.getUUID());
                         workTimeDetail.set("work_time_id", workTimeId);
@@ -333,6 +333,7 @@ public class SchedulingService extends BaseService {
                         workTimeDetail.set("date", r.get("date"));
                         workTimeDetail.set("start_time", timeObj.getString("start"));
                         workTimeDetail.set("end_time", timeObj.getString("end"));
+                        workTimeDetail.set("area_name", timeObj.getString("areaName"));
                         workTimeDetail.set("status", 0);
                         workTimeDetail.set("creater_id", userId);
                         workTimeDetail.set("create_time", time);
@@ -346,16 +347,16 @@ public class SchedulingService extends BaseService {
             Db.delete(delete_work_time, usu.getUserBean().get("store_id"), dateArr[0], dateArr[dateArr.length - 1]);
             String delete_work_time_detail = "delete from h_work_time_detail where store_id=? and date>=? and date<=?";
             Db.delete(delete_work_time_detail, usu.getUserBean().get("store_id"), dateArr[0], dateArr[dateArr.length - 1]);
-            if(workTimeDetailList != null && workTimeDetailList.size() > 0){
-                for(Record r : workTimeDetailList){
-                    String start_time = r.getStr("start_time");
-                    String end_time = r.getStr("end_time");
-                    start_time = start_time.substring(0, start_time.length() - 3);
-                    end_time = end_time.substring(0, end_time.length() - 3);
-                    r.set("start_time", start_time);
-                    r.set("end_time", end_time);
-                }
-            }
+//            if(workTimeDetailList != null && workTimeDetailList.size() > 0){
+//                for(Record r : workTimeDetailList){
+//                    String start_time = r.getStr("start_time");
+//                    String end_time = r.getStr("end_time");
+//                    start_time = start_time.substring(0, start_time.length() - 3);
+//                    end_time = end_time.substring(0, end_time.length() - 3);
+//                    r.set("start_time", start_time);
+//                    r.set("end_time", end_time);
+//                }
+//            }
             Db.batchSave("h_work_time", workTimeList, workTimeList.size());
             Db.batchSave("h_work_time_detail", workTimeDetailList, workTimeDetailList.size());
         }
