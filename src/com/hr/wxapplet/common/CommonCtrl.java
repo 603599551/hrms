@@ -14,16 +14,20 @@ import utils.bean.JsonHashMap;
 import org.apache.http.HttpEntity;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CommonCtrl extends BaseCtrl{
 
-    private static final String APPID = "wx236db34923f577e3";
-    private static final String SECRET = "7c6869e372b6e8e90da4f010da40db3a";
+    private static final String APPID_EMP = "wx236db34923f577e3";
+    private static final String SECRET_EMP = "7c6869e372b6e8e90da4f010da40db3a";
+    private static final String APPID_MGR = "wx86af5292e5cb6aa9";
+    private static final String SECRET_MGR = "eb0043c86d1bd7797cf11a407e66d499";
     private static final String authorization_code = "authorization_code";
     public String login_url = "https://api.weixin.qq.com/sns/jscode2session?";
-    public String getAccessToken_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + APPID + "&secret=" + SECRET;
-    public String sendCustomerMessage_url = "https://api.weixin.qq.com/cgi-bin/message/custom/send";
-    public static String templateId = "3JlxvZ61_mey-sNJzseGZA1GNwyY2sG8yLj2mPKza_w";
+//    public String getAccessToken_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + APPID + "&secret=" + SECRET;
+//    public String sendCustomerMessage_url = "https://api.weixin.qq.com/cgi-bin/message/custom/send";
+//    public static String templateId = "3JlxvZ61_mey-sNJzseGZA1GNwyY2sG8yLj2mPKza_w";
 
     /**
      * url:https://ip:port/context/wx/common/wxLogin
@@ -31,11 +35,32 @@ public class CommonCtrl extends BaseCtrl{
      */
     public void wxLogin() throws IOException {
         JsonHashMap jhm = new JsonHashMap();
+        String type = getPara("type");
         String code = getPara("code");
+        Map<String, String> appidSecretMap = appidSecretMap(type);
+        String APPID = appidSecretMap.get("APPID");
+        String SECRET = appidSecretMap.get("SECRET");
         String url = this.login_url + "appid=" + APPID + "&secret=" + SECRET + "&js_code=" + code + "&grant_type=" + authorization_code;
         String doc = Jsoup.connect(url).execute().body();
         jhm.put("data", JSONObject.parseObject(doc));
         renderJson(jhm);
+    }
+
+    /**
+     * //员工端0 经理端1
+     * @param type
+     * @return
+     */
+    private Map<String, String> appidSecretMap(String type){
+        Map<String, String> result = new HashMap<>();
+        if("0".equals(type)){
+            result.put("APPID", APPID_EMP);
+            result.put("SECRET", SECRET_EMP);
+        }else if("1".equals(type)){
+            result.put("APPID", APPID_MGR);
+            result.put("SECRET", SECRET_MGR);
+        }
+        return result;
     }
 
 

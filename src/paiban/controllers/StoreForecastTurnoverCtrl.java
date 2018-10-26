@@ -82,10 +82,15 @@ public class StoreForecastTurnoverCtrl extends BaseCtrl{
         UserSessionUtil usu = new UserSessionUtil(getRequest());
         String store_id = usu.getUserBean().get("store_id") + "";
         String date = getPara("date");
-        date = "2018-08-06";
+//        date = "2018-08-06";
         String select = "select * from h_store_forecast_turnover where store_id=? and scheduling_date>=? and scheduling_date<=?";
         String dateEnd = nextDay(date, 6);
         List<Record> list = Db.find(select, store_id, date, dateEnd);
+        if(list == null || list.size() == 0){
+            String startDate = nextDay(date, -7);
+            String endDate =nextDay(date, -1);
+            list = Db.find(select, store_id, startDate, endDate);
+        }
         List<List<Map<String, String>>> dataList = new ArrayList<>();
         JSONArray jsonArr = new JSONArray();
         if(list != null && list.size() > 0){
@@ -103,8 +108,10 @@ public class StoreForecastTurnoverCtrl extends BaseCtrl{
                 }
                 dataList.add(oneList);
             }
+            jhm.put("data", dataList);
+        }else{
+            jhm.putCode(2);
         }
-        jhm.put("data", dataList);
 //        renderJson("{\"code\":1,\"data\":[[{\"input\":\"12\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"200\"},{\"input\":\"300\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"500\"},{\"input\":\"\"},{\"input\":\"1100\"},{\"input\":\"\"},{\"input\":\"1800\"},{\"input\":\"\"},{\"input\":\"5000\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}],[{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"},{\"input\":\"\"}]]}");
         renderJson(jhm);
     }
