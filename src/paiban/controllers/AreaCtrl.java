@@ -20,7 +20,7 @@ public class AreaCtrl extends BaseCtrl{
         JsonHashMap jhm = new JsonHashMap();
         String storeId = getPara("dept");
         try {
-            String select = "select * from h_area where store_id=?";
+            String select = "select * from h_area where store_id=? order by name";
             List<Record> result = Db.find(select, storeId);
             if(result != null && result.size() > 0){
                 for(Record r : result){
@@ -122,9 +122,8 @@ public class AreaCtrl extends BaseCtrl{
     public void delete(){
         JsonHashMap jhm = new JsonHashMap();
         String id = getPara("id");
-        String delete = "delete from h_area where id=?";
         try{
-            Db.delete(delete, id);
+            service.delete(id);
             jhm.putMessage("删除成功！");
         }catch (Exception e){
             e.printStackTrace();
@@ -155,13 +154,14 @@ public class AreaCtrl extends BaseCtrl{
     }
 
     public void showAreaStaff(){
-        String date = getPara("start_date");
+//        String date = getPara("start_date");
         String storeId = getPara("dept");
 //        String result = "{\"code\":1,\"data\":[{\"id\":\"a123\",\"name\":\"m1\",\"workers\":[{\"id\":\"qwer\",\"name\":\"张三\",\"color\":\"#b7a6d4\"},{\"id\":\"sjkdf\",\"name\":\"王二麻子\",\"color\":\"#316f52\"},{\"id\":\"fghnb\",\"name\":\"李四\",\"color\":\"#fa7a19\"}]},{\"id\":\"b123\",\"name\":\"m2\",\"workers\":[{\"id\":\"qwer\",\"name\":\"张三\",\"color\":\"#b7a6d4\"},{\"id\":\"fghnb\",\"name\":\"李四\",\"color\":\"#fa7a19\"}]},{\"id\":\"c123\",\"name\":\"A1\",\"workers\":[{\"id\":\"qwer\",\"name\":\"张三\",\"color\":\"#b7a6d4\"},{\"id\":\"sjkdf\",\"name\":\"王二麻子\",\"color\":\"#316f52\"}]}]}";
         JsonHashMap jhm = new JsonHashMap();
         try{
-            String select = "select has.area_id id, has.area_name name, hs.name sname, hs.id sid from h_area_staff has, h_staff hs where store_id=? and date=? and has.staff_id=hs.id";
-            List<Record> list = Db.find(select, storeId, date);
+//            String select = "select has.area_id id, has.area_name name, hs.name sname, hs.id sid from h_area_staff has, h_staff hs where store_id=? and date=? and has.staff_id=hs.id";
+            String select = "select has.area_id id, has.area_name name, hs.name sname, hs.id sid from h_area_staff has, h_staff hs where store_id=? and has.staff_id=hs.id order by has.area_name";
+            List<Record> list = Db.find(select, storeId);
             String colorSelect = "select color from h_store_color";
             List<Record> colorList = Db.find(colorSelect);
             String selectArea = "select * from h_area where store_id=?";
@@ -213,12 +213,13 @@ public class AreaCtrl extends BaseCtrl{
 
     public void edit(){
         String id = getPara("id");
-        String date = getPara("date");
+//        String date = getPara("date");
         String[] workers = getParaValues("workers");
         JsonHashMap jhm = new JsonHashMap();
         try{
             if(workers != null && workers.length > 0){
-                service.edit(id, workers, date, new UserSessionUtil(getRequest()));
+//                service.edit(id, workers, date, new UserSessionUtil(getRequest()));
+                service.edit(id, workers, new UserSessionUtil(getRequest()));
             }
             jhm.putMessage("编辑成功！");
         }catch (Exception e){
