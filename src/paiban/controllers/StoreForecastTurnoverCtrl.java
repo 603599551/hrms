@@ -32,10 +32,11 @@ public class StoreForecastTurnoverCtrl extends BaseCtrl{
             JSONObject json = JSONObject.parseObject(this.getRequestObject());
             String date = json.getString("date");
             JSONArray timeAndMoney = json.getJSONArray("list");
-            String year = sdf_year.format(new Date());
+//            String year = sdf_year.format(new Date());
             String[] dayArr = new String[7];
             for(int i = 0; i < dayArr.length; i++){
-                dayArr[i] = nextDay(year + "-" + date, i);
+//                dayArr[i] = nextDay(year + "-" + date, i);
+                dayArr[i] = nextDay(date, i);
             }
             List<Map<String, String>> dataList = new ArrayList<>();
             //{"10":"200","11":"400","12":"1000","13":"1500","14":"1500","15":"500","16":"300","17":"500","18":"800","19":"800","20":"300","21":"200","22":"0","9":"200","total_money":"8200"}
