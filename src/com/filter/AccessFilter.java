@@ -77,7 +77,7 @@ public class AccessFilter implements Filter{
 			return true;
 		}else if(servletPath.startsWith("/upload/") ){
 			return true;
-		}if(servletPath.startsWith("/wx/") ){
+		}else if(servletPath.startsWith("/wx/") ){
 			return true;
 		}else if(servletPath.startsWith("/mgr/mobile/") ){
 			if(usu.getUserBean()==null){
