@@ -3,6 +3,7 @@ package com.common.controllers;
 import com.alibaba.fastjson.JSONObject;
 import com.jfinal.core.Controller;
 import com.jfinal.plugin.activerecord.Record;
+import utils.WX_Message.Constants;
 
 import java.io.BufferedReader;
 import java.text.ParseException;
@@ -12,7 +13,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class BaseCtrl extends Controller {
+public abstract class BaseCtrl extends Controller implements Constants {
 
     protected SimpleDateFormat sdf_ymd = new SimpleDateFormat("yyyy-MM-dd");
     protected SimpleDateFormat sdf_year = new SimpleDateFormat("yyyy");

@@ -6,13 +6,17 @@ import com.jfinal.plugin.activerecord.ActiveRecordException;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import easy.util.DateTool;
-import easy.util.UUIDTool;
 import org.apache.commons.lang.StringUtils;
+import utils.WX_Message.TemplateData;
+import utils.WX_Message.WX_MessageUtil;
 import utils.bean.JsonHashMap;
 
 import java.util.*;
 
 public class ManageCtrl extends BaseCtrl{
+
+    private static final String TRAIN_AGREE_REMARK = "{{senderName}}，您的{{noticeTitle}}考核申请已经同意，请于{{time}}准时在{{address}}处考核。";
+    private static final String TRAIN_REFUSE_REMARK = "{{senderName}}，您的{{noticeTitle}}考核申请已经拒绝，拒绝原因是：{{reason}}";
 
     /**
      * url:https://ip:port/context/wx/manager/queryNotice
@@ -224,6 +228,10 @@ public class ManageCtrl extends BaseCtrl{
         paraMap.put("status",status);
         paraMap.put("noticeId",noticeId);
 
+        Record notice = Db.findById("h_notice", noticeId);
+        Record sendStaff = Db.findById("h_staff", notice.get("sender_id"));
+        Map<String,TemplateData> param = new HashMap<>();
+
         //同意情况
         if (StringUtils.equals(status,"0")){
             if (StringUtils.isEmpty(time)){
@@ -241,6 +249,15 @@ public class ManageCtrl extends BaseCtrl{
                 paraMap.put("address",address);
                 ManageSrv srv=enhance(ManageSrv.class);
                 srv.agreeCheck(paraMap);
+
+                param.put("first",new TemplateData("同意考核申请","#000000"));
+                param.put("keyword1",new TemplateData(notice.getStr("title") + "考核","#000000"));
+                param.put("keyword2",new TemplateData(time,"#000000"));
+                String remark = TRAIN_AGREE_REMARK.replace("{{senderName}}", sendStaff.getStr("name"));
+                remark = remark.replace("{{noticeTitle}}", notice.getStr("title"));
+                remark = remark.replace("{{time}}", time);
+                remark = remark.replace("{{address}}", address);
+                param.put("remark",new TemplateData(remark,"#000000"));
                 jhm.putCode(1).putMessage("回复成功！");
             }catch (ActiveRecordException e){
                 e.printStackTrace();
@@ -258,12 +275,24 @@ public class ManageCtrl extends BaseCtrl{
                 paraMap.put("reason",reason);
                 ManageSrv srv=enhance(ManageSrv.class);
                 srv.refuseCheck(paraMap);
+
+                param.put("first",new TemplateData("拒绝考核申请","#000000"));
+                param.put("keyword1",new TemplateData(notice.getStr("title") + "考核","#000000"));
+                param.put("keyword2",new TemplateData(time,"#000000"));
+                String remark = TRAIN_REFUSE_REMARK.replace("{{senderName}}", sendStaff.getStr("name"));
+                remark = remark.replace("{{noticeTitle}}", notice.getStr("title"));
+                remark = remark.replace("{{reason}}", reason);
+                param.put("remark",new TemplateData(remark,"#000000"));
                 jhm.putCode(1).putMessage("回复成功！");
             }catch (ActiveRecordException e){
                 e.printStackTrace();
                 jhm.putCode(-1).putMessage(e.getMessage());
             }
         }
+        if(1 == jhm.getCode()){
+            WX_MessageUtil.senMsg(sendStaff.getStr("open_id"), APPLICATION_FOR_AUDIT_NOTICE_TEMPLATEID,"", param);
+        }
+
         renderJson(jhm);
     }
 

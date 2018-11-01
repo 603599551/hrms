@@ -3,11 +3,12 @@ package com.hr.wxapplet.staff.controller;
 import com.common.controllers.BaseCtrl;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
-import com.oreilly.servlet.DaemonHttpServlet;
 import easy.util.DateTool;
 import easy.util.UUIDTool;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
+import utils.WX_Message.TemplateData;
+import utils.WX_Message.WX_MessageUtil;
 import utils.bean.JsonHashMap;
 
 import java.util.*;
@@ -317,15 +318,18 @@ public class StaffCtrl extends BaseCtrl {
         }
 
         String kindSql = "SELECT title FROM h_train_article WHERE id=?";
-        String receiverSql = "SELECT id FROM h_staff WHERE dept_id=(SELECT dept_id FROM h_staff WHERE id=?) AND job='store_manager'";
+        String receiverSql = "SELECT id, open_id FROM h_staff WHERE dept_id=(SELECT dept_id FROM h_staff WHERE id=?) AND job='store_manager'";
         String time = DateTool.GetDateTime();
         try {
+            Record receiverStaff = Db.findFirst(receiverSql, userId);
+            Record sendStaff = Db.findById("h_staff", userId);
+            Record train = Db.findFirst(kindSql, typeId);
             Record notice = new Record();
             notice.set("id", UUIDTool.getUUID());
             //title----申请考核的岗位名
-            notice.set("title", Db.findFirst(kindSql, typeId).getStr("title"));
+            notice.set("title", train.getStr("title"));
             notice.set("sender_id", userId);
-            notice.set("receiver_id", Db.findFirst(receiverSql, userId).getStr("id"));
+            notice.set("receiver_id", receiverStaff.getStr("id"));
             notice.set("create_time", time);
             notice.set("modify_time", time);
             notice.set("status", "0");
@@ -333,6 +337,12 @@ public class StaffCtrl extends BaseCtrl {
 
             boolean flag = Db.save("h_notice", notice);
             if (flag) {
+                Map<String,TemplateData> param = new HashMap<>();
+                param.put("first",new TemplateData("考核申请","#000000"));
+                param.put("keyword1",new TemplateData(train.getStr("title") + "考核","#000000"));
+                param.put("keyword2",new TemplateData(time,"#000000"));
+                param.put("remark",new TemplateData("员工" + sendStaff.getStr("name") + "申请" + train.getStr("title") + "考核","#000000"));
+                WX_MessageUtil.senMsg(receiverStaff.getStr("open_id"), APPLICATION_FOR_AUDIT_NOTICE_TEMPLATEID,"", param);
                 jhm.putCode(1).putMessage("申请成功！");
             } else {
                 jhm.putCode(0).putMessage("申请失败！");
