@@ -1,6 +1,7 @@
 package com.hr.train.controllers;
 
 import com.common.controllers.BaseCtrl;
+import com.jfinal.Config;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
@@ -243,6 +244,22 @@ public class ArticleCtrl extends BaseCtrl {
             if (typeSearch.getInt("c") != 0) {
                 jhm.putCode(0).putMessage("文章标题重复!");
             } else {
+                //当上传pdf文件时，前台传来的地址不正确，要重新拼装七牛云下载地址
+                if(StringUtils.isNotBlank(orgName)){
+                    String[] orgNameArray=orgName.split(",");
+                    if(orgNameArray.length>0){
+                        StringBuilder pdfUrlSb=new StringBuilder();
+                        for(String name:orgNameArray){
+                            pdfUrlSb.append(Config.qiniuUrl);
+                            pdfUrlSb.append(name);
+                            pdfUrlSb.append(",");
+                        }
+                        int len=pdfUrlSb.length();
+                        pdfUrlSb.delete(len-1,len);
+                        content=pdfUrlSb.toString();
+                    }
+                }
+
                 Record type = new Record();
                 type.set("title", title);
                 type.set("content", content);
@@ -375,6 +392,22 @@ public class ArticleCtrl extends BaseCtrl {
                 renderJson(jhm);
                 return;
             } else {
+                //当上传pdf文件时，前台传来的地址不正确，要重新拼装七牛云下载地址
+                if(StringUtils.isNotBlank(orgName)){
+                    String[] orgNameArray=orgName.split(",");
+                    if(orgNameArray.length>0){
+                        StringBuilder pdfUrlSb=new StringBuilder();
+                        for(String name:orgNameArray){
+                            pdfUrlSb.append(Config.qiniuUrl);
+                            pdfUrlSb.append(name);
+                            pdfUrlSb.append(",");
+                        }
+                        int len=pdfUrlSb.length();
+                        pdfUrlSb.delete(len-1,len);
+                        content=pdfUrlSb.toString();
+                    }
+                }
+
                 Record type = Db.findById("h_train_article", id);
                 type.set("title", title);
                 type.set("content", content);
@@ -484,7 +517,7 @@ public class ArticleCtrl extends BaseCtrl {
                 String createrId=r.getStr("creater_id");
                 Record nameR = Db.findFirst("SELECT name FROM h_staff WHERE id=? union all SELECT name FROM h_admin WHERE id=?", createrId,createrId);
                 String pdfPath=r.getStr("pdf_path");
-                pdfPath=basePath+pdfPath;
+//                pdfPath=basePath+pdfPath;
                 r.set("author", nameR.getStr("name"));
                 r.remove("creater_id");
                 r.remove("modifier_id");
