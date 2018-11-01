@@ -24,7 +24,8 @@ public class ManageSrv extends BaseService {
 
         String noticeSql="SELECT * FROM h_notice WHERE id=?";
         //入职日期、岗位value
-        String hiredateSql="SELECT s.hiredate,d.value FROM h_staff s,h_dictionary d WHERE s.id=? AND d.name=?";
+        String hiredateSql="SELECT s.hiredate FROM h_staff s WHERE s.id=? ";
+        String valueSql="SELECT d.value FROM h_dictionary d WHERE d.name=?";
         String createTime= DateTool.GetDateTime();
 
         Record mNotice=Db.findFirst(noticeSql,noticeId);
@@ -32,9 +33,10 @@ public class ManageSrv extends BaseService {
         String mReceiverId=mNotice.getStr("receiver_id");
         String mTitle=mNotice.getStr("title");
 
-        Record hNotice=Db.findFirst(hiredateSql,mSenderId,mTitle);
+        Record hNotice=Db.findFirst(hiredateSql,mSenderId);
+        Record hNotice2=Db.findFirst(valueSql,mTitle);
         String hiredate=hNotice.getStr("hiredate");
-        String kindId=hNotice.getStr("value");
+        String kindId=hNotice2.getStr("value");
 
         String examId=UUIDTool.getUUID();
         //向exam表增加考试记录
