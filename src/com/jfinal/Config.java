@@ -52,6 +52,7 @@ public class Config extends JFinalConfig {
 	public static String appid = "";
 	public static String partner = "";
 	public static String paternerKey = "";
+	public static String qiniuUrl;
 
 	/**
 	 * 如果生产环境配置文件存在，则优先加载该配置，否则加载开发环境配置文件
@@ -89,6 +90,16 @@ public class Config extends JFinalConfig {
 		loadProp("a_little_config_pro.txt", "a_little_config.txt");
 		// ApiConfigKit 设为开发模式可以在开发阶段输出请求交互的 xml 与 json 数据
 		ApiConfigKit.setDevMode(constants.getDevMode());
+
+
+		qiniuUrl=getProperty("qiniu_url");
+		if(StringUtils.isBlank(qiniuUrl)){
+			System.out.println("严重警告：没有配置七牛云url，上传培训pdf文档后，无法拼装下载地址");
+			System.out.println("严重警告：没有配置七牛云url，上传培训pdf文档后，无法拼装下载地址");
+			System.out.println("严重警告：没有配置七牛云url，上传培训pdf文档后，无法拼装下载地址");
+		}else{
+			System.out.println("七牛云下载url="+qiniuUrl);
+		}
 	}
 
 	@Override
