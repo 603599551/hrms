@@ -203,7 +203,15 @@ public class StaffCtrl extends BaseCtrl {
         }
 
         //单表查询h_train_article
-        String sql1="SELECT ta.id,ta.type_2,ta.title AS name,ta.video,ta.pdf_path FROM h_train_article ta WHERE ta.type_1=?";
+        String sql1="";
+
+        if (!StringUtils.equals(name,"产品培训")){
+            sql1="SELECT ta.id,ta.type_2 AS typeId,ta.title AS name,ta.video,ta.pdf_path FROM h_train_article ta WHERE ta.type_1=?";
+        }else {
+            sql1="SELECT ta.id,ta.type_3 AS typeId,ta.title AS name,ta.video,ta.pdf_path FROM h_train_article ta WHERE ta.type_1=?";
+        }
+
+
         //根据员工id和培训id查询是否考核和考核状态
         String sql2="SELECT result FROM h_exam WHERE staff_id=? AND kind_id=(SELECT value FROM h_dictionary WHERE name=(SELECT name FROM h_train_type WHERE id=?)) ORDER BY create_time DESC LIMIT 1";
 
@@ -221,11 +229,20 @@ public class StaffCtrl extends BaseCtrl {
                 return;
             }
             for (Record train:trainList){
+                int vLen,pLen;
                 //将多个视频/pdf地址以逗号为分隔符拆分开来
                 String []videos=train.getStr("video").split(",");
                 String []pdfs=train.getStr("pdf_path").split(",");
-                int vLen=videos.length;
-                int pLen=pdfs.length;
+                if (StringUtils.isEmpty(train.getStr("video"))){
+                    vLen=0;
+                }else {
+                    vLen=videos.length;
+                }
+                if (StringUtils.isEmpty(train.getStr("pdf_path"))){
+                    pLen=0;
+                }else {
+                    pLen=pdfs.length;
+                }
                 train.set("videoSum",vLen);
                 train.set("fileSum",pLen);
 
@@ -306,6 +323,8 @@ public class StaffCtrl extends BaseCtrl {
         String userId = getPara("userId");
         //培训id
         String typeId = getPara("typeId");
+        //文章id
+        String articleId=getPara("id");
         if (StringUtils.isEmpty(userId)) {
             jhm.putCode(0).putMessage("员工id不能为空！");
             renderJson(jhm);
@@ -323,7 +342,7 @@ public class StaffCtrl extends BaseCtrl {
         try {
             Record receiverStaff = Db.findFirst(receiverSql, userId);
             Record sendStaff = Db.findById("h_staff", userId);
-            Record train = Db.findFirst(kindSql, typeId);
+            Record train = Db.findFirst(kindSql, articleId);
             Record notice = new Record();
             notice.set("id", UUIDTool.getUUID());
             //title----申请考核的岗位名
@@ -334,6 +353,7 @@ public class StaffCtrl extends BaseCtrl {
             notice.set("modify_time", time);
             notice.set("status", "0");
             notice.set("type", "check");
+            notice.set("fid", typeId);
 
             boolean flag = Db.save("h_notice", notice);
             if (flag) {

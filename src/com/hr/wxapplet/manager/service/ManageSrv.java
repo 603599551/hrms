@@ -21,6 +21,7 @@ public class ManageSrv extends BaseService {
         String noticeId = (String) paraMap.get("noticeId");
         String time = (String) paraMap.get("time");
         String address = (String) paraMap.get("address");
+        String typeId = (String) paraMap.get("typeId");
 
         String noticeSql="SELECT * FROM h_notice WHERE id=?";
         //入职日期、岗位value
@@ -36,7 +37,12 @@ public class ManageSrv extends BaseService {
         Record hNotice=Db.findFirst(hiredateSql,mSenderId);
         Record hNotice2=Db.findFirst(valueSql,mTitle);
         String hiredate=hNotice.getStr("hiredate");
-        String kindId=hNotice2.getStr("value");
+        String kindId;
+        if (hNotice2!=null){
+            kindId=hNotice2.getStr("value");
+        }else {
+            kindId="";
+        }
 
         String examId=UUIDTool.getUUID();
         //向exam表增加考试记录
@@ -48,7 +54,7 @@ public class ManageSrv extends BaseService {
         exam.set("kind_id", kindId);
         exam.set("review_time", time);
         exam.set("examiner_id", mReceiverId);
-        exam.set("type_id", "");
+        exam.set("type_id", typeId);
         try{
             Db.save("h_exam",exam);
         }catch (ActiveRecordException e){
@@ -148,7 +154,7 @@ public class ManageSrv extends BaseService {
             throw new ActiveRecordException("提交失败！");
         }
 
-        String sql="SELECT d.name AS title,e.id AS fid,e.staff_id AS receiver_id FROM h_exam e,h_dictionary d WHERE e.id=? AND e.kind_id=d.value";
+        String sql="SELECT t.name AS title,e.id AS fid,e.staff_id AS receiver_id FROM h_exam e,h_train_type t WHERE e.id=? AND t.id=e.type_id ";
 
         String title;
         String fid;
@@ -195,6 +201,7 @@ public class ManageSrv extends BaseService {
         String address = (String) paraMap.get("address");
         String name = (String) paraMap.get("name");
         String value = (String) paraMap.get("value");
+        String typeId = (String) paraMap.get("typeId");
 
         String createTime = DateTool.GetDateTime();
 
@@ -215,7 +222,7 @@ public class ManageSrv extends BaseService {
         exam.set("kind_id", value);
         exam.set("review_time", time);
         exam.set("examiner_id", managerId);
-        exam.set("type_id", "");
+        exam.set("type_id", typeId);
 
         try{
             Db.save("h_exam",exam);
@@ -223,10 +230,15 @@ public class ManageSrv extends BaseService {
             throw new ActiveRecordException("Fail to add examRecord!");
         }
 
+        if (StringUtils.isEmpty(name)) {
+            Record nameR=Db.findById("h_train_type",typeId);
+            name=nameR.getStr("name");
+        }
+
         //向员工发送考核消息
         Record notice = new Record();
         notice.set("id", UUIDTool.getUUID());
-        //title----申请考核的岗位名
+        //title----申请考核的分类名
         notice.set("title", name);
         notice.set("content", address);
         notice.set("sender_id", managerId);

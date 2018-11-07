@@ -31,7 +31,7 @@ public class ManageCtrl extends BaseCtrl{
             return;
         }
 
-        String sql="SELECT n.id, n.title AS job,n.sender_id AS staffId,s.name,n.create_time AS `time`,n.`status` FROM h_notice n,h_staff s WHERE receiver_id=? AND `type`='check' AND n.sender_id=s.id AND n.`status` IN('0','1','2')  ORDER BY n.create_time DESC  LIMIT 50";
+        String sql="SELECT n.id,n.fid AS typeId, n.title AS job,n.sender_id AS staffId,s.name,n.create_time AS `time`,n.`status` FROM h_notice n,h_staff s WHERE receiver_id=? AND `type`='check' AND n.sender_id=s.id AND n.`status` IN('0','1','2')  ORDER BY n.create_time DESC  LIMIT 50";
 
         try{
             List<Record> list=Db.find(sql,id);
@@ -71,8 +71,8 @@ public class ManageCtrl extends BaseCtrl{
             return;
         }
 
-        //staff、exam、dictionary、question_type、question 五表查询
-        String sql="SELECT st.name AS department,e.id,s.name,s.phone,d.name AS job,e.result AS `status`,s.hiredate AS entryTime,e.create_time AS applyTime,e.review_time AS checkTime,qt.name AS `type`,q.title,q.content AS des FROM h_exam e,h_staff s,h_dictionary d,h_question_type qt,h_question q,h_store st WHERE e.examiner_id=? AND e.staff_id=s.id AND d.value=e.kind_id AND e.kind_id=qt.kind_id AND q.type_id=qt.id AND s.dept_id=st.id ORDER BY e.create_time DESC ,qt.name DESC";
+        //staff、exam、h_train_type、question_type、question 五表查询
+        String sql="SELECT st.name AS department,e.id,s.name,s.phone,tt.name AS job,e.result AS `status`,s.hiredate AS entryTime,e.create_time AS applyTime,e.review_time AS checkTime,qt.name AS `type`,q.title,q.content AS des FROM h_exam e,h_staff s,h_train_type tt,h_question_type qt,h_question q,h_store st WHERE e.examiner_id=? AND e.staff_id=s.id AND tt.id=e.type_id AND e.kind_id=qt.kind_id AND q.type_id=qt.id AND s.dept_id=st.id ORDER BY e.create_time DESC ,qt.name DESC";
 
         try{
             List<Record> initialList=Db.find(sql,id);
@@ -204,6 +204,8 @@ public class ManageCtrl extends BaseCtrl{
         String time=getPara("time");
         String address=getPara("address");
         String reason=getPara("reason");
+        String typeId=getPara("typeId");
+
         //回复列表id
         String noticeId=getPara("listId");
 
@@ -247,6 +249,7 @@ public class ManageCtrl extends BaseCtrl{
             try{
                 paraMap.put("time",time);
                 paraMap.put("address",address);
+                paraMap.put("typeId",typeId);
                 ManageSrv srv=enhance(ManageSrv.class);
                 srv.agreeCheck(paraMap);
 
@@ -483,6 +486,7 @@ public class ManageCtrl extends BaseCtrl{
         //岗位value
         String value = getPara("value");
 
+
         if (StringUtils.isEmpty(managerId)) {
             jhm.putCode(0).putMessage("经理id不能为空！");
             renderJson(jhm);
@@ -516,7 +520,13 @@ public class ManageCtrl extends BaseCtrl{
 
         String createTime = DateTool.GetDateTime();
 
+
+
         try {
+            String sql="SELECT id FROM h_train_type WHERE name=?";
+            Record r=Db.findFirst(sql,name);
+            String typeId=r.getStr("id");
+
             Map paraMap=new HashMap();
             paraMap.put("managerId",managerId);
             paraMap.put("staffId",staffId);
@@ -524,6 +534,7 @@ public class ManageCtrl extends BaseCtrl{
             paraMap.put("address",address);
             paraMap.put("name",name);
             paraMap.put("value",value);
+            paraMap.put("typeId",typeId);
             ManageSrv srv=enhance(ManageSrv.class);
             srv.launchCheck(paraMap);
             jhm.putCode(1).putMessage("发起考核成功！");
