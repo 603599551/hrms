@@ -387,7 +387,9 @@ public class ManageCtrl extends BaseCtrl{
                 String job = "";
                 for(int i = 0, length = kindEnglishArray.length; i < length; i++){
                     Record kind  = Db.findFirst(transforChinese,kindEnglishArray[i]);
-                    job += kind.getStr("job") + ",";
+                    if (kind!=null){
+                        job += kind.getStr("job") + ",";
+                    }
                 }
                 char pinyinChar = r.getStr("pinyin").charAt(0);
                 r.remove("kind");
