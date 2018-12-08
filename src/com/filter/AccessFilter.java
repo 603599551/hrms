@@ -3,6 +3,7 @@ package com.filter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -10,11 +11,13 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.alibaba.fastjson.JSON;
 
+import com.alibaba.fastjson.JSONObject;
 import com.utils.UserSessionUtil;
 import easy.web.UrlKit;
 import utils.bean.JsonHashMap;
@@ -30,12 +33,12 @@ public class AccessFilter implements Filter{
 	@Override
 	public void destroy() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response,
-			FilterChain chain) throws IOException, ServletException {
+						 FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest req=(HttpServletRequest)request;
 		HttpServletResponse resp=(HttpServletResponse)response;
 		resp.setContentType("text/html;charset=UTF-8");
@@ -47,7 +50,7 @@ public class AccessFilter implements Filter{
 		String domain=UrlKit.getDomain(req);
 		req.setAttribute("domain",domain);
 
-		boolean isLogin=isLogin(req,resp);//处理自动登录
+		boolean isLogin=isLong4Hrms(req,resp);//处理自动登录
 		if(isLogin){
 			chain.doFilter(request, response);
 		}
@@ -57,6 +60,53 @@ public class AccessFilter implements Filter{
 
 	}
 
+	private static final String STATIC_RESOURCES = "/static/";
+
+	private boolean isLong4Hrms(HttpServletRequest req,HttpServletResponse resp){
+		String servletPath = req.getServletPath().toLowerCase();
+		UserSessionUtil usu = new UserSessionUtil(req);
+		if("admin".equals(usu.getUsername())){//访问后台页面
+			return true;
+		}else if(servletPath.startsWith(STATIC_RESOURCES) ){
+			return true;
+		}else if(servletPath.startsWith("/login") ){
+			return true;
+		}else if(servletPath.startsWith("/index") ){
+			return true;
+		}else if(servletPath.startsWith("/mobile/") ){
+			return true;
+		}else if(servletPath.startsWith("/upload/") ){
+			return true;
+		}else if(servletPath.startsWith("/wx/") ){
+			return true;
+		}else if(servletPath.startsWith("/mgr/mobile/") ){
+			if(usu.getUserBean()==null){
+				JsonHashMap jhm = new JsonHashMap();
+				jhm.putCode(0).putMessage("登录超时，请重新登录！");
+				try {
+					resp.getWriter().write(JSONObject.toJSONString(jhm));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return false;
+			}else{
+				return true;
+			}
+		}else{
+			if(usu.getUserBean()==null){
+				JsonHashMap jhm = new JsonHashMap();
+            	jhm.put("code", "nosid");
+				try {
+					resp.getWriter().write(JSONObject.toJSONString(jhm));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return false;
+			}else{
+				return true;
+			}
+		}
+	}
 
 	/**
 	 * 当访问html、jsp时，读取cookie，自动登录
@@ -64,14 +114,15 @@ public class AccessFilter implements Filter{
 	 */
 	private boolean isLogin(HttpServletRequest req,HttpServletResponse resp){
 
-		String servletPath=req.getServletPath().toLowerCase();  
+		String servletPath=req.getServletPath().toLowerCase();
 //		String suffix=servletPath.substring(servletPath.lastIndexOf(".")+1);
 //		if(servletPath.indexOf(".")==-1){
 //
 //		}else
 //		Map adminSession=(Map)req.getSession().getAttribute(KEY.SESSION_ADMIN);
 //		Map userSession=(Map)req.getSession().getAttribute(KEY.SESSION_USER);
-		UserSessionUtil usu=new UserSessionUtil(req);
+    	UserSessionUtil usu=new UserSessionUtil(req);
+
 		if("admin".equals(usu.getUsername())){//访问后台页面
 			return true;
 		}else if(servletPath.startsWith("/user") ){//访问用户登录后才能访问的目录
@@ -103,12 +154,12 @@ public class AccessFilter implements Filter{
 		}else if(servletPath.startsWith("/index") ){//访问用户登录后才能访问的目录
 			if(usu.getUserBean()==null){
 				//System.out.println("--com.club.filter.AccessFilter已经登录，不需要自动登录");
-				try {
-					resp.sendRedirect(UrlKit.getDomain(req)+"/login.html");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return false;
+//				try {
+//					resp.sendRedirect(UrlKit.getDomain(req)+"/index.html");
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+				return true;
 			}else{
 				return true;
 			}

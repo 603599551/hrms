@@ -1,6 +1,10 @@
 package com.hr.store.controllers;
 
 import com.common.controllers.BaseCtrl;
+import com.hr.store.service.StoreMgrService;
+import com.jfinal.plugin.activerecord.Record;
+import com.utils.UserSessionUtil;
+import utils.bean.JsonHashMap;
 
 public class StoreMgrCtrl extends BaseCtrl {
 
@@ -41,7 +45,17 @@ public class StoreMgrCtrl extends BaseCtrl {
      }
      */
     public void fire(){
-        renderJson("{\"code\":1,\"message\":\"辞退成功！\"}");
+        JsonHashMap jhm=new JsonHashMap();
+        UserSessionUtil usu = new UserSessionUtil(getRequest());
+        Record record = getParaRecord();
+        try {
+            StoreMgrService sms = enhance(StoreMgrService.class);
+            jhm = sms.fire(record, usu);
+        }catch (Exception e){
+            e.printStackTrace();
+            jhm.putCode(-1).putMessage("服务器发生异常！");
+        }
+        renderJson(jhm);
     }
 
 }

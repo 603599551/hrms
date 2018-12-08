@@ -2,6 +2,9 @@ package com.hr.controllers;
 
 import com.jfinal.core.Controller;
 import com.utils.UserSessionUtil;
+import utils.bean.JsonHashMap;
+
+import javax.servlet.http.Cookie;
 
 public class HomeCtrl extends Controller {
     public void index(){
@@ -9,7 +12,10 @@ public class HomeCtrl extends Controller {
         if(usu.isLogin()){
             redirect("/index.html");
         }else {
-            redirect("/login.html");
+//            JsonHashMap jhm = new JsonHashMap();
+//            jhm.put("code", "nosid");
+//            renderJson(jhm);
+            redirect("/index.html");
         }
     }
 }

@@ -24,13 +24,13 @@ public class UserSessionUtil {
     public UserSessionUtil(HttpServletRequest request){
         HttpSession session=request.getSession();
         userBean=(UserBean)session.getAttribute(KEY.SESSION_USER);
-        if (true) {//
+        if (false) {//
             userBean=new UserBean();
             //长大店长
 //            Record r = Db.findFirst("select * from staff where id=?", "60a6f36a65f341c78ee07c9fc250e916");
             //红旗街店长
 //            Record r = Db.findFirst("select * from staff where id=?", "713765d2815845efbbdeafc6ede3310c");
-            Record r = Db.findFirst("select sta.*, sto.city city, sto.store_color store_color from h_staff sta, h_store sto where sta.dept_id=sto.id and sta.id=?", "1");
+            Record r = Db.findFirst("select sta.*, sto.city city, sto.store_color store_color from h_admin sta left join h_store sto on sta.dept_id=sto.id and sta.id=?", "1");
             userBean.setId(r.get("id"));
             userBean.setName(r.getStr("username"));
             userBean.setRealName(r.getStr("name" ));
